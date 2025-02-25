@@ -256,7 +256,7 @@ $defs:
   static_network:
     type: object
     additionalProperties: false
-    description: A network configuration that uses static IP addresses (i.e. no DHCP) with fixed configuration options.
+    description: Section to configure the network with static IP addresses (i.e. no DHCP) and fixed configuration options.
     properties:
       ip:
         description: The fixed ip address assigned to the node.
