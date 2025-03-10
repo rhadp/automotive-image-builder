@@ -72,21 +72,21 @@ pipelines:
           - type: org.osbuild.systemd
             options:
               enabled_services:
-                - mpp-if: not use_aboot
+                - mpp-if: use_grub2
                   then: greenboot-grub2-set-counter.service
-                - mpp-if: not use_aboot
+                - mpp-if: use_grub2
                   then: greenboot-grub2-set-success.service
                 - greenboot-healthcheck.service
-                - mpp-if: not use_aboot
+                - mpp-if: use_grub2
                   then: greenboot-rpm-ostree-grub2-check-fallback.service
                 - greenboot-status.service
                 - greenboot-task-runner.service
                 - mpp-if: "containers_transient_store and 'podman' in rpms['rootfs']"
                   then: podman-clean-transient.service
               disabled_services:
-                - mpp-if: use_aboot
+                - mpp-if: use_aboot_like
                   then: greenboot-grub2-set-success.service
-                - mpp-if: use_aboot
+                - mpp-if: use_aboot_like
                   then: greenboot-grub2-set-counter.service
         - mpp-eval: image_extra_stages
         - - type: org.osbuild.selinux
@@ -144,10 +144,13 @@ pipelines:
               etc_group_members:
                 - wheel
                 - docker
-          - mpp-if: use_aboot
+          - mpp-if: use_aboot_like
             then:
               type: org.osbuild-auto.aboot.conf
               options:
+                boot_type:
+                  mpp-if: use_ukiboot
+                  then: ukiboot
                 pagesize:
                   mpp-if: "locals().get('aboot_pagesize',) != None"
                   then:
@@ -164,6 +167,10 @@ pipelines:
                   mpp-if: "locals().get('aboot_partition_b') != None"
                   then:
                     mpp-format-string: "{aboot_partition_b}"
+                partition_ctl:
+                  mpp-if: "locals().get('partition_ctl') != None"
+                  then:
+                    mpp-format-string: "{partition_ctl}"
                 second_offset:
                   mpp-if: "locals().get('aboot_second_offset') != None"
                   then:
@@ -189,7 +196,7 @@ pipelines:
                   mpp-if: "locals().get('aboot_ramdisk_offset') != None"
                   then:
                     mpp-format-string: "{aboot_ramdisk_offset}"
-          - mpp-if: use_aboot
+          - mpp-if: use_aboot_like
             then:
               type: org.osbuild-auto.aboot.update
               options:
@@ -384,6 +391,20 @@ pipelines:
             root:
               keys:
                 mpp-eval: root_ssh_keys
+      # TODO: This should really be done by ostree deploy above
+      - mpp-if: use_ukiboot
+        then:
+          type: org.osbuild.copy
+          inputs:
+            tree:
+              type: org.osbuild.tree
+              origin: org.osbuild.pipeline
+              references:
+                - name:ostree-tree
+          options:
+            paths:
+              - from: input://tree/usr/lib/ostree-boot/efi/EFI
+                to: tree:///boot/efi
       - type: org.osbuild.ostree.selinux
         options:
           deployment:

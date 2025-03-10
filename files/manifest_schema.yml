@@ -315,7 +315,7 @@ $defs:
         type: object
         additionalProperties: false
         patternProperties:
-          "(aboot|boot|efi|vbmeta|sbl)":
+          "(aboot|ukiboot|boot|efi|vbmeta|sbl)":
             type: object
             additionalProperties: false
             properties:

@@ -1,5 +1,6 @@
 version: '2'
 mpp-vars:
+  efibootfile: BOOTAA64.EFI
   efiarch: aa64
   goarch: arm64
   arch_rpms:

@@ -40,6 +40,12 @@ mpp-vars:
     mpp-eval: _compute_uuid('vbmetapart_a')
   vbmetapart_b_uuid:
     mpp-eval: _compute_uuid('vbmetapart_b')
+  ukibootpart_a_uuid:
+    mpp-eval: _compute_uuid('ukibootpart_a')
+  ukibootpart_b_uuid:
+    mpp-eval: _compute_uuid('ukibootpart_b')
+  ukibootctl_uuid:
+    mpp-eval: _compute_uuid('ukibootpart_ctl')
   rootpart_uuid:
     mpp-eval: _compute_uuid('rootpart')
   luks_uuid:
@@ -48,16 +54,24 @@ mpp-vars:
   # Derive these from use_boot
   use_aboot:
     mpp-eval: use_boot == "aboot"
+  use_ukiboot:
+    mpp-eval: use_boot == "ukiboot"
   use_grub2:
     mpp-eval: use_boot == "grub2" or use_boot == "grub2-sbl"
   use_sbl:
     mpp-eval: use_boot == "grub2-sbl"
+  use_aboot_like:
+    mpp-eval: use_aboot or use_ukiboot
 
   # Enable as needed
   use_abootpart:
     mpp-if: not "use_abootpart" in locals()
     then:
       mpp-eval: use_aboot
+  use_ukibootpart:
+    mpp-if: not "use_ukibootpart" in locals()
+    then:
+      mpp-eval: use_ukiboot
   use_vbmetapart:
     mpp-if: not "use_vbmetapart" in locals()
     then:
@@ -65,7 +79,7 @@ mpp-vars:
   use_efipart:
     mpp-if: not "use_efipart" in locals()
     then:
-      mpp-eval: use_grub2
+      mpp-eval: use_grub2 or use_ukiboot
   use_bootpart:
     mpp-if: not "use_bootpart" in locals()
     then:
@@ -231,7 +245,7 @@ mpp-vars:
   kernel_opts:
     mpp-join:
       - - rw
-        - mpp-if: use_ostree and use_aboot
+        - mpp-if: use_ostree and use_aboot_like
           then: ostree=true
         - loglevel=$kernel_loglevel
         - mpp-if: use_efi_runtime
@@ -549,6 +563,27 @@ mpp-vars:
             options:
               profiles:
                 - realtime
+        - mpp-if: use_ukiboot
+          then:
+            type: org.osbuild.copy
+            inputs:
+              tree:
+                type: org.osbuild.tree
+                origin: org.osbuild.pipeline
+                references:
+                  - name:build
+            options:
+              paths:
+                - from:
+                    mpp-format-string: input://tree/usr/libexec/ukiboot/efi/ukiboot{efiarch}.efi
+                  to:
+                    mpp-format-string: tree:///boot/efi/EFI/BOOT/{efibootfile}
+                - from:
+                    mpp-format-string: input://tree/usr/libexec/ukiboot/efi/slot_a.addon.efi
+                  to: tree:///boot/efi/EFI/BOOT/slot_a.addon.efi
+                - from:
+                    mpp-format-string: input://tree/usr/libexec/ukiboot/efi/slot_b.addon.efi
+                  to: tree:///boot/efi/EFI/BOOT/slot_b.addon.efi
 
   # Extra directories that will be created in the image, list amended by moode-*.ipp
   extra_tree_dirs:
@@ -670,23 +705,27 @@ mpp-vars:
           then: cryptsetup
         - mpp-if: use_luks
           then: lvm2
-        - mpp-if: use_aboot
+        - mpp-if: use_aboot_like
           then: aboot-update
-        - mpp-if: use_aboot
+        - mpp-if: use_aboot_like
           then: aboot-deploy
         - mpp-if: use_composefs_signed
           then: openssl
-      - - mpp-if: sign_kernel_modules
+        - mpp-if: sign_kernel_modules
           then: $kernel_devel_rpm
+      - mpp-if: use_ukiboot
+        then:
+          - ukiboot
+          - systemd-ukify
 
   ostree_mode_rpms:
     - nss-altfiles
     - greenboot
-    - mpp-if: not use_aboot
+    - mpp-if: use_grub2
       then: greenboot-grub2
     - greenboot-reboot
     - greenboot-status
-    - mpp-if: not use_aboot
+    - mpp-if: use_grub2
       then: greenboot-rpm-ostree-grub2
     - skopeo  # Needed for upgrading from an OCI remove image
 
@@ -714,8 +753,10 @@ mpp-vars:
           then: $linux_firmware_rpm
         - mpp-if: use_luks
           then: lvm2
-        - mpp-if: use_aboot
+        - mpp-if: use_aboot_like
           then: aboot-deploy
+        - mpp-if: use_ukiboot
+          then: ukiboot
         - mpp-if: use_tuned_realtime
           then: tuned
         - mpp-if: use_tuned_realtime
