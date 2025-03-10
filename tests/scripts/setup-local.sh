@@ -2,7 +2,7 @@
 
 if [ ! -d ${OUTDIR} ]; then
     mkdir -p ${OUTDIR}
-    mkdir -p ${BUILDIR}
+    mkdir -p ${BUILDDIR}
     mkdir -p ${RUNDIR}
 fi
 

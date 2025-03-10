@@ -5,7 +5,7 @@ environment:
     PROJECT_DIR: ""
 
     AIB: $PROJECT_DIR/automotive-image-builder
-    OUTDIR: /tmp/aib_testdir
+    OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
     RUNDIR: $OUTDIR/run
 
@@ -32,3 +32,8 @@ execute:
 report:
     how: junit
 
+finish:
+    - name: Cleanup temporary files
+      how: shell
+      script: |
+          ./scripts/cleanup.sh

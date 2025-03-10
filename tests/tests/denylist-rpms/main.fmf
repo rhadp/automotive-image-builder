@@ -1,0 +1,5 @@
+summary: Verify that specified RPM packages are not available in image
+id: bc1d8fee-5d01-498b-982f-6dd3c29f0a57
+duration: 60m
+test: |
+    ./test-denylist-rpms.sh

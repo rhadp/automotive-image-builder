@@ -1,0 +1,8 @@
+name: install_rpms
+content:
+  rpms:
+    - strace
+qm:
+  content:
+    rpms:
+      - less

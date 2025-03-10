@@ -1,0 +1,5 @@
+summary: Verify that requested RPM packages are properly installed inside image
+id: fd5e4968-ed6e-4a74-9df6-7ba1356aea62
+duration: 60m
+test: |
+    ./test-install-rpms.sh

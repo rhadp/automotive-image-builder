@@ -19,15 +19,35 @@ dnf install \
 
 ### Using local machine
 
+```shell
+dnf install \
+    tmt-all \
+    virt-install \
+    git-gui \
+    -y
+```
 Using this method tests will run on your local machine, where you need to have install all automotive-image-builder
 dependencies and also tmt infrastructure (more details in the relevant section below).
 
 To run integration tests please execute below command in the [tests](./) directory:
 
+#### Running Tests Requiring sudo Privileges
+Some integration tests require sudo permissions.
+There are two ways to provide these permissions in a non-interactive environment:
+1. Using SUDO_ASKPASS
+You can use the SUDO_ASKPASS environment variable to provide a script that returns your sudo password.
+
 ```shell
 cd tests
-tmt --feeling-safe run -v -ePROJECT_DIR="Absolute path to your repository clone" plan --name local
+SUDO_ASKPASS=/usr/libexec/git-core/git-gui--askpass tmt --feeling-safe run -v 
+ -ePROJECT_DIR="Absolute path to your repository clone" plan --name local 
 ```
+
+2. Allow Password-less sudo for Specific Commands
+You can configure sudo to run specific commands without asking for a password.
+See the Fedora guide for setup:
+https://docs.fedoraproject.org/en-US/quick-docs/performing-administration-tasks-using-sudo/
+
 
 ### Using manually provisioned machine or VM
 

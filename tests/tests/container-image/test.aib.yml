@@ -1,0 +1,6 @@
+name: container_image
+content:
+  container_images:
+    - source: registry.gitlab.com/centos/automotive/sample-images/demo/auto-apps
+      tag: latest
+      name: localhost/auto-apps
