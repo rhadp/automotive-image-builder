@@ -1,0 +1,5 @@
+summary: Verify that specified kernel modules are not available in image
+id: 7b448665-cd10-48c4-a668-ffebafb0e7e3
+duration: 60m
+test: |
+    ./test-denylist-modules.sh

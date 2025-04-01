@@ -1,0 +1,5 @@
+summary: Verify that custom container is properly installed into image
+id: a6cf978a-97df-40eb-a8b7-77716531281c
+duration: 60m
+test: |
+    ./test-container-image.sh

@@ -1,0 +1,39 @@
+summary: a-i-b tests running on local machine
+
+environment:
+    # Full path to the directory with cloned repository of the project
+    PROJECT_DIR: ""
+
+    AIB: $PROJECT_DIR/automotive-image-builder
+    OUTDIR: /var/tmp/tmt
+    BUILDDIR: $OUTDIR/build
+    RUNDIR: $OUTDIR/run
+
+provision:
+    how: local
+
+prepare:
+    - name: Setup local environment
+      how: shell
+      script: |
+          ./scripts/setup-local.sh
+
+    - name: Report a-i-b version
+      how: shell
+      script: |
+         ${AIB} --version
+
+discover:
+    how: fmf
+
+execute:
+    how: tmt
+
+report:
+    how: junit
+
+finish:
+    - name: Cleanup temporary files
+      how: shell
+      script: |
+          ./scripts/cleanup.sh
