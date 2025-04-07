@@ -11,7 +11,7 @@ import shutil
 
 import yaml
 
-from .utils import yaml_load_ordered, extract_comment_header, get_osbuild_version
+from .utils import yaml_load_ordered, extract_comment_header, get_osbuild_major_version
 from .exports import export, EXPORT_DATAS, get_export_data
 from .runner import Runner
 from .ostree import OSTree
@@ -367,7 +367,7 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
         "distro_name": args.distro,
         "image_mode": args.mode,
         "use_fusa": args.fusa,
-        "osbuild_version": get_osbuild_version(
+        "osbuild_major_version": get_osbuild_major_version(
             runner, use_container=(args.vm or args.container)
         ),
         # This is a leftover for backwards compatibilty:
