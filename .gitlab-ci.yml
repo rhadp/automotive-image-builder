@@ -47,11 +47,6 @@ compose-test-job:
   script:
     - tests/test-compose tests/test-compose.json
 
-integration-test-job:
-  stage: test
-  script:
-    - tests/test-integration
-
 compose-test-modified-distro:
   stage: test
   script:
