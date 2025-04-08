@@ -38,7 +38,8 @@ test-unit:
 
 .PHONY: test-integration
 test-integration:
-	tests/test-integration
+	cd tests && \
+	tmt --feeling-safe run -v -ePROJECT_DIR=$$PWD/.. plan --name local
 
 .PHONY: test
 test: test-compose test-unit test-integration yamllint
