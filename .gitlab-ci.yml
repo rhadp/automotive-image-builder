@@ -217,3 +217,27 @@ build_doc_demos:
     paths:
       - logs
     when: always
+
+integration_tests:
+  stage: test
+  image: quay.io/centos/centos:stream9
+  before_script:
+    - dnf config-manager --set-enabled crb
+    - dnf install -y python3-pip jq less rsync openssh-clients epel-release
+    - dnf install -y tmt tmt+report-junit
+    - pip install "duffy[client]"
+    - mkdir -p ~/.config
+    - 'echo "client:" > ~/.config/duffy'
+    - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
+    - 'echo "  auth:" >> ~/.config/duffy'
+    - 'echo "    name:" $duffy_name >> ~/.config/duffy'
+    - 'echo "    key:" $duffy_key >> ~/.config/duffy'
+    - base64 -d $ssh_key > automotive_sig.ssh
+    - chmod 600 automotive_sig.ssh
+  script:
+    - pip install "duffy[client]"
+    - sh ci-scripts/run_tmt_tests.sh
+  artifacts:
+    paths:
+      - tmt-run
+    when: always
