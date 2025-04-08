@@ -90,7 +90,7 @@ pipelines:
                   mpp-eval: bootfs_uuid
                 label: boot
                 lazy_init:
-                  mpp-if: osbuild_version > 138
+                  mpp-if: osbuild_major_version > 138
                   then: false
           - mpp-if: _use_separate_var and _varpart_size > 0
             then:
@@ -103,7 +103,7 @@ pipelines:
                   mpp-eval: varpart_uuid
                 label: var
                 lazy_init:
-                  mpp-if: osbuild_version > 138
+                  mpp-if: osbuild_major_version > 138
                   then: false
           - mpp-if: _qm_use_separate_var and _qm_varpart_size > 0
             then:
@@ -116,7 +116,7 @@ pipelines:
                   mpp-eval: qm_varpart_uuid
                 label: qm_var
                 lazy_init:
-                  mpp-if: osbuild_version > 138
+                  mpp-if: osbuild_major_version > 138
                   then: false
         - mpp-if: use_luks
           then:
@@ -168,7 +168,7 @@ pipelines:
                 then:
                   mpp-format-string: root
               lazy_init:
-                mpp-if: osbuild_version > 138
+                mpp-if: osbuild_major_version > 138
                 then: false
               verity: true
           - type: org.osbuild.copy
@@ -341,7 +341,7 @@ pipelines:
             mpp-eval: rootfs_uuid
           label: root
           lazy_init:
-            mpp-if: osbuild_version > 138
+            mpp-if: osbuild_major_version > 138
             then: false
           verity: true
       - type: org.osbuild.copy

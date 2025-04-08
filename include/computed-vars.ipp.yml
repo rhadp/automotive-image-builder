@@ -314,7 +314,7 @@ mpp-vars:
       kernel_opts:
         mpp-eval: ''' '' .join(kernel_opts)'
       kernel_cmdline_size:
-        mpp-if: osbuild_version > 140
+        mpp-if: osbuild_major_version > 140
         then: 1024
   selinux_conf:
     mpp-format-string: |
