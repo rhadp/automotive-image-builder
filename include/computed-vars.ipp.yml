@@ -283,8 +283,6 @@ mpp-vars:
           - nosoftlockup
           - isolcpus=managed_irq,domain,$tuned_realtime_isolcpus
       - - systemd.show_status=auto
-        # Staggered spin-up
-        - libahci.ignore_sss=1
         # Enabling these slub_debug options to address a specific safety concern related to heap memory
         # integrity that only be achieved by setting the SLUB allocator to perform consistency checks.
         #   F = Sanity checks on
