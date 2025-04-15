@@ -9,3 +9,4 @@ __pycache__
 .coverage
 report.xml
 .pre-commit-config.yaml
+.idea/

@@ -1,7 +1,6 @@
 #!/usr/bin/bash -x
 
-export TESTDIR="${TMT_TREE:-$(realpath "$(dirname "$0")/../..")}"
-source "$TESTDIR/scripts/test-lib.sh"
+source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
 build --export tar --extend-define tar_paths='usr/share/containers/storage/overlay-images' test.aib.yml out.tar

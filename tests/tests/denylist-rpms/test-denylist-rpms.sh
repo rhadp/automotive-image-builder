@@ -1,7 +1,6 @@
 #!/usr/bin/bash -x
 
-export TESTDIR="${TMT_TREE:-$(realpath "$(dirname "$0")/../..")}"
-source "$TESTDIR/scripts/test-lib.sh"
+source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
 echo_log "Starting trybuild with denied RPM..."
 if trybuild --export rpmlist --extend-define denylist_rpms=strace test.aib.yml out.json 2> error.txt; then
