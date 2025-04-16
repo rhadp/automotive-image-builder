@@ -221,6 +221,9 @@ build_doc_demos:
 integration_tests:
   stage: test
   image: quay.io/centos/centos:stream9
+  needs:
+    - job: packit-srpm-build
+      artifacts: true
   before_script:
     - dnf config-manager --set-enabled crb
     - dnf install -y python3-pip jq less rsync openssh-clients epel-release
@@ -235,9 +238,14 @@ integration_tests:
     - base64 -d $ssh_key > automotive_sig.ssh
     - chmod 600 automotive_sig.ssh
   script:
+    - echo "CI_PIPELINE_SOURCE = $CI_PIPELINE_SOURCE"
     - pip install "duffy[client]"
     - sh ci-scripts/run_tmt_tests.sh
   artifacts:
     paths:
       - tmt-run
     when: always
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never
