@@ -39,8 +39,8 @@ You can use the SUDO_ASKPASS environment variable to provide a script that retur
 
 ```shell
 cd tests
-SUDO_ASKPASS=/usr/libexec/git-core/git-gui--askpass tmt --feeling-safe run -v 
- -ePROJECT_DIR="Absolute path to your repository clone" plan --name local 
+SUDO_ASKPASS=/usr/libexec/git-core/git-gui--askpass tmt --feeling-safe run -v
+ -ePROJECT_DIR="Absolute path to your repository clone" plan --name local
 ```
 
 2. Allow Password-less sudo for Specific Commands
@@ -63,6 +63,22 @@ cd tests
 tmt run -v -eNODE="IP or hostname" plan --name connect
 ```
 
+### Using manually provisioned machine or VM with custom a-i-b package
+
+To use custom a-i-b package source RPM needs to be uploaded to testing machine before executing tests, for example:
+
+```shell
+make srpm
+scp -i ~/.ssh/aib-tests automotive-image-builder*.src.rpm root@"IP or hostname":/var/tmp/aib-srpm
+```
+
+To run integrations tests inside this machine/VM with custom a-i-b build please execute following commands:
+
+```shell
+cd tests
+tmt run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes plan --name connect
+```
+
 ### Customizing test execution
 
 Following environment variable exists to customize test execution:
@@ -74,6 +90,14 @@ Following environment variable exists to customize test execution:
    - Contains the URL of the custom repository to install automotive-image-builder and its dependencies from
      (for example to test custom automotive-image-builder package)
    - Default value: _empty_
+- **`AIB_SRPM_DIR`**
+   - Directory where a-i-b source RPM should be uploaded before tests execution
+   - Default value: `/var/tmp/aib-srpm`
+- **`BUILD_AIB_RPM`**
+   - Enable/disable building a-i-b package from source RPM package provided on a machine specified by `NODE` environment
+     variable
+   - Default value: `no`
+   - Possible values: `yes` `no`
 - **`NODE`**
    - IP address or hostname of machine or VM, where integration tests will be run
    - Default value: _empty_
