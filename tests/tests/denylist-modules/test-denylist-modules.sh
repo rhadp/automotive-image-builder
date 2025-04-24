@@ -1,7 +1,6 @@
 #!/usr/bin/bash -x
 
-export TESTDIR="${TMT_TREE:-$(realpath "$(dirname "$0")/../..")}"
-source "$TESTDIR/scripts/test-lib.sh"
+source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
 # Function to log test results
 echo_final_test_result() {
