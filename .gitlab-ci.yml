@@ -47,11 +47,6 @@ compose-test-job:
   script:
     - tests/test-compose tests/test-compose.json
 
-integration-test-job:
-  stage: test
-  script:
-    - tests/test-integration
-
 compose-test-modified-distro:
   stage: test
   script:
@@ -222,3 +217,35 @@ build_doc_demos:
     paths:
       - logs
     when: always
+
+integration_tests:
+  stage: test
+  image: quay.io/centos/centos:stream9
+  needs:
+    - job: packit-srpm-build
+      artifacts: true
+  before_script:
+    - dnf config-manager --set-enabled crb
+    - dnf install -y python3-pip jq less rsync openssh-clients epel-release
+    - dnf install -y tmt tmt+report-junit
+    - pip install "duffy[client]"
+    - mkdir -p ~/.config
+    - 'echo "client:" > ~/.config/duffy'
+    - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
+    - 'echo "  auth:" >> ~/.config/duffy'
+    - 'echo "    name:" $duffy_name >> ~/.config/duffy'
+    - 'echo "    key:" $duffy_key >> ~/.config/duffy'
+    - base64 -d $ssh_key > automotive_sig.ssh
+    - chmod 600 automotive_sig.ssh
+  script:
+    - echo "CI_PIPELINE_SOURCE = $CI_PIPELINE_SOURCE"
+    - pip install "duffy[client]"
+    - sh ci-scripts/run_tmt_tests.sh
+  artifacts:
+    paths:
+      - tmt-run
+    when: always
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never

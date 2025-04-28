@@ -10,6 +10,12 @@ environment:
     # SSH key used to authenticate to above NODE
     NODE_SSH_KEY: "~/.ssh/aib-tests"
 
+    # Enable/disable building a-i-b from SRPM
+    BUILD_AIB_RPM: no
+
+    # Directory when a-i-b SRPM should exist in order to build it
+    AIB_SRPM_DIR: /var/tmp/aib-srpm
+
     AIB: automotive-image-builder
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
@@ -26,6 +32,11 @@ prepare:
       how: shell
       script: |
           ./scripts/setup-repos.sh
+
+    - name: Building a-i-b package
+      how: shell
+      script: |
+          ./scripts/rebuild-package.sh
 
     - name: Install a-i-b
       how: install
