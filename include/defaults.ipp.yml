@@ -75,6 +75,7 @@ mpp-vars:
   bluechi_controller_host_ip: ""
   bluechi_controller_socket: "/run/bluechi/bluechi.sock"
   bluechi_controller_allowed_node_names: []
+  bluechi_controller_use_tcp: false
 
   use_luks: false
   luks_passphrase: password

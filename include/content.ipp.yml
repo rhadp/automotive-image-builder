@@ -135,6 +135,7 @@ mpp-vars:
     mpp-format-string: |
       [bluechi-controller]
       AllowedNodeNames={ ','.join(bluechi_controller_allowed_node_names) }
+      UseTCP={ bluechi_controller_use_tcp }
   qm_subuid_content:
     mpp-format-string: |
       containers:{ qm_container_subuid }
