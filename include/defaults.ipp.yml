@@ -106,6 +106,8 @@ mpp-vars:
   efipart_size: 204800
   bootpart_size: 614400
   abootpart_size: 131072 # 64M
+  ukibootpart_size: 131072
+  ukibootctlpart_size: 2048
   vbmetapart_size: 128 # 64K
   varpart_relative_size: 0 # /var size as relative of image size (unless varpart_size is set)
   qm_varpart_relative_size: 0 # /var/qm size as relative of image size (unless qm_varpart_size is set)
@@ -154,7 +156,7 @@ mpp-vars:
     - 53 # remaining tries 0x7
 
   # Possible values:
-  # aboot, grub2, grub2-sbl, none
+  # aboot, ukiboot, grub2, grub2-sbl, none
   use_boot: grub2
   use_abl: false
   qm_pipeline: qm_rootfs
@@ -181,6 +183,9 @@ mpp-vars:
     qm_varpart: c36a70ca-8827-4e0e-977e-7179ccfe0e65
     abootpart_a: 1dd3a986-997c-0c48-1d1b-b0d0399f3153
     abootpart_b: 45105095-3847-4657-51f2-2a0144550453
+    ukibootpart_a: CD3B4BE3-0139-4A63-8060-658554C7273B
+    ukibootpart_b: E4D4DA50-7050-41AE-A5F9-DEF12B94DFB5
+    ukibootpart_ctl: 5A6F3ADE-EEB0-11EF-A838-E89C256C3906
     vbmetapart_a: da91d469-09b3-ce43-795e-3b86f3735143
     vbmetapart_b: 305087ff-bf9a-910d-f3c4-606a8de7788a
     rootpart: 6264d520-3fb9-423f-8ab8-7a0a8e3d3562

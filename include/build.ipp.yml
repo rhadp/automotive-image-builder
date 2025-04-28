@@ -52,6 +52,24 @@ mpp-vars:
     uuid: $abootpart_b_uuid
     attrs:
       mpp-eval: inactive_gpt_attrs
+  ukiboot_a_partition:
+    id: ukiboot_a
+    name: ukiboot_a
+    size: $ukibootpart_size
+    type: BC13C2FF-59E6-4262-A352-B275FD6F7172 # ukitboot
+    uuid: $ukibootpart_a_uuid
+  ukiboot_b_partition:
+    id: ukiboot_b
+    name: ukiboot_b
+    size: $ukibootpart_size
+    type: BC13C2FF-59E6-4262-A352-B275FD6F7172 # ukiboot
+    uuid: $ukibootpart_b_uuid
+  ukibootctl_partition:
+    id: ukibootctl
+    name: ukibootctl
+    size: $ukibootctlpart_size
+    type: BC13C2FF-59E6-4262-A352-B275FD6F7172 # ukiboot
+    uuid: $ukibootctl_uuid
   vbmeta_a_partition:
     id: vbmeta_a
     name: vbmeta_a
@@ -90,6 +108,15 @@ mpp-vars:
     - mpp-if: use_vbmetapart
       then:
         mpp-eval: vbmeta_b_partition
+    - mpp-if: use_ukibootpart
+      then:
+        mpp-eval: ukiboot_a_partition
+    - mpp-if: use_ukibootpart
+      then:
+        mpp-eval: ukiboot_b_partition
+    - mpp-if: use_ukibootpart
+      then:
+        mpp-eval: ukibootctl_partition
   separate_var_partition:
     id: var
     name: var

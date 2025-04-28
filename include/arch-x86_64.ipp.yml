@@ -1,5 +1,6 @@
 version: '2'
 mpp-vars:
+  efibootfile: BOOTX64.EFI
   efiarch: x64
   goarch: amd64
   arch_rpms:

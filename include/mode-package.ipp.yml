@@ -120,10 +120,13 @@ pipelines:
                 legacy: false
                 write_defaults: false
                 greenboot: true
-        - mpp-if: use_aboot
+        - mpp-if: use_aboot_like
           then:
             - type: org.osbuild-auto.aboot.conf
               options:
+                boot_type:
+                  mpp-if: use_ukiboot
+                  then: ukiboot
                 pagesize:
                   mpp-if: "locals().get('aboot_pagesize',) != None"
                   then:
@@ -140,6 +143,10 @@ pipelines:
                   mpp-if: "locals().get('aboot_partition_b') != None"
                   then:
                     mpp-format-string: "{aboot_partition_b}"
+                partition_ctl:
+                  mpp-if: "locals().get('partition_ctl') != None"
+                  then:
+                    mpp-format-string: "{partition_ctl}"
                 second_offset:
                   mpp-if: "locals().get('aboot_second_offset') != None"
                   then:
