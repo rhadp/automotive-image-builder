@@ -565,9 +565,14 @@ mpp-vars:
             options:
               profiles:
                 - realtime
-        - mpp-if: use_ukiboot
-          then:
-            type: org.osbuild.copy
+      - mpp-if: use_ukiboot
+        then:
+          - type: org.osbuild.mkdir
+            options:
+              paths:
+                - path: /boot/efi/EFI/BOOT/ukiboot_a.efi.extra.d
+                - path: /boot/efi/EFI/BOOT/ukiboot_b.efi.extra.d
+          - type: org.osbuild.copy
             inputs:
               tree:
                 type: org.osbuild.tree
@@ -582,10 +587,10 @@ mpp-vars:
                     mpp-format-string: tree:///boot/efi/EFI/BOOT/{efibootfile}
                 - from:
                     mpp-format-string: input://tree/usr/libexec/ukiboot/efi/slot_a.addon.efi
-                  to: tree:///boot/efi/EFI/BOOT/slot_a.addon.efi
+                  to: tree:///boot/efi/EFI/BOOT/ukiboot_a.efi.extra.d/slot_a.addon.efi
                 - from:
                     mpp-format-string: input://tree/usr/libexec/ukiboot/efi/slot_b.addon.efi
-                  to: tree:///boot/efi/EFI/BOOT/slot_b.addon.efi
+                  to: tree:///boot/efi/EFI/BOOT/ukiboot_b.efi.extra.d/slot_b.addon.efi
 
   # Extra directories that will be created in the image, list amended by moode-*.ipp
   extra_tree_dirs:
