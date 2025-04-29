@@ -719,6 +719,7 @@ mpp-vars:
         then:
           - ukiboot
           - systemd-ukify
+          - systemd-boot
 
   ostree_mode_rpms:
     - nss-altfiles
