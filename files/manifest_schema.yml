@@ -256,25 +256,25 @@ $defs:
   static_network:
     type: object
     additionalProperties: false
-    description: Use static network setup
+    description: Section to configure the network with static IP addresses (i.e. no DHCP) and fixed configuration options.
     properties:
       ip:
-        description: The ip address for this node, for example `10.0.2.15`.
+        description: The fixed ip address assigned to the node.
         type: string
       ip_prefixlen:
-        description: The ip prefix length for the local network, for example `24` for a `255.255.255.0` netmask.
+        description: Prefix length is the number of bits that define the network portion of an IP address, specified in CIDR notation. For example 24 for a 255.255.255.0 netmask.
         type: number
       gateway:
-        description: The ip address of the default gateway
+        description: the default route taken by non-local packets when the host does not know where the destination is.
         type: string
       dns:
-        description: The ip address of the name server to use
+        description: DNS is the IP address of the name server to be used (eg. example.com to 192.0.2.1).
         type: string
       iface:
-        description: The hardware interface name to setup for the static ip at boot (for example `eth0`)
+        description: The hardware network interface name to setup for the static ip at boot (for example eth0). Normally this doesn't need to be specified, as the default network interface for the target board will be used. However, in case you are using a non-standard network driver or card this can be used to override that.
         type: string
       load_module:
-        description: Optional name of a kernel module to load at boot for the network support
+        description: Optional name of a kernel module to load at boot for the network support. Normally this feature may not be needed because the target board will load the default network drivers, but if a non-standard network driver is used, it can be specified using this option.
         type: string
 
   dynamic_network:
