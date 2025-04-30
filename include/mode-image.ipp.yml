@@ -76,6 +76,8 @@ pipelines:
                   then: greenboot-grub2-set-counter.service
                 - mpp-if: use_grub2
                   then: greenboot-grub2-set-success.service
+                - mpp-if: use_ukiboot
+                  then: ukiboot-set-success.service
                 - greenboot-healthcheck.service
                 - mpp-if: use_grub2
                   then: greenboot-rpm-ostree-grub2-check-fallback.service
