@@ -295,6 +295,7 @@ class ManifestLoader:
         self.set_from("qm_memory_max", memory_limit, "max")
         self.set_from("qm_memory_high", memory_limit, "high")
 
+        self.set_from("qm_cpu_weight", qm, "cpu_weight")
         self.set_from("boot_check_qm_digest", qm, "container_checksum")
 
     def handle_network(self, network):
