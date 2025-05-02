@@ -141,7 +141,9 @@ pages:
   script:
     - mkdir -p public
     - cp docs/index.html public/
-    - generate-schema-doc files/manifest_schema.yml public/simple_manifest.html
+    - generate-schema-doc files/manifest_schema.yml public/manifest.html
+    # Backwards compat filename for old links
+    - ln -s manifest.html public/simple_manifest.html
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 

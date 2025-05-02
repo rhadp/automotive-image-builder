@@ -68,4 +68,5 @@ yamllint:
 
 generate-manifest-doc: .venv
 	mkdir -p docs
-	. .venv/bin/activate; generate-schema-doc files/manifest_schema.yml docs/simple_manifest.html
+	. .venv/bin/activate; generate-schema-doc files/manifest_schema.yml docs/manifest.html
+	. .venv/bin/activate; generate-schema-doc --config template_name=md files/manifest_schema.yml docs/manifest.md

@@ -103,10 +103,14 @@ fi
 
 if [ $BUILD_SOURCE = true ]
 then
+  make generate-manifest-doc
   SOURCE_FILENAME="$PACKAGE_NAME-$PACKAGE_VERSION$DEV_RELEASE_SUFFIX.tar.gz"
   cp -f .rpmbuild/SPECS/$PACKAGE_NAME.spec .
   git archive \
     -o ".rpmbuild/SOURCES/$SOURCE_FILENAME" \
+    --prefix="$PACKAGE_NAME-$PACKAGE_VERSION/docs/" \
+    --add-file docs/manifest.html \
+    --add-file docs/manifest.md \
     --prefix="$PACKAGE_NAME-$PACKAGE_VERSION/" \
     --add-file $PACKAGE_NAME.spec \
     HEAD

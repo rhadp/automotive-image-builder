@@ -33,7 +33,7 @@ Tool to build (and run) automotive images
 
 %files
 %license LICENSE
-%doc README.md
+%doc README.md docs/manifest.html docs/manifest.md
 %{_bindir}/automotive-image-builder
 %{_bindir}/automotive-image-runner
 %{_bindir}/automotive-image-vm

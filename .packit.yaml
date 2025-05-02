@@ -9,7 +9,9 @@ srpm_build_deps:
   - git
   - jq
   - python3-devel
+  - python3-pip
   - rpm-build
+  - make
 
 actions: &common_actions
   post-upstream-clone:
