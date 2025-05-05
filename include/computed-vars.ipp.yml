@@ -250,8 +250,8 @@ mpp-vars:
         - mpp-if: use_ostree and use_aboot_like
           then: ostree=true
         - loglevel=$kernel_loglevel
-        - mpp-if: use_efi_runtime
-          then: efi=runtime
+        - mpp-if: not use_efi_runtime
+          then: efi=noruntime
       - mpp-eval: kernel_opts
       - mpp-eval: simple_kernel_opts
       - mpp-eval: extra_kernel_opts
