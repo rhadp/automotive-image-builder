@@ -20,7 +20,6 @@ mpp-vars:
     mpp-join:
       - mpp-eval: kernel_opts
       - - acpi=off
-        - efi=noruntime
   dracut_drivers:
     mpp-join:
       - mpp-eval: dracut_drivers
