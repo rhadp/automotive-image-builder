@@ -344,7 +344,17 @@ def strip_ext(path):
     return os.path.splitext(os.path.splitext(path)[0])[0]
 
 
+def validate_fusa_args(args):
+    if not args.fusa:
+        return
+
+    if args.mode != "image":
+        raise exceptions.NotAllowedFusa("The option --mode=package")
+
+
 def create_osbuild_manifest(args, tmpdir, out, runner):
+    validate_fusa_args(args)
+
     with open(args.manifest) as f:
         try:
             manifest = yaml.safe_load(f)
