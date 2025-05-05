@@ -11,7 +11,7 @@ import shutil
 
 import yaml
 
-from .utils import yaml_load_ordered, extract_comment_header, get_osbuild_major_version
+from .utils import extract_comment_header, get_osbuild_major_version
 from .exports import export, EXPORT_DATAS, get_export_data
 from .runner import Runner
 from .ostree import OSTree
@@ -74,7 +74,7 @@ def parse_define(d, option):
     k = parts[0]
     yaml_v = parts[1]
     try:
-        v = yaml_load_ordered(yaml_v)
+        v = yaml.safe_load(yaml_v)
     except yaml.parser.ParserError as e:
         raise exceptions.InvalidOption(option, yaml_v) from e
     return k, v
@@ -401,7 +401,7 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
     for df in args.define_file:
         try:
             with open(df) as f:
-                file_defines = yaml_load_ordered(f)
+                file_defines = yaml.safe_load(f)
             if not isinstance(file_defines, dict):
                 raise exceptions.DefineFileError("Define file must be yaml dict")
             for k, v in file_defines.items():

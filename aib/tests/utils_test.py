@@ -1,14 +1,7 @@
 import unittest
-import collections
 from io import StringIO
 
 from aib import utils
-
-
-class TestManifestLoader(unittest.TestCase):
-    def test_ordered_yaml_loader(self):
-        res = utils.yaml_load_ordered("foobar: 12")
-        self.assertEqual(type(res), collections.OrderedDict)
 
 
 class TestExtractCommentsHeader(unittest.TestCase):
