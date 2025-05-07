@@ -1,6 +1,6 @@
 Name:           automotive-image-builder
 Version:        @@VERSION@@
-Release:        1%{?dist}
+Release:        @@RELEASE@@%{?dist}
 Summary:        A tool to build (and run) automotive images
 
 License:        MIT

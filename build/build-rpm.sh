@@ -2,15 +2,20 @@
 set -e
 
 PACKAGE_NAME="automotive-image-builder"
+SPEC=$(realpath $PACKAGE_NAME.spec.in)
 POSITIONAL_ARGS=()
 GENERATE_SPEC=false
 BUILD_SOURCE=false
 BUILD_BINARY=false
-DEV_RELEASE=false
+DEV_RELEASE=true
 PRINT_SOURCE_PATH=false
 DEV_RELEASE_SUFFIX=""
 SOURCE_FILENAME=""
 OUTPUT_DIR=$(pwd)
+
+usage() {
+  echo "Usage: build-rpm.sh [--generate-spec|--build_source|--build_binary] [--release] [--print-source-path] [output_dir]"
+}
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -19,10 +24,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -bs|--build-source)
+      GENERATE_SPEC=true
       BUILD_SOURCE=true
       shift
       ;;
     -bb|--build-binary)
+      GENERATE_SPEC=true
       BUILD_SOURCE=true
       BUILD_BINARY=true
       shift
@@ -31,8 +38,12 @@ while [[ $# -gt 0 ]]; do
       PRINT_SOURCE_PATH=true
       shift
       ;;
+    --release)
+      DEV_RELEASE=false
+      shift
+      ;;
     -h|--help)
-      echo "build-rpm.sh [-bs|-bb] spec_file [output_dir]"
+      usage
       exit 0
       ;;
     -*|--*)
@@ -46,41 +57,31 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Store SPEC variable from positional arg
+# Store OUTPUT_DIR variable from positional arg
 if [ ${#POSITIONAL_ARGS[@]} -ge 1 ]
 then
-  ARG=${POSITIONAL_ARGS[0]}
-  if [ -d "$ARG" ]
-  then
-    SPEC=$(realpath "$ARG"/$PACKAGE_NAME.spec.in)
-  elif [ -f "$ARG" ]; then
-    SPEC=$(realpath -s "$ARG")
-    if [[ "$SPEC" == */.copr/dev.spec ]]
-    then
-      DEV_RELEASE=true
-      COMMITS_NUM_SINCE_LAST_TAG=$(git log $(git describe --tags --abbrev=0)..HEAD --oneline | wc -l)
-      COMMIT_HASH=$(git log -1 --pretty=format:%h)
-      DEV_RELEASE_SUFFIX=".dev$COMMITS_NUM_SINCE_LAST_TAG+$COMMIT_HASH"
-    fi
-  else
-    fatal "Spec file doesn't exists: $ARG"
-  fi
+  OUTPUT_DIR=${POSITIONAL_ARGS[0]}
 fi
 
-# Store OUTPUT_DIR variable from positional arg
-if [ ${#POSITIONAL_ARGS[@]} -ge 2 ]
+if [ $GENERATE_SPEC = false ] && [ $BUILD_SOURCE = false ]
 then
-  OUTPUT_DIR=${POSITIONAL_ARGS[1]}
+  echo "No action specified"
+  usage
+  exit 1
 fi
-
-[ "${#POSITIONAL_ARGS[@]}" -gt 0 ] || fatal "missing parameters"
 
 if [ -z "$PACKAGE_VERSION" ] && [ -f ./aib/version.py ]
 then
   PACKAGE_VERSION=$(python3 ./aib/version.py)
 fi
+PACKAGE_RELEASE=1
+if [ $DEV_RELEASE = true ]
+then
+  DEV_RELEASE_SUFFIX=".$(date +%04Y%02m%02d%02H%02M).git$(git rev-parse --short HEAD)"
+  PACKAGE_RELEASE="0$DEV_RELEASE_SUFFIX"
+fi
 
-if [ $GENERATE_SPEC = true ] || [ $BUILD_SOURCE = true ]
+if [ $GENERATE_SPEC = true ]
 then
   rm -rf .rpmbuild
   mkdir -p .rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
@@ -88,17 +89,10 @@ then
   # Copy spec file to the SPECS directory
   cp "$SPEC" .rpmbuild/SPECS/$PACKAGE_NAME.spec
 
-  # Set package version to the spec file
+  # Set package version and release to the spec file
   sed -e "s/@@VERSION@@/$PACKAGE_VERSION/g" -i .rpmbuild/SPECS/$PACKAGE_NAME.spec
-
-  # Add the dev_release_suffix with the commit hash if it is a dev release
-  if [ $DEV_RELEASE = true ]
-  then
-    OLD_SPEC_RELEASE=$(grep "^Release:" .rpmbuild/SPECS/$PACKAGE_NAME.spec)
-    NEW_SPEC_RELEASE=${OLD_SPEC_RELEASE/1%/1$DEV_RELEASE_SUFFIX%}
-    sed -e "s/^Release:.*$/$NEW_SPEC_RELEASE/g" -i .rpmbuild/SPECS/$PACKAGE_NAME.spec
-    sed -e "s/.tar.gz/$DEV_RELEASE_SUFFIX.tar.gz/g" -i .rpmbuild/SPECS/$PACKAGE_NAME.spec
-  fi
+  sed -e "s/@@RELEASE@@/$PACKAGE_RELEASE/g" -i .rpmbuild/SPECS/$PACKAGE_NAME.spec
+  sed -e "s/.tar.gz/$DEV_RELEASE_SUFFIX.tar.gz/g" -i .rpmbuild/SPECS/$PACKAGE_NAME.spec
 fi
 
 if [ $BUILD_SOURCE = true ]
