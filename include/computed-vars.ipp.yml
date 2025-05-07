@@ -62,6 +62,9 @@ mpp-vars:
     mpp-eval: use_boot == "grub2-sbl"
   use_aboot_like:
     mpp-eval: use_aboot or use_ukiboot
+  # Compressed kernel doesn't work with ukiboot on aarch64
+  aboot_compress_kernel:
+    mpp-eval: False if use_ukiboot and arch == 'aarch64' else aboot_compress_kernel
 
   # Enable as needed
   use_abootpart:
