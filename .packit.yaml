@@ -16,13 +16,13 @@ srpm_build_deps:
 actions: &common_actions
   post-upstream-clone:
     - bash -c 'git config --global --add safe.directory $(pwd)'
-    - bash -c '.copr/build-rpm.sh --generate-spec .copr/dev.spec'
+    - bash -c 'build/build-rpm.sh --generate-spec'
 
   get-current-version:
     - python3 ./aib/version.py
 
   create-archive:
-    - bash -c '.copr/build-rpm.sh --build-source .copr/dev.spec --print-source-path'
+    - bash -c 'build/build-rpm.sh --build-source --print-source-path'
 
 jobs:
   - job: copr_build
@@ -62,7 +62,7 @@ jobs:
       <<: *common_actions
       post-upstream-clone:
         - bash -c 'git config --global --add safe.directory $(pwd)'
-        - bash -c '.copr/build-rpm.sh --generate-spec automotive-image-builder.spec.in'
+        - bash -c 'build/build-rpm.sh --generate-spec --release'
 
       create-archive:
-        - bash -c '.copr/build-rpm.sh --build-source automotive-image-builder.spec.in --print-source-path'
+        - bash -c 'build/build-rpm.sh --build-source --release --print-source-path'

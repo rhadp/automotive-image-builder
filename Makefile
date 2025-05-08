@@ -45,16 +45,16 @@ test-integration:
 test: test-compose test-unit test-integration yamllint
 
 rpm:
-	./.copr/build-rpm.sh -bb automotive-image-builder.spec.in
+	./build/build-rpm.sh -bb --release
 
 srpm:
-	./.copr/build-rpm.sh -bs automotive-image-builder.spec.in
+	./build/build-rpm.sh -bs --release
 
 rpm_dev:
-	./.copr/build-rpm.sh -bb .copr/dev.spec
+	./build/build-rpm.sh -bb
 
 srpm_dev:
-	./.copr/build-rpm.sh -bs .copr/dev.spec
+	./build/build-rpm.sh -bs
 
 import-mpp:
 	./import-osbuild-mpp.sh $(OSBUILD_MPP_TAG)
