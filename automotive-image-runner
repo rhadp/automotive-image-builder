@@ -442,7 +442,7 @@ def main():
 
     if args.publish_dir:
         if shutil.which("netcat") is None:
-            print("Command `netcat` not found in path, ignoring publish-dir")
+            exit_error("Command `netcat` not found in path and --publish-dir was specified")
         else:
             httpd_port = run_http_server(args.publish_dir)
             guestfwds = f"guestfwd=tcp:10.0.2.100:80-cmd:netcat 127.0.0.1 {httpd_port},"
