@@ -141,6 +141,16 @@ pipelines:
                   mpp-if: dracut_install
                   then:
                     mpp-eval: dracut_install
+          # Work around https://github.com/coreos/rpm-ostree/pull/5382 not yet being available
+          - mpp-if: selinux_policy != "targeted"
+            then:
+              type: org.osbuild.lorax-script
+              options:
+                path: auto/append
+                product:
+                  name:
+                    mpp-format-string: /etc/selinux/{selinux_policy}/contexts/files/file_contexts.subs_dist
+                  version: '"/usr/etc /etc"'
           - type: org.osbuild.ostree.preptree
             options:
               etc_group_members:
