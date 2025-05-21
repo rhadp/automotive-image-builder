@@ -234,6 +234,19 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile/{embedded['symlink']}
               to: tree:///usr/share/lorax/templates.d/auto/symlink
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: append
+              text: 'append ${product.name} ${product.version}'
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['append']}
+              to: tree:///usr/share/lorax/templates.d/auto/append
       - type: org.osbuild.selinux
         options:
           file_contexts:
