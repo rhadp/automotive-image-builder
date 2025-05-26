@@ -15,7 +15,7 @@ mpp-vars:
   version: "unversioned"
 
   # the osname as used by OSTree
-  osname: centos
+  osname: default
   ostree_repo_url: http://10.0.2.100/
   ostree_remote_name: auto-sig
   use_composefs_signed: true
