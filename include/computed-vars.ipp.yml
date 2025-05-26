@@ -51,6 +51,21 @@ mpp-vars:
   luks_uuid:
     mpp-eval: _compute_uuid('luks')
 
+  # Per https://uapi-group.org/specifications/specs/discoverable_partitions_specification/
+  rootfs_partition_type:
+    aarch64: 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
+    x86_64: b921b045-1df0-41c3-af44-4c6f280d3fae
+  partition_type_rootfs:
+    mpp-eval: rootfs_partition_type[arch]
+  partition_type_efi: c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+  partition_type_boot: bc13c2ff-59e6-4262-a352-b275fd6f7172
+  partition_type_var: 4d21b016-b534-45c2-a9fb-5c16e091fd2d
+  partition_type_generic: 0fc63daf-8483-4772-8e79-3d69d8477de4
+  partition_type_var_qm: edfe9f90-3a4d-11f0-b8f8-e89c256c3906
+  partition_type_other: 0fc63daf-8483-4772-8e79-3d69d8477de4
+  partition_type_aboot: 20117f86-e985-4357-b9ee-374bc1d8487d # Android boot v2
+  partition_type_ukiboot: bc13c2ff-59e6-4262-a352-b275fd6f7172
+
   # Derive these from use_boot
   use_aboot:
     mpp-eval: use_boot == "aboot"
