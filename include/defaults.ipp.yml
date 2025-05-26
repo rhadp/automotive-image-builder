@@ -66,8 +66,8 @@ mpp-vars:
   qm_simple_rpms: []
   qm_simple_add_devel_repos: false
   qm_simple_add_debug_repos: false
-  boot_check_qm_digest_default: "8cd0b8bb9c140ea896750cf814ccedac0aa05717ecb4dc4f0556cd5325b3ae4c"
-  boot_check_qm_digest_bluechi: "f2a7425974b0da25b3d87172de3d567542c36394efc1e2110ee1211407d10820"
+  boot_check_qm_digest_default: "1163a97f6978f028af7621a38d3f9ff2e966e3c2a75a38bf2c4d08d8995bd177"
+  boot_check_qm_digest_bluechi: "63790033db96a77d4a36a9afc0bdba31fee38194e941f2ca927945ca6dac70b8"
 
   use_bluechi_agent: false
   use_bluechi_controller: false
