@@ -17,7 +17,7 @@ mpp-vars:
 
   # Compute dynamic uuids if requested, but allow override
   _compute_uuid:
-    mpp-eval: "lambda key: locals().get(key + '_uuid', default_uuids[key] if static_uuids else str(_uuid.uuid4()))"
+    mpp-eval: "lambda key: locals().get(key + '_uuid', default_uuids[key])"
   rootfs_uuid:
     mpp-eval: _compute_uuid('rootfs')
   bootfs_uuid:
