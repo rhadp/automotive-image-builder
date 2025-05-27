@@ -270,6 +270,8 @@ mpp-vars:
         - loglevel=$kernel_loglevel
         - mpp-if: not use_efi_runtime
           then: efi=noruntime
+        - mpp-if: not use_abl
+          then: "root=LABEL=root"
       - mpp-eval: kernel_opts
       - mpp-eval: simple_kernel_opts
       - mpp-eval: extra_kernel_opts
@@ -339,10 +341,6 @@ mpp-vars:
   kernel_cmdline_stage:
     type: org.osbuild.kernel-cmdline
     options:
-      root_fs_uuid:
-        mpp-if: not use_abl
-        then:
-          mpp-eval: rootfs_uuid
       kernel_opts:
         mpp-eval: ''' '' .join(kernel_opts)'
       kernel_cmdline_size:

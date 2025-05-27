@@ -107,10 +107,10 @@ pipelines:
             then:
               type: org.osbuild.grub2
               options:
-                root_fs_uuid:
-                  mpp-eval: rootfs_uuid
-                boot_fs_uuid:
-                  mpp-eval: bootfs_uuid
+                rootfs:
+                  label: root
+                bootfs:
+                  label: boot
                 kernel_opts:
                   mpp-eval: ''' '' .join(kernel_opts)'
                 uefi:
