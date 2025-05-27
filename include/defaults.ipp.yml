@@ -176,7 +176,6 @@ mpp-vars:
   aboot_partlabel: system_a
   vbmeta_partlabel: vbmeta_a
   use_composefs: true
-  use_ocibased: false
   systemd_timeout: 30s
   default_uuids:
     rootfs: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
