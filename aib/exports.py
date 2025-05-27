@@ -11,9 +11,15 @@ EXPORT_DATAS = {
         "is_dir": True,
     },
     "container": {"desc": "Container image", "filename": "container.tar"},
-    "ostree-oci-image": {
-        "desc": "Container OCI image archive",
+    "bootc-archive": {
+        "desc": "Bootc OCI image archive",
         "filename": "image.oci-archive",
+    },
+    "bootc": {
+        "desc": "Bootc image in local store",
+        "export_arg": "bootc-archive",
+        "filename": "image.oci-archive",
+        "convert": "podman-import",
     },
     "rootfs": {
         "desc": "Directory with image rootfs files",
@@ -79,6 +85,8 @@ def export(outputdir, dest, dest_is_directory, export, runner):
     else:
         export_file = os.path.join(exportdir)
 
+    handle_file = True
+
     convert = data.get("convert", "")
     if convert == "simg":
         if "convert_filename" in data:
@@ -97,6 +105,19 @@ def export(outputdir, dest, dest_is_directory, export, runner):
         else:
             export_file = converted_file
 
+    if convert == "podman-import":
+        # No actual file is created from the conversion
+        handle_file = False
+        runner.run(
+            [
+                "skopeo",
+                "copy",
+                "oci-archive:" + export_file,
+                "containers-storage:" + dest,
+            ],
+            use_sudo=True,
+        )
+
     if dest_is_directory:
         dest = os.path.join(dest, os.path.basename(export_file))
 
@@ -105,10 +126,11 @@ def export(outputdir, dest, dest_is_directory, export, runner):
         if os.path.isdir(dest) or os.path.isfile(dest):
             runner.run(["rm", "-rf", dest], use_sudo=True)
 
-    if not data.get("no_chown", False):
-        runner.run(
-            ["chown", f"{os.getuid()}:{os.getgid()}", export_file],
-            use_sudo=True,
-        )
+    if handle_file:
+        if not data.get("no_chown", False):
+            runner.run(
+                ["chown", f"{os.getuid()}:{os.getgid()}", export_file],
+                use_sudo=True,
+            )
 
-    runner.run(["mv", export_file, dest], use_sudo=True)
+        runner.run(["mv", export_file, dest], use_sudo=True)

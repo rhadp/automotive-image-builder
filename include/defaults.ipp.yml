@@ -15,7 +15,7 @@ mpp-vars:
   version: "unversioned"
 
   is_bootc_export:
-    mpp-eval: '"ostree-oci-image" in exports'
+    mpp-eval: '"bootc-archive" in exports or "bootc" in exports'
 
   # the osname as used by OSTree
   osname: default

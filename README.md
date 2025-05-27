@@ -107,7 +107,7 @@ are:
 * `container`: A container image you can run with podman or docker
 * `tar`: A tar file containing the basic rootfs files
 * `ostree-commit`: An ostree repo with the commit built from the image
-* `ostree-oci-image`: An oci image wrapping the ostree commit from ostree-commit
+* `bootc`: A bootc image
 * `rpmlist`: A json file listing all the rpms used in the image
 
 ## Manifest variables

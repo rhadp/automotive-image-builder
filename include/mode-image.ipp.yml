@@ -274,7 +274,7 @@ pipelines:
               mpp-eval: ostree_ref
             key: /repo/build-key
 
-  - name: ostree-oci-image
+  - name: bootc-archive
     build: name:build
     stages:
       - type: org.osbuild.ostree.encapsulate
