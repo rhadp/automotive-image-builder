@@ -14,6 +14,9 @@ mpp-vars:
     mpp-eval: locals().get('qm_varpart_size', int(int(image_size) * qm_varpart_relative_size / 512))
   _qm_use_separate_var:
     mpp-eval: use_qm and _qm_varpart_size != 0
+  ostree_os_version:
+    mpp-if: not "ostree_os_version" in locals()
+    then: $version
 
   # Compute dynamic uuids if requested, but allow override
   _compute_uuid:
