@@ -632,6 +632,12 @@ mpp-vars:
         path: /usr/lib/systemd/system/auto-boot-check.service.d
         parents: true
         exist_ok: true
+    - path: /usr/lib/bootc/install
+      parents: true
+      exist_ok: true
+    - path: /usr/lib/bootc-image-builder
+      parents: true
+      exist_ok: true
   # Extra content that will be copied from from extra-tree to the image, list amended by moode-*.ipp
   extra_tree_content:
     - from: input://extra-tree/systemd-system.conf
@@ -716,6 +722,10 @@ mpp-vars:
       then:
         from: input://extra-tree/qm-automotive.conf
         to: tree:////usr/share/containers/systemd/qm.container.d/10-automotive.conf
+    - from: input://extra-tree/bootc.install
+      to: tree://///usr/lib/bootc/install/05-aib.toml
+    - from: input://extra-tree/bib-config.json
+      to: tree://///usr/lib/bootc-image-builder/config.json
 
   build_rpms:
     mpp-join:
@@ -775,6 +785,9 @@ mpp-vars:
         - selinux-policy-$selinux_policy
         - mpp-if: linux_firmware_rpm
           then: $linux_firmware_rpm
+        # TODO-BOOTC: Should maybe not always be needed, for example with aboot/ukiboot
+        - mpp-if: is_bootc_export
+          then: bootupd
         - mpp-if: use_luks
           then: lvm2
         - mpp-if: use_aboot_like

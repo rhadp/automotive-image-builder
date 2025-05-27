@@ -14,11 +14,16 @@ mpp-vars:
   # Value of IMAGE_VERSION in /etc/build-info and ostree version
   version: "unversioned"
 
+  is_bootc_export:
+    mpp-eval: '"ostree-oci-image" in exports'
+
   # the osname as used by OSTree
   osname: default
   ostree_repo_url: http://10.0.2.100/
   ostree_remote_name: auto-sig
-  use_composefs_signed: true
+  use_composefs_signed:
+    # TODO-BOOTC: bootc doesn't currently work with our mode of signed commits
+    mpp-eval: not is_bootc_export
   use_transient_etc: true
 
   # Kernel options

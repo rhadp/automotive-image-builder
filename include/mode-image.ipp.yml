@@ -156,6 +156,11 @@ pipelines:
               etc_group_members:
                 - wheel
                 - docker
+            # TODO-BOOTC: For now we only do this for bootc targets, but its is not ideal
+            # to depend on export targets like this. This should be fixed.
+          - mpp-if: is_bootc_export
+            then:
+              type: org.osbuild.bootupd.gen-metadata
           - mpp-if: use_aboot_like
             then:
               type: org.osbuild-auto.aboot.conf
