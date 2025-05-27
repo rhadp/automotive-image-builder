@@ -780,6 +780,10 @@ mpp-vars:
         then:
           - util-linux-automotive
           - dracut-automotive
+      - mpp-if: locals().get('bootc_add_builder_rpms', False)
+        then:
+          - mpp-if: arch == 'x86_64'
+            then: grub2-pc # needed for bootupd on x86
       - - $release_rpm
         - $kernel_rpm
         - selinux-policy-$selinux_policy
