@@ -34,6 +34,7 @@ def convert_list(elem):
 default_manifest = tests["default-manifest"]
 arches = convert_list(tests["arch"])
 distros = convert_list(tests["distro"])
+skip_distros = convert_list(tests["skip-distro"])
 targets = convert_list(tests["target"])
 # override distros and targets
 if len(sys.argv) > 3:
@@ -52,6 +53,9 @@ if len(sys.argv) > 3:
         sys.exit(1)
 modes = convert_list(tests["mode"])
 defines = convert_list(tests["defines"])
+
+for skip in skip_distros:
+    distros = [d for d in distros if d != skip]
 
 
 def collect_args(elms, arg):
