@@ -142,7 +142,7 @@ mpp-vars:
       RequiredSelinuxContext=bluechi_agent_t
       [node qm.{ bluechi_nodename }]
       Allowed=true
-      RequiredSelinuxContext=qm_t
+      RequiredSelinuxContext=qm_bluechi_agent_t
   qm_subuid_content:
     mpp-format-string: |
       containers:{ qm_container_subuid }
