@@ -2,6 +2,14 @@ name: install_rpms
 content:
   rpms:
     - strace
+    - coreutils-debuginfo
+    - htop
+  enable_repos:
+    - debug
+  repos:
+    - id: epel
+      baseurl: http://rep-epel-il.upress.io/9/Everything/x86_64/
+
 qm:
   content:
     rpms:
