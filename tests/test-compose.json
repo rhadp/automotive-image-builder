@@ -1,6 +1,7 @@
 {
     "default-manifest": "test.mpp.yml",
     "distro": ["autosd9-latest-sig", "autosd9"],
+    "skip-distro": ["rhivos", "rhivos1"],
     "arch": [ "x86_64", "aarch64" ],
     "mode": [ "image", "package" ],
     "target": [ "qemu",
