@@ -7,7 +7,6 @@ mpp-vars:
   distro_baseurl: ""
   distro_baseurl_repo: $distro_baseurl/RHIVOS/$arch/os/
   distro_chroot: centos-stream-9-$arch
-  osname: rhivos
   uefi_vendor: redhat
   kernel_package: kernel-automotive
   release_rpm: redhat-release

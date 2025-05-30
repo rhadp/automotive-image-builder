@@ -17,7 +17,7 @@ mpp-vars:
 
   # Compute dynamic uuids if requested, but allow override
   _compute_uuid:
-    mpp-eval: "lambda key: locals().get(key + '_uuid', default_uuids[key] if static_uuids else str(_uuid.uuid4()))"
+    mpp-eval: "lambda key: locals().get(key + '_uuid', default_uuids[key])"
   rootfs_uuid:
     mpp-eval: _compute_uuid('rootfs')
   bootfs_uuid:
@@ -50,6 +50,21 @@ mpp-vars:
     mpp-eval: _compute_uuid('rootpart')
   luks_uuid:
     mpp-eval: _compute_uuid('luks')
+
+  # Per https://uapi-group.org/specifications/specs/discoverable_partitions_specification/
+  rootfs_partition_type:
+    aarch64: 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
+    x86_64: b921b045-1df0-41c3-af44-4c6f280d3fae
+  partition_type_rootfs:
+    mpp-eval: rootfs_partition_type[arch]
+  partition_type_efi: c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+  partition_type_boot: bc13c2ff-59e6-4262-a352-b275fd6f7172
+  partition_type_var: 4d21b016-b534-45c2-a9fb-5c16e091fd2d
+  partition_type_generic: 0fc63daf-8483-4772-8e79-3d69d8477de4
+  partition_type_var_qm: edfe9f90-3a4d-11f0-b8f8-e89c256c3906
+  partition_type_other: 0fc63daf-8483-4772-8e79-3d69d8477de4
+  partition_type_aboot: 20117f86-e985-4357-b9ee-374bc1d8487d # Android boot v2
+  partition_type_ukiboot: bc13c2ff-59e6-4262-a352-b275fd6f7172
 
   # Derive these from use_boot
   use_aboot:
@@ -253,6 +268,8 @@ mpp-vars:
         - loglevel=$kernel_loglevel
         - mpp-if: not use_efi_runtime
           then: efi=noruntime
+        - mpp-if: not use_abl
+          then: "root=LABEL=root"
       - mpp-eval: kernel_opts
       - mpp-eval: simple_kernel_opts
       - mpp-eval: extra_kernel_opts
@@ -322,10 +339,6 @@ mpp-vars:
   kernel_cmdline_stage:
     type: org.osbuild.kernel-cmdline
     options:
-      root_fs_uuid:
-        mpp-if: not use_abl
-        then:
-          mpp-eval: rootfs_uuid
       kernel_opts:
         mpp-eval: ''' '' .join(kernel_opts)'
       kernel_cmdline_size:
@@ -617,6 +630,12 @@ mpp-vars:
         path: /usr/lib/systemd/system/auto-boot-check.service.d
         parents: true
         exist_ok: true
+    - path: /usr/lib/bootc/install
+      parents: true
+      exist_ok: true
+    - path: /usr/lib/bootc-image-builder
+      parents: true
+      exist_ok: true
   # Extra content that will be copied from from extra-tree to the image, list amended by moode-*.ipp
   extra_tree_content:
     - from: input://extra-tree/systemd-system.conf
@@ -701,6 +720,10 @@ mpp-vars:
       then:
         from: input://extra-tree/qm-automotive.conf
         to: tree:////usr/share/containers/systemd/qm.container.d/10-automotive.conf
+    - from: input://extra-tree/bootc.install
+      to: tree://///usr/lib/bootc/install/05-aib.toml
+    - from: input://extra-tree/bib-config.json
+      to: tree://///usr/lib/bootc-image-builder/config.json
 
   build_rpms:
     mpp-join:
@@ -755,11 +778,18 @@ mpp-vars:
         then:
           - util-linux-automotive
           - dracut-automotive
+      - mpp-if: locals().get('bootc_add_builder_rpms', False)
+        then:
+          - mpp-if: arch == 'x86_64'
+            then: grub2-pc # needed for bootupd on x86
       - - $release_rpm
         - $kernel_rpm
         - selinux-policy-$selinux_policy
         - mpp-if: linux_firmware_rpm
           then: $linux_firmware_rpm
+        # TODO-BOOTC: Should maybe not always be needed, for example with aboot/ukiboot
+        - mpp-if: is_bootc_export
+          then: bootupd
         - mpp-if: use_luks
           then: lvm2
         - mpp-if: use_aboot_like

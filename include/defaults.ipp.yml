@@ -14,11 +14,16 @@ mpp-vars:
   # Value of IMAGE_VERSION in /etc/build-info and ostree version
   version: "unversioned"
 
+  is_bootc_export:
+    mpp-eval: '"bootc-archive" in exports or "bootc" in exports'
+
   # the osname as used by OSTree
-  osname: centos
+  osname: default
   ostree_repo_url: http://10.0.2.100/
   ostree_remote_name: auto-sig
-  use_composefs_signed: true
+  use_composefs_signed:
+    # TODO-BOOTC: bootc doesn't currently work with our mode of signed commits
+    mpp-eval: not is_bootc_export
   use_transient_etc: true
 
   # Kernel options
@@ -175,9 +180,7 @@ mpp-vars:
   aboot_partlabel: system_a
   vbmeta_partlabel: vbmeta_a
   use_composefs: true
-  use_ocibased: false
   systemd_timeout: 30s
-  static_uuids: true
   default_uuids:
     rootfs: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
     bootfs: 156f0420-627b-4151-ae6f-fda298097515
