@@ -33,6 +33,7 @@ def convert_list(elem):
 
 default_manifest = tests["default-manifest"]
 arches = convert_list(tests["arch"])
+target_arches = tests["target-arches"]
 distros = convert_list(tests["distro"])
 skip_distros = convert_list(tests["skip-distro"])
 targets = convert_list(tests["target"])
@@ -41,11 +42,9 @@ if len(sys.argv) > 3:
     if sys.argv[2] == "distro":
         distros = convert_list(sys.argv[3].split())
         targets = [convert_elem("qemu")]
-        arches = [convert_elem("aarch64")]
     elif sys.argv[2] == "target":
         targets = convert_list(sys.argv[3].split())
         distros = [convert_elem("autosd9-sig")]
-        arches = [convert_elem("aarch64")]
     else:
         print(
             f"Unrecognized mode: {sys.argv[2]}. Please use one of ['distro', 'target']"
@@ -95,10 +94,19 @@ def filter_by_distro(elms, distro):
     return False
 
 
+def target_runs_on_arch(target, arch):
+    t = target["value"]
+    if t not in target_arches:
+        return True
+    return arch["value"] in target_arches[t]
+
+
 to_run = []
 for distro in distros:
     for arch in arches:
         for target in targets:
+            if not target_runs_on_arch(target, arch):
+                continue
             for mode in modes:
                 for define in defines:
                     elms = [arch, target, mode, define]
