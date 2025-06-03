@@ -63,6 +63,8 @@ network:
   static: {}
 
 image:
+  selinux_booleans:
+    domain_can_mmap_files: true
   image_size: 9 GiB
   partitions:
     boot:

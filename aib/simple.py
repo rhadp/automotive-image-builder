@@ -42,6 +42,13 @@ def parse_size(s: str):
     raise TypeError(f"invalid size value: '{s}'")
 
 
+# Convert a python value to 'true' or 'false'
+def json_bool(b):
+    if b:
+        return "true"
+    return "false"
+
+
 # The manifest we use is always empty.mpp.yml, but due to who the
 # osbuil-mpp syntax and evaluation works we need to also generate an
 # extra manifest with the included file content. This is shared betwee
@@ -369,6 +376,11 @@ class ManifestLoader:
         self.set_from("ostree_ref", image, "ostree_ref")
         self.set_from("selinux_mode", image, "selinux_mode")
         self.set_from("selinux_policy", image, "selinux_policy")
+        bools = image.get("selinux_booleans", {})
+        if len(bools) > 0:
+            self.set(
+                "selinux_booleans", [f"{k}={json_bool(v)}" for (k, v) in bools.items()]
+            )
 
     def handle_experimental(self, experimental):
         internal_defines = experimental.get("internal_defines", {})
