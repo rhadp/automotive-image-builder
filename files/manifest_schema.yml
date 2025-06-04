@@ -310,6 +310,11 @@ $defs:
       selinux_policy:
         description: The name of the selinux policy to use
         type: string
+      selinux_booleans:
+        description: Set individual selinux policy boolean options
+        type: object
+        additionalProperties:
+          type: boolean
       partitions:
         description: Disk partition details, like sizes.
         type: object
