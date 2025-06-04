@@ -1,0 +1,5 @@
+summary: Verify that custom sshd_config are properly added to the image
+id: b268f50c-d03c-4a41-b80e-f7c5408ec427
+duration: 60m
+test: |
+    ./sshd-config.sh
