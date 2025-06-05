@@ -735,7 +735,7 @@ mpp-vars:
     - mpp-if: root_ssh_keys
       then:
         from: input://extra-tree/root_sshd_authorized_keys.conf
-        to: tree:///etc/ssh/sshd_config.d/99-custom-auhorized-keys.conf
+        to: tree:///etc/ssh/sshd_config.d/99-custom-authorized-keys.conf
     - mpp-if: root_ssh_keys
       then:
         from: input://extra-tree/root_sshd_authorized_keys
