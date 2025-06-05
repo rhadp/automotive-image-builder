@@ -1,0 +1,69 @@
+# Target for Azure images
+version: '2'
+mpp-vars:
+  target_rpms:
+    - WALinuxAgent
+    - cloud-init
+    - cloud-utils-growpart
+    - gdisk
+    - hyperv-daemons
+  dracut_add_drivers:
+    mpp-join:
+      - mpp-eval: dracut_add_drivers
+      - - hv_vmbus
+        - hv_netvsc
+        - hv_storvsc
+        - vfat
+  target_extra_image_stages:
+    - type: org.osbuild.systemd
+      options:
+        enabled_services:
+          - sshd
+          - NetworkManager
+          - waagent.service
+          - cloud-init.service
+        default_target: multi-user.target
+    - type: org.osbuild.waagent.conf
+      options:
+        config:
+          Provisioning.UseCloudInit: true
+          Provisioning.Enabled: true
+          ResourceDisk.Format: false
+          ResourceDisk.EnableSwap: false
+    - type: org.osbuild.cloud-init
+      options:
+        filename: 00-cs-default-user.cfg
+        config:
+          system_info:
+            default_user:
+              name: azureuser
+    - type: org.osbuild.cloud-init
+      options:
+        filename: 91-azure_datasource.cfg
+        config:
+          datasource_list: ["Azure"]
+          datasource:
+            Azure:
+              apply_network_config: true
+    - type: org.osbuild.cloud-init
+      options:
+        filename: 05_logging.cfg
+        config:
+          output:
+            all: '| tee -a /var/log/cloud-init-output.log'
+    - type: org.osbuild.cloud-init
+      options:
+        filename: 10-azure-kvp.cfg
+        config:
+          reporting:
+            logging:
+              type: log
+            telemetry:
+              type: hyperv
+  consoles: ttyS0
+  kernel_opts:
+    mpp-join:
+      - mpp-eval: kernel_opts
+      - - rootdelay=300
+        - earlyprintk=ttyS0
+        - net.ifnames=0
