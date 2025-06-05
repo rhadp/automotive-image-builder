@@ -69,6 +69,9 @@ mpp-vars:
   partition_type_aboot: 20117f86-e985-4357-b9ee-374bc1d8487d # Android boot v2
   partition_type_ukiboot: bc13c2ff-59e6-4262-a352-b275fd6f7172
 
+  disable_ipv6:
+    mpp-eval: use_fusa or disable_ipv6
+
   # Derive these from use_boot
   use_aboot:
     mpp-eval: use_boot == "aboot"
@@ -286,6 +289,9 @@ mpp-vars:
       - mpp-if: consoles
         then:
           mpp-eval: "list(map(lambda c: 'console=' + c, consoles.split()))"
+      - mpp-if: disable_ipv6
+        then:
+          - ipv6.disable=1
       - mpp-if: use_debug or use_kernel_debug_package
         then:
           - ignore_loglevel
