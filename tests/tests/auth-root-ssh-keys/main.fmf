@@ -1,0 +1,5 @@
+summary: Verify that custom root_ssh_keys are properly added to the image
+id: 8ebe1305-b3fe-4813-b340-e29a2cea9a00
+duration: 60m
+test: |
+    ./authorized-keys.sh

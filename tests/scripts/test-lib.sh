@@ -102,6 +102,10 @@ list_tar_modules () {
     list_tar $1 | grep "usr/lib/modules/.*/kernel/.*.ko" | xargs basename -a | sed s/.ko.*//
 }
 
+save_to_tmt_test_data () {
+    cp $1 "${TMT_TEST_DATA}"
+}
+
 # Some default options that make builds faster, override if problematic
 FAST_OPTIONS="--define sign_kernel_modules=false"
 
@@ -112,8 +116,12 @@ trybuild() {
 build() {
    if ! trybuild "$@"; then
       echo FAILED to build image
+      # only show last 50 lines in
       tail -n 50 build.log
+      # save build log to tmt test data
+      save_to_tmt_test_data build.log
       exit 1
    fi
+   save_to_tmt_test_data build.log
 }
 

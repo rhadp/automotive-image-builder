@@ -1,0 +1,12 @@
+name: root-ssh-keys
+content:
+  rpms:
+    - openssh-server
+
+auth:
+  root_ssh_keys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCy7ExampleKey123456 root@test
+
+  sshd_config:
+    PasswordAuthentication: false
+    PermitRootLogin: prohibit-password
