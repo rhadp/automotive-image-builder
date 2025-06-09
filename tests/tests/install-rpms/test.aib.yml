@@ -8,9 +8,16 @@ content:
     - debug
   repos:
     - id: epel
-      baseurl: http://rep-epel-il.upress.io/9/Everything/x86_64/
+      baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
 
 qm:
   content:
     rpms:
       - less
+      - rpm-debuginfo
+      - neofetch
+    enable_repos:
+      - debug
+    repos:
+      - id: epel
+        baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/

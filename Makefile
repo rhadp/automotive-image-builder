@@ -70,3 +70,7 @@ generate-manifest-doc: .venv
 	mkdir -p docs
 	. .venv/bin/activate; generate-schema-doc files/manifest_schema.yml docs/manifest.html
 	. .venv/bin/activate; generate-schema-doc --config template_name=md files/manifest_schema.yml docs/manifest.md
+
+bootc-image:
+	./automotive-image-builder build --export bootc files/bootc-builder.aib.yml quay.io/centos-sig-automotive/aib-bootc:latest-$(shell build/ociarch)
+	sudo podman tag quay.io/centos-sig-automotive/aib-bootc:latest-$(shell build/ociarch) quay.io/centos-sig-automotive/aib-bootc:latest

@@ -1,28 +1,35 @@
 {
     "default-manifest": "test.mpp.yml",
     "distro": ["autosd9-latest-sig", "autosd9"],
+    "skip-distro": ["rhivos", "rhivos1"],
     "arch": [ "x86_64", "aarch64" ],
     "mode": [ "image", "package" ],
     "target": [ "qemu",
                 {
                     "value": "ridesx4",
-                    "arch-is": "aarch64",
                     "distro-is-not": "eln"
                 },
-                {
-                    "value": "rcar_s4",
-                    "arch-is": "aarch64"
-                },
-                {
-                    "value": "rpi4",
-                    "arch-is": "aarch64"
-                },
+                "rcar_s4",
+                "rpi4",
                 {
                     "value": "abootqemu",
                     "arch-is": "aarch64",
                     "distro-is": ["autosd9-latest-sig"]
                 }
               ],
+    "target-arches": {
+        "abootqemu": ["aarch64"],
+        "abootqemukvm": ["aarch64"],
+        "acrn": ["x86_64"],
+        "am62sk": ["aarch64"],
+        "am69sk": ["aarch64"],
+        "beagleplay": ["aarch64"],
+        "j784s4evm": ["aarch64"],
+        "qdrive3": ["aarch64"],
+        "rcar_s4": ["aarch64"],
+        "ridesx4": ["aarch64"],
+        "rpi4": ["aarch64"]
+    },
     "defines": [
         "",
         { "value": "use_qm=true",

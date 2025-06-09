@@ -9,7 +9,6 @@ mpp-vars:
   distro_build_rpms:
     - python3-tomli-w
   is_autoinit_supported: false
-  osname: fedora
   uefi_vendor: fedora
   kernel_package: kernel
   release_rpm: fedora-release

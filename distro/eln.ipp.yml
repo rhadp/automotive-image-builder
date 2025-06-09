@@ -7,7 +7,6 @@ mpp-vars:
   distro_baseurl_repo: $distro_baseurl/compose/BaseOS/$arch/os/
   distro_chroot: fedora-eln-$arch
   is_autoinit_supported: false
-  osname: fedora
   uefi_vendor: fedora
   kernel_package: kernel
   release_rpm: fedora-release

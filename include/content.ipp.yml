@@ -5,10 +5,10 @@ mpp-vars:
     mpp-format-string: |
       [Unit]
       Before=local-fs.target
-      After=blockdev@dev-disk-by\\x2duuid-{bootfs_uuid.replace("-", _dash_escape)}.target
+      After=blockdev@dev-disk-by\\x2dpartuuid-{bootpart_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
-      What=/dev/disk/by-uuid/$bootfs_uuid
+      What=/dev/disk/by-partuuid/$bootpart_uuid
       Where=/boot
       Type=ext4
 
@@ -31,10 +31,10 @@ mpp-vars:
     mpp-format-string: |
       [Unit]
       Before=local-fs.target
-      After=blockdev@dev-disk-by\\x2duuid-{varpart_uuid.replace("-", _dash_escape)}.target
+      After=blockdev@dev-disk-by\\x2dpartuuid-{varpart_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
-      What=/dev/disk/by-uuid/$varpart_uuid
+      What=/dev/disk/by-partuuid/$varpart_uuid
       Where=/var
       Type=ext4
 
@@ -44,10 +44,10 @@ mpp-vars:
     mpp-format-string: |
       [Unit]
       Before=local-fs.target
-      After=blockdev@dev-disk-by\\x2duuid-{qm_varpart_uuid.replace("-", _dash_escape)}.target
+      After=blockdev@dev-disk-by\\x2dpartuuid-{qm_varpart_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
-      What=/dev/disk/by-uuid/$qm_varpart_uuid
+      What=/dev/disk/by-partuuid/$qm_varpart_uuid
       Where=/var/qm
       Type=ext4
 
@@ -142,7 +142,7 @@ mpp-vars:
       RequiredSelinuxContext=bluechi_agent_t
       [node qm.{ bluechi_nodename }]
       Allowed=true
-      RequiredSelinuxContext=qm_t
+      RequiredSelinuxContext=qm_bluechi_agent_t
   qm_subuid_content:
     mpp-format-string: |
       containers:{ qm_container_subuid }
@@ -242,6 +242,76 @@ mpp-vars:
     mpp-format-string: |
       [Unit]
       {"After=qm.service" if _boot_check_qm_digest else ""}
+  root_sshd_authorized_keys_conf:
+    mpp-format-string: |
+      AuthorizedKeysFile /etc/ssh/authorized_keys/%u .ssh/authorized_keys
+  root_sshd_authorized_keys:
+    mpp-format-string: |
+      { newline.join(root_ssh_keys) }
+
+  bootc_install_options:
+    mpp-format-string: |
+      [install.filesystem.root]
+      type = \"ext4\"
+      [install]
+      kargs = {_json.dumps(kernel_opts)}
+
+  bootc_disk_customization:
+    type: gpt
+    minsize: $image_size
+    partitions:
+      - mpp-if: use_efipart
+        then:
+          part_label: efi
+          part_type: $partition_type_efi
+          part_uuid: $efipart_uuid
+          fs_type: vfat
+          label: ESP
+          mountpoint: /boot/efi
+          minsize:
+            mpp-format-string: '{efipart_size * 512}'
+      - mpp-if: use_bootpart
+        then:
+          part_label: boot
+          part_type: $partition_type_boot
+          part_uuid: $bootpart_uuid
+          fs_type: ext4
+          label: boot
+          mountpoint: /boot
+          minsize:
+            mpp-format-string: '{bootpart_size * 512}'
+      - mpp-if: _use_separate_var and _varpart_size > 0
+        then:
+          part_label: var
+          part_type: $partition_type_var
+          part_uuid: $varpart_uuid
+          fs_type: ext4
+          label: var
+          mountpoint: /var
+          minsize:
+            mpp-format-string: '{_varpart_size * 512}'
+      - mpp-if: _qm_use_separate_var and _qm_varpart_size > 0
+        then:
+          part_label: qm_var
+          part_type: $partition_type_var_qm
+          part_uuid: $qm_varpart_uuid
+          fs_type: ext4
+          label: qm_var
+          mountpoint: /var/qm
+          minsize:
+            mpp-format-string: '{_qm_varpart_size * 512}'
+      - part_label: $rootpart_label
+        part_type: $partition_type_rootfs
+        part_uuid: $rootpart_uuid
+        fs_type: ext4
+        label: root
+        mountpoint: /
+        minsize: "1 GiB"
+
+  bib_config:
+    customizations:
+      disk:
+        mpp-eval: bootc_disk_customization
 
 pipelines:
   # Some variables need to be written to files, do that here
@@ -567,3 +637,58 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile/{embedded['realtime-variables.conf']}
               to: tree:///realtime-variables.conf
+
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: bootc.install
+              text: $bootc_install_options
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['bootc.install']}
+              to: tree:///bootc.install
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: bib-config.json
+              text:
+                mpp-eval: "_json.dumps(bib_config)"
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['bib-config.json']}
+              to: tree:///bib-config.json
+
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: root_sshd_authorized_keys_conf
+              text: $root_sshd_authorized_keys_conf
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['root_sshd_authorized_keys_conf']}
+              to: tree:///root_sshd_authorized_keys.conf
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: root_sshd_authorized_keys
+              text: $root_sshd_authorized_keys
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['root_sshd_authorized_keys']}
+              to: tree:///root_sshd_authorized_keys

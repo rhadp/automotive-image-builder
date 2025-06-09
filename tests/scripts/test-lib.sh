@@ -70,6 +70,30 @@ assert_file_doesnt_have_content () {
     done
 }
 
+assert_file_has_owner() {
+    local file=$1
+    local expected_uid_gid=$2
+    local actual_uid_gid=$(stat -c "%u:%g" "$file")
+    if [[ "$actual_uid_gid" == "$expected_uid_gid" ]]; then
+        echo "PASS: $file has correct UID:GID $expected_uid_gid"
+    else
+        echo "FAIL: $file has UID:GID $actual_uid_gid, expected $expected_uid_gid"
+        exit 1
+    fi
+}
+
+assert_file_has_permission() {
+    local file=$1
+    local expected_perm=$2
+    local actual_perm=$(stat -c "%a" "$file")
+    if [[ "$actual_perm" == "$expected_perm" ]]; then
+        echo "PASS: $file has correct permissions $expected_perm"
+    else
+        echo "FAIL: $file permissions are $actual_perm, expected $expected_perm"
+        exit 1
+    fi
+}
+
 list_tar () {
     tar --list -f $1
 }

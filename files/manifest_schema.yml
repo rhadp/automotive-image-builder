@@ -310,6 +310,11 @@ $defs:
       selinux_policy:
         description: The name of the selinux policy to use
         type: string
+      selinux_booleans:
+        description: Set individual selinux policy boolean options
+        type: object
+        additionalProperties:
+          type: boolean
       partitions:
         description: Disk partition details, like sizes.
         type: object
@@ -394,9 +399,6 @@ $defs:
                   - 9c6ae55b-cf88-45b8-84e8-64990759f39d
       hostname:
         description: The network hostname
-        type: string
-      osname:
-        description: The name of the os used, as used by OSTree
         type: string
       ostree_ref:
         description: The name of the ostree ref (defaults to $distro_name/$arch/$target-$naem)
