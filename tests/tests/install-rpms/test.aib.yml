@@ -2,7 +2,22 @@ name: install_rpms
 content:
   rpms:
     - strace
+    - coreutils-debuginfo
+    - htop
+  enable_repos:
+    - debug
+  repos:
+    - id: epel
+      baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
+
 qm:
   content:
     rpms:
       - less
+      - rpm-debuginfo
+      - neofetch
+    enable_repos:
+      - debug
+    repos:
+      - id: epel
+        baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
