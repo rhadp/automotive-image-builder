@@ -1,0 +1,5 @@
+summary: Verify that users and groups are correctly added to the image
+id: ec4ea821-ac5f-4b46-a3c2-e4d1bef1cb54
+duration: 60m
+test: |
+    ./users-and-groups.sh
