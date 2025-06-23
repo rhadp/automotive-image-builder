@@ -1,0 +1,10 @@
+name: network-static
+
+network:
+  static:
+    ip: "192.168.0.10"
+    ip_prefixlen: 24
+    gateway: "192.168.0.1"
+    dns: "192.168.0.53"
+    iface: "eth0"
+    load_module: "e1000"
