@@ -8,7 +8,7 @@ content:
     - debug
   repos:
     - id: epel
-      baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
+      baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/$arch/
 
 qm:
   content:
@@ -20,4 +20,4 @@ qm:
       - debug
     repos:
       - id: epel
-        baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
+        baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/$arch/
