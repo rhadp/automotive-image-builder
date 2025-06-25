@@ -1,0 +1,5 @@
+summary: Verify that systemd enabled and disabled services are properly configured in the image
+id: 496f93d9-d74c-4d9e-adf6-b07e570e7e89
+duration: 60m
+test: |
+    ./test-systemd-services.sh

@@ -1,0 +1,21 @@
+name: systemd_services
+content:
+  rpms:
+    - openssh-server
+    - httpd
+  systemd:
+    enabled_services:
+      - sshd.service
+    disabled_services:
+      - httpd.service
+
+qm:
+  content:
+    rpms:
+      - cronie
+      - cups
+    systemd:
+      enabled_services:
+        - crond.service
+      disabled_services:
+        - cups.service
