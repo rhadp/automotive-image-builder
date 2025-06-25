@@ -128,6 +128,12 @@ mpp-vars:
   image_repo_ids:
     mpp-eval: "[repo['id'] for repo in image_repos]"
 
+  # use_bluechi is a backwards compat option that enables both use_bluechi_agent and use_bluechi_controller
+  use_bluechi_agent:
+    mpp-eval: use_bluechi_agent or locals().get('use_bluechi')
+  use_bluechi_controller:
+    mpp-eval: use_bluechi_controller or locals().get('use_bluechi')
+
   _boot_check_qm_digest_default:
     mpp-if: use_bluechi_agent and use_bluechi_controller
     then:
@@ -175,11 +181,6 @@ mpp-vars:
     mpp-eval: "'180s' if use_debug or use_kernel_debug_package else systemd_timeout"
   coredump_storage:
     mpp-eval: "'external' if use_debug or use_kernel_debug_package else coredump_storage"
-  # use_bluechi is a backwards compat option that enables both use_bluechi_agent and use_bluechi_controller
-  use_bluechi_agent:
-    mpp-eval: use_bluechi_agent or locals().get('use_bluechi')
-  use_bluechi_controller:
-    mpp-eval: use_bluechi_controller or locals().get('use_bluechi')
   use_ostree:
     mpp-eval: use_ostree or image_mode == 'image'
   _dash_escape: "\\x2d"
