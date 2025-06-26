@@ -1,0 +1,35 @@
+#!/usr/bin/bash -x
+
+source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
+
+echo_log "Starting build for static network configuration..."
+build --export tar --extend-define "tar_paths=['etc/main.nmstate','usr/lib/boot-check.d/nmstate.conf','usr/lib/modules-load.d/auto-modules.conf']" test-network-static.aib.yml out.tar
+echo_log "Build completed, output: out.tar"
+tar xvf out.tar
+
+# Check for static IP config
+NMSTATE_FILE="./etc/main.nmstate"
+BOOTCONF_FILE="./usr/lib/boot-check.d/nmstate.conf"
+MODULES_FILE="./usr/lib/modules-load.d/auto-modules.conf"
+
+# Check the main.nmstate file
+assert_has_file "$NMSTATE_FILE"
+assert_file_has_content "$NMSTATE_FILE" "name: eth0"
+assert_file_has_content "$NMSTATE_FILE" "ip: 192.168.0.10"
+assert_file_has_content "$NMSTATE_FILE" "prefix-length: 24"
+assert_file_has_content "$NMSTATE_FILE" "next-hop-address: 192.168.0.1"
+assert_file_has_content "$NMSTATE_FILE" "server:"
+assert_file_has_content "$NMSTATE_FILE" "192.168.0.53"
+
+# Check boot helper file
+assert_has_file "$BOOTCONF_FILE"
+assert_file_has_content "$BOOTCONF_FILE" "ip 192.168.0.10 24"
+assert_file_has_content "$BOOTCONF_FILE" "default_gw 192.168.0.1"
+assert_file_has_content "$BOOTCONF_FILE" "nameserver 192.168.0.53"
+
+# Check module load config
+assert_has_file "$MODULES_FILE"
+assert_file_has_content "$MODULES_FILE" "e1000"
+
+echo "PASS: static network configuration validated successfully."
+

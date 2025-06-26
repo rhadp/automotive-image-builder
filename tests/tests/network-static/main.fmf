@@ -1,0 +1,5 @@
+summary: Verify that static network configuration is properly added to the image
+id: 9e47c797-265f-4b69-bfcf-19c504e1c54d
+duration: 60m
+test: |
+    ./static-network.sh
