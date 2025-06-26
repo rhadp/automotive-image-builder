@@ -1,0 +1,23 @@
+name: auth-users-groups
+
+auth:
+  groups:
+    guest:
+      gid: 2000
+    foo:
+      gid: 2042
+    devs:
+      gid: 2050
+
+  users:
+    guest:
+      password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.
+      gid: 2000
+      uid: 2000
+      home: /var/guest
+      groups:
+        - devs
+    foo:
+      gid: 2042
+      uid: 2042
+      shell: /sbin/nologin
