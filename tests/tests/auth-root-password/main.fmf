@@ -1,0 +1,5 @@
+summary: Verify that root_password is properly added to the image
+id: 468f4f07-8504-4dad-9944-8e0c25d1e363
+duration: 60m
+test: |
+    ./root-password.sh
