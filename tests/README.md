@@ -85,7 +85,7 @@ Following environment variable exists to customize test execution:
 
 - **`AIB_BASE_REPO`**
    - Contains the URL of the base repository to install automotive-image-builder and its dependencies from
-   - Default value: `https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose/AutoSD/\${arch}/os/`
+   - Default value: `https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose/AutoSD/\$arch/os/`
 - **`AIB_CUSTOM_REPO`**
    - Contains the URL of the custom repository to install automotive-image-builder and its dependencies from
      (for example to test custom automotive-image-builder package)
