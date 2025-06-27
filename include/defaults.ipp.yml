@@ -132,6 +132,7 @@ mpp-vars:
   static_ip_iface: ""
   static_ip_modules: []
   static_ip_uuid: 6fb8f75a-7fde-4906-a51e-a70e56c58742
+  disable_ipv6: true
 
   # These are available for end users, not used internally
   extra_rpms: []
