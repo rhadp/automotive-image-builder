@@ -1,0 +1,9 @@
+name: network-dynamic
+
+content:
+  rpms:
+    - nmstate
+    - network-manager-applet
+
+network:
+  dynamic: {}

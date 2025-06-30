@@ -1,0 +1,4 @@
+summary: Verify that dynamic network configuration is properly added to the image
+id: a4dcbfdd-5474-45a1-9678-0eddaf88a1c8
+duration: 60m
+test: ./dynamic-network.sh
