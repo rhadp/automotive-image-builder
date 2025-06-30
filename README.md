@@ -191,3 +191,13 @@ You can then configure these containers to run automatically in the system by us
 [quadlet.container](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) file
 to start the container from systemd. You can view an example configuration in the
 [examples/container.aib.yml](examples/container.aib.yml) file.
+
+## Requesting new AIB manifest options
+
+You can request support for additional AIB options by opening an issue in the automotive-image-builder repo:
+
+1. Create an issue to request a new option.
+1. Share a link to the issue in the #automotive-image-builder Slack channel.
+1. Solicit feedback from AIB team on the legitimacy and prioritization of the request. If your request is accepted, the AIB team 
+   will triage, prioritize, and complete the work.
+1. Track the issue to its resolution and close the ticket when a solution is implemented.
