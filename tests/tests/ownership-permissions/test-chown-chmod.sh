@@ -61,4 +61,4 @@ assert_file_has_owner "$QM_FILE1" "65534:65534"
 assert_file_has_permission "$QM_FILE2" "644"
 assert_file_has_owner "$QM_FILE2" "0:0"
 
-echo "PASS: All file permissions and ownerships are correctly set."
+echo_pass "All file permissions and ownerships are correctly set."     

@@ -20,5 +20,5 @@ echo_log "Checking files in qm.content section..."
 assert_has_file "$QM_EXTRACTED_DIR/qm_keep.txt"
 assert_file_doesnt_exist "$QM_EXTRACTED_DIR/qm_delete.txt"
 
-echo "PASS: remove_files directive correctly removed specified files."
+echo_pass "remove_files directive correctly removed specified files."
 

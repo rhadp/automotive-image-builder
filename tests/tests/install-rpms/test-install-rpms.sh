@@ -42,4 +42,4 @@ cat out.json | jq '.qm_rootfs_base|has("neofetch")' > qm_has_neofetch.txt
 assert_file_has_content qm_has_neofetch.txt true
 echo_log "Assertion completed for neofetch."
 
-echo_log "PASS: All package installation checks completed successfully."
+echo_pass "All package installation checks completed successfully."

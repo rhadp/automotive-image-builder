@@ -14,5 +14,5 @@ assert_file_has_content dir/file2.txt "This is the file content"
 assert_file_has_content dir/file3.txt "Automotive image builder"
 assert_file_has_content usr/lib/qm/rootfs/dir/file4.txt "This is the qm file content"
 
-echo "PASS: Image contains all required files"
+echo_pass "Image contains all required files"
 

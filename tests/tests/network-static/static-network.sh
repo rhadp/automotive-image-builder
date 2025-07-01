@@ -31,5 +31,5 @@ assert_file_has_content "$BOOTCONF_FILE" "nameserver 192.168.0.53"
 assert_has_file "$MODULES_FILE"
 assert_file_has_content "$MODULES_FILE" "e1000"
 
-echo "PASS: static network configuration validated successfully."
+echo_pass "static network configuration validated successfully."
 

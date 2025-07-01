@@ -4,8 +4,16 @@ echo_log() {
     echo "INFO: $1"
 }
 
+echo_pass() {
+    echo "PASS: $1"
+}
+
+echo_fail() {
+    echo "FAIL: $1"
+}
+
 fatal() {
-    echo $@ 1>&2; exit 1
+    echo "FAIL: $@" 1>&2; exit 1
 }
 
 _fatal_print_file() {
@@ -75,10 +83,9 @@ assert_file_has_owner() {
     local expected_uid_gid=$2
     local actual_uid_gid=$(stat -c "%u:%g" "$file")
     if [[ "$actual_uid_gid" == "$expected_uid_gid" ]]; then
-        echo "PASS: $file has correct UID:GID $expected_uid_gid"
+        echo_pass $file has correct UID:GID $expected_uid_gid"
     else
-        echo "FAIL: $file has UID:GID $actual_uid_gid, expected $expected_uid_gid"
-        exit 1
+        echo_fail $file has UID:GID $actual_uid_gid, expected $expected_uid_gid"
     fi
 }
 
@@ -87,10 +94,9 @@ assert_file_has_permission() {
     local expected_perm=$2
     local actual_perm=$(stat -c "%a" "$file")
     if [[ "$actual_perm" == "$expected_perm" ]]; then
-        echo "PASS: $file has correct permissions $expected_perm"
+        echo_pass $file has correct permissions $expected_perm
     else
-        echo "FAIL: $file permissions are $actual_perm, expected $expected_perm"
-        exit 1
+        echo_fail $file permissions are $actual_perm, expected $expected_perm
     fi
 }
 
