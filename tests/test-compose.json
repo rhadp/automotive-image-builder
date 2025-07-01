@@ -28,7 +28,8 @@
         "qdrive3": ["aarch64"],
         "rcar_s4": ["aarch64"],
         "ridesx4": ["aarch64"],
-        "rpi4": ["aarch64"]
+        "rpi4": ["aarch64"],
+        "tda4vm_sk": ["aarch64"]
     },
     "defines": [
         "",
