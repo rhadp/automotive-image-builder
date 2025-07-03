@@ -1,0 +1,4 @@
+name: image-size-2GiB
+
+image:
+  image_size: "2 GiB"

@@ -1,0 +1,4 @@
+summary: Verify The size of the total image, allows suffixes like "GB" (powers of 1000) or "GiB" (powers of 1024)
+id: 0275d829-4e1b-415a-8bd7-6c68d4273377
+duration: 60m
+test: ./image-size.sh

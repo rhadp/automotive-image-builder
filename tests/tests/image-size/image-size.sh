@@ -1,0 +1,45 @@
+#!/usr/bin/bash -x
+
+source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
+
+for YML_NAME in test-image-size-*.aib.yml; do
+    IMAGE_NAME="test-image.qcow2"
+
+    # Extract image_size value
+    IMAGE_SIZE=$(grep 'image_size:' "$YML_NAME" | awk -F': *' '{ print $2 }' | tr -d '"')
+
+    # Parse image_size and expected size in bytes based on unit
+    UNIT=$(echo "$IMAGE_SIZE" | grep -oEi '(GiB|MB)$')
+    NUM=$(echo "$IMAGE_SIZE" | sed 's/[^0-9]//g')
+
+    case "$UNIT" in
+      GiB) MULT=1073741824 ;;
+      MB)  MULT=1000000 ;;
+      *)   echo "FAIL: Unsupported unit in $IMAGE_SIZE"; exit 1 ;;
+    esac
+
+    EXPECTED_BYTES=$((NUM * MULT))
+
+    # Build image
+    echo_log "Building image: $YML_NAME"
+    build --target qemu --export qcow2 "$YML_NAME" "$IMAGE_NAME" || {
+        echo "FAIL: Build failed for $YML_NAME"
+        exit 1
+    }
+
+    # Compare actual vs expected image size
+    ACTUAL_BYTES=$(qemu-img info --output=json "$IMAGE_NAME" | jq '.["virtual-size"]')
+
+    TOLERANCE=4096  #  4 KiB buffer in case of metadata overhead when qemu-img creates a QCOW2 image.
+    DELTA=$(( ACTUAL_BYTES - EXPECTED_BYTES ))
+    ABS_DELTA=${DELTA#-}  # absolute value
+
+    echo_log "Testing image: $YML_NAME"
+    if [ "$ABS_DELTA" -le "$TOLERANCE" ]; then
+        echo "PASS: $YML_NAME matched ($IMAGE_SIZE)"
+    else
+        echo "FAIL: $YML_NAME mismatched. Got $ACTUAL_BYTES, expected $EXPECTED_BYTES"
+        exit 1
+    fi
+done
+
