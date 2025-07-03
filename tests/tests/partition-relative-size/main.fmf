@@ -1,0 +1,5 @@
+summary: Verify that var and var_qm partitions occupy the expected relative size
+id: 44df142f-ba7b-4965-9ad9-4cdbdf7e11c1
+duration: 60m
+test: |
+    ./test-partition-relative-size.sh

@@ -145,6 +145,84 @@ assert_service_disabled() {
     fi
 }
 
+assert_partition_relative_size() {
+    local img=$1
+    local label=$2
+    local expected_ratio=$3
+    local epsilon=${4:-0.01}
+
+    local loop
+    loop=$(sudo losetup --find --partscan --show "$img") || fatal "FAIL: Failed to setup loop device"
+    trap "sudo losetup -d $loop" RETURN
+
+    local img_size
+    img_size=$(stat -c %s "$img") || fatal "FAIL: Failed to stat image file"
+
+    local part=""
+    for p in /dev/$(basename "$loop")p*; do
+        if sudo blkid "$p" 2>/dev/null | grep -q "LABEL=\"$label\""; then
+            part=$p
+            break
+        fi
+    done
+
+    if [ -z "$part" ]; then
+        fatal "FAIL: Partition with label '$label' not found in image"
+    fi
+
+    local part_size
+    part_size=$(sudo blockdev --getsize64 "$part") || fatal "FAIL: Failed to get size of partition $part"
+
+    local ratio
+    ratio=$(awk -v ps=$part_size -v is=$img_size 'BEGIN { print ps / is }')
+
+    local lower upper
+    lower=$(awk -v er=$expected_ratio -v e=$epsilon 'BEGIN { print er - e }')
+    upper=$(awk -v er=$expected_ratio -v e=$epsilon 'BEGIN { print er + e }')
+
+    if awk -v r=$ratio -v lo=$lower -v hi=$upper 'BEGIN { exit !(r >= lo && r <= hi) }'; then
+        echo "PASS: Partition '$label' relative size $ratio matches expected $expected_ratio ± $epsilon"
+    else
+        fatal "FAIL: Partition '$label' relative size $ratio NOT in range [$lower, $upper]"
+    fi
+}
+
+assert_partition_absolute_size() {
+    local img=$1
+    local label=$2
+    local expected_size=$3
+    local epsilon=${4:-0}  # optional tolerance in bytes
+
+    local loop
+    loop=$(sudo losetup --find --partscan --show "$img") || fatal "FAIL: Failed to setup loop device"
+    trap "sudo losetup -d $loop" RETURN
+
+    local part=""
+    for p in /dev/$(basename "$loop")p*; do
+        if sudo blkid "$p" 2>/dev/null | grep -q "LABEL=\"$label\""; then
+            part=$p
+            break
+        fi
+    done
+
+    if [ -z "$part" ]; then
+        fatal "FAIL: Partition with label '$label' not found in image"
+    fi
+
+    local part_size
+    part_size=$(sudo blockdev --getsize64 "$part") || fatal "FAIL: Failed to get size of partition $part"
+
+    local lower upper
+    lower=$(awk -v es=$expected_size -v e=$epsilon 'BEGIN { print es - e }')
+    upper=$(awk -v es=$expected_size -v e=$epsilon 'BEGIN { print es + e }')
+
+    if awk -v ps=$part_size -v lo=$lower -v hi=$upper 'BEGIN { exit !(ps >= lo && ps <= hi) }'; then
+        echo "PASS: Partition '$label' size $part_size bytes matches expected $expected_size ± $epsilon"
+    else
+        fatal "FAIL: Partition '$label' size $part_size bytes NOT in range [$lower, $upper]"
+    fi
+}
+
 list_tar () {
     tar --list -f $1
 }

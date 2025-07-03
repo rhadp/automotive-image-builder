@@ -1,0 +1,12 @@
+name: var-partition
+
+qm:
+  content: {}
+
+image:
+  image_size: 4 GiB
+  partitions:
+    var:
+      relative_size: 0.2
+    var_qm:
+      relative_size: 0.1

@@ -1,0 +1,5 @@
+summary: Verify that var and var_qm partitions occupy the expected absolute size
+id: af48c2ba-9022-4ef3-8ddd-0a1ba9197c28
+duration: 60m
+test: |
+    ./test-partition-absolute-size.sh
