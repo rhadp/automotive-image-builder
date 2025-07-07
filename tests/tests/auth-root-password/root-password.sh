@@ -14,5 +14,5 @@ EXPECTED_HASH='$6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9h
 assert_has_file "$SHADOW_FILE_PATH"
 assert_file_has_content "$SHADOW_FILE_PATH" "root:$EXPECTED_HASH"
 
-echo "PASS: root password hash validated successfully."
+echo_pass "root password hash validated successfully."
 

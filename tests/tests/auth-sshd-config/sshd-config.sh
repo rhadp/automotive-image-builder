@@ -14,5 +14,5 @@ assert_has_file "$SSHD_CONFIG_PATH"
 assert_file_has_content "$SSHD_CONFIG_PATH" "PermitRootLogin prohibit-password"
 assert_file_has_content "$SSHD_CONFIG_PATH" "PasswordAuthentication no"
 
-echo "PASS: sshd_config validated successfully."
+echo_pass "sshd_config validated successfully."
 

@@ -27,5 +27,5 @@ assert_file_has_content "$GROUP_PATH" "devs:x:2050:guest"
 assert_has_file "$SHADOW_PATH"
 assert_file_has_content "$SHADOW_PATH" "guest:$EXPECTED_HASH"
 
-echo "PASS: users and groups validated successfully."
+echo_pass "users and groups validated successfully."
 
