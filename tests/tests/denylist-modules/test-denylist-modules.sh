@@ -5,9 +5,9 @@ source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 # Function to log test results
 echo_final_test_result() {
     if [ "$1" -eq 0 ] && [ "$2" -eq 0 ]; then
-        echo "PASS: All module checks passed"
+        echo_pass "All module checks passed"
     else
-        echo "FAIL: One or more module checks failed"
+        echo_fail "One or more module checks failed"
     fi
 }
 

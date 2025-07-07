@@ -20,4 +20,4 @@ assert_file_has_content "$KEY_FILE_PATH" "$EXPECTED_KEY"
 assert_has_file "$SSHD_CONFIG_OVERRIDE"
 assert_file_has_content "$SSHD_CONFIG_OVERRIDE" "$AUTHORIZED_KEYS_LINE"
 
-echo "PASS: root_ssh_keys and sshd_config override validated successfully."
+echo_pass "root_ssh_keys and sshd_config override validated successfully."
