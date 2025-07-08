@@ -15,5 +15,5 @@ echo_log "Checking file content of image_names..."
 assert_file_has_content image_names "localhost/auto-apps:latest"
 echo_log "Assertion completed for image_names."
 
-echo "PASS: Custom container is properly installed in the image"
+echo_pass "Custom container is properly installed in the image"
 

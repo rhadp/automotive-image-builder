@@ -15,7 +15,7 @@ for YML_NAME in test-image-size-*.aib.yml; do
     case "$UNIT" in
       GiB) MULT=1073741824 ;;
       MB)  MULT=1000000 ;;
-      *)   echo "FAIL: Unsupported unit in $IMAGE_SIZE"; exit 1 ;;
+      *)   echo_fail "Unsupported unit in $IMAGE_SIZE"; exit 1 ;;
     esac
 
     EXPECTED_BYTES=$((NUM * MULT))
@@ -23,7 +23,7 @@ for YML_NAME in test-image-size-*.aib.yml; do
     # Build image
     echo_log "Building image: $YML_NAME"
     build --target qemu --export qcow2 "$YML_NAME" "$IMAGE_NAME" || {
-        echo "FAIL: Build failed for $YML_NAME"
+        echo_fail "Build failed for $YML_NAME"
         exit 1
     }
 
@@ -36,9 +36,9 @@ for YML_NAME in test-image-size-*.aib.yml; do
 
     echo_log "Testing image: $YML_NAME"
     if [ "$ABS_DELTA" -le "$TOLERANCE" ]; then
-        echo "PASS: $YML_NAME matched ($IMAGE_SIZE)"
+        echo_pass "$YML_NAME matched ($IMAGE_SIZE)"
     else
-        echo "FAIL: $YML_NAME mismatched. Got $ACTUAL_BYTES, expected $EXPECTED_BYTES"
+        echo_fail "$YML_NAME mismatched. Got $ACTUAL_BYTES, expected $EXPECTED_BYTES"
         exit 1
     fi
 done

@@ -60,7 +60,7 @@ mpp-vars:
     id: ukibootctl
     name: ukibootctl
     size: $ukibootctlpart_size
-    type: $partition_type_ukiboot
+    type: $partition_type_ukibootctl
     uuid: $ukibootctl_uuid
   vbmeta_a_partition:
     id: vbmeta_a

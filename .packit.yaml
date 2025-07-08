@@ -27,6 +27,7 @@ actions: &common_actions
 jobs:
   - job: copr_build
     trigger: pull_request
+    osh_diff_scan_after_copr_build: false
     targets:
       - centos-stream-9-aarch64
       - centos-stream-9-x86_64
