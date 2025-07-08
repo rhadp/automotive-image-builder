@@ -16,11 +16,7 @@ if ls etc/NetworkManager/system-connections/*.nmconnection &>/dev/null; then
 fi
 
 # 3. Ensure NetworkManager is enabled at boot
-nm_service="etc/systemd/system/multi-user.target.wants/NetworkManager.service"
-if [[ ! -L "$nm_service" || "$(readlink "$nm_service")" != "/usr/lib/systemd/system/NetworkManager.service" ]]; then
-  echo_fail "NetworkManager.service is not properly enabled"
-  exit 1
-fi
+assert_service_enabled NetworkManager.service content
 
 echo_pass "dynamic networking configured correctly (no static profiles, NetworkManager enabled)"
 

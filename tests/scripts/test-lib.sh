@@ -54,6 +54,10 @@ assert_has_file () {
     test -f "$1" || fatal "Couldn't find '$1'"
 }
 
+assert_not_has_file () {
+    test ! -f "$1" || fatal "File '$1' shouldn't exist"
+}
+
 assert_has_dir () {
     test -d "$1" || fatal "Couldn't find '$1'"
 }
