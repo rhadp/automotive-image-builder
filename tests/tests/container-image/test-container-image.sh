@@ -2,18 +2,23 @@
 
 source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
-echo_log "Starting build..."
-build --export tar --extend-define tar_paths='usr/share/containers/storage/overlay-images' test.aib.yml out.tar
+echo_log "Starting build for container_images and qm.content.container_images test..."
+build --export tar --extend-define tar_paths="['usr/share/containers/storage/overlay-images', 'usr/lib/qm/rootfs/usr/share/containers/storage/overlay-images']" test.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
 
-tar xvf out.tar
+tar xvf out.tar > /dev/null
 
-echo_log "Extracting image names from images.json..."
-cat usr/share/containers/storage/overlay-images/images.json | jq .[0].names[0] > image_names
+BASE_IMAGE_JSON="./usr/share/containers/storage/overlay-images/images.json"
+QM_IMAGE_JSON="./usr/lib/qm/rootfs/usr/share/containers/storage/overlay-images/images.json"
 
-echo_log "Checking file content of image_names..."
-assert_file_has_content image_names "localhost/auto-apps:latest"
-echo_log "Assertion completed for image_names."
+# Check both images.json files exist
+assert_has_file "$BASE_IMAGE_JSON"
+assert_has_file "$QM_IMAGE_JSON"
+
+# Validate container from base section
+assert_file_has_content "$BASE_IMAGE_JSON" "localhost/auto-apps:latest"
+
+# Validate container from QM section
+assert_file_has_content "$QM_IMAGE_JSON" "localhost/qm-apps:latest"
 
 echo_pass "Custom container is properly installed in the image"
-
