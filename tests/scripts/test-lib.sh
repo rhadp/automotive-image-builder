@@ -100,6 +100,47 @@ assert_file_has_permission() {
     fi
 }
 
+resolve_systemd_wants_path() {
+    local service_name="$1"
+    local section="$2"
+
+    if [ "$section" = "content" ]; then
+        echo "etc/systemd/system/multi-user.target.wants/$service_name"
+    elif [ "$section" = "qm" ]; then
+        echo "usr/lib/qm/rootfs/etc/systemd/system/multi-user.target.wants/$service_name"
+    else
+        fatal "Unknown section: $section"
+    fi
+}
+
+assert_service_enabled() {
+    local service_name="$1"
+    local section="$2"
+    local symlink_path
+    symlink_path=$(resolve_systemd_wants_path "$service_name" "$section")
+
+    if test -L "$symlink_path"; then
+        echo_pass "$service_name is enabled in $section."
+    else
+        echo_fail "$service_name is not enabled in $section."
+        exit 1
+    fi
+}
+
+assert_service_disabled() {
+    local service_name="$1"
+    local section="$2"
+    local symlink_path
+    symlink_path=$(resolve_systemd_wants_path "$service_name" "$section")
+
+    if test -L "$symlink_path"; then
+        echo_fail "$service_name should be disabled in $section but symlink exists!"
+        exit 1
+    else
+        echo_pass "$service_name is disabled in $section."
+    fi
+}
+
 list_tar () {
     tar --list -f $1
 }
