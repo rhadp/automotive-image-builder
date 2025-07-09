@@ -151,6 +151,7 @@ class Contents:
         self.make_dirs = data.get("make_dirs", [])
         self.file_content_copy = []
         self.systemd = data.get("systemd", {})
+        self.sbom = data.get("sbom", {})
 
     # Gets key to use for target partition (rootfs/qm)
     def get_key(self, key):
@@ -201,6 +202,9 @@ class Contents:
 
         if self.systemd:
             self.set_define("simple_systemd", self.systemd)
+
+        if self.sbom:
+            self.set_define("simple_sbom", self.sbom)
 
 
 class QMContents(Contents):
