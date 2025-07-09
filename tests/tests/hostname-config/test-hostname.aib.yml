@@ -1,0 +1,4 @@
+name: hostname-config-test
+
+image:
+  hostname: test-host-name-automotive
