@@ -12,7 +12,7 @@ mpp-vars:
   selinux_policy: automotive   # Available in nightly repo
   distro_repos:
     - id: autosd
-      baseurl: $distro_baseurl/AutoSD/$arch/os/
+      baseurl: $distro_baseurl_repo
       priority: 10
   distro_devel_repos: []
   distro_debug_repos:
