@@ -52,8 +52,8 @@ content:
 ```
 
 
-You can find detailed [schema documentation for the manifest syntax]
-(https://centos.gitlab.io/automotive/src/automotive-image-builder/simple_manifest.html).
+You can find detailed
+[schema documentation for the manifest syntax](https://centos.gitlab.io/automotive/src/automotive-image-builder/simple_manifest.html).
 
 You can also experiment with the example manifests in the [examples](examples) directory:
 
