@@ -13,7 +13,7 @@ mpp-vars:
   selinux_policy: automotive
   distro_repos:
     - id: rhivos
-      baseurl: $distro_baseurl/RHIVOS/$arch/os/
+      baseurl: $distro_baseurl_repo
       priority: 10
   distro_devel_repos: []
   distro_debug_repos:
