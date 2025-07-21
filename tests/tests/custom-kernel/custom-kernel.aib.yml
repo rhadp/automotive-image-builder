@@ -1,0 +1,22 @@
+name: custom-kernel-test
+
+kernel:
+  kernel_package: kernel-automotive
+  kernel_version:
+
+content:
+  rpms:
+    - openssh-server
+  systemd:
+    enabled_services:
+      - sshd.service
+  repos:
+    - id: custom-kernel
+      baseurl:
+      priority: 1
+
+auth:
+  root_password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.
+  sshd_config:
+    PasswordAuthentication: true
+    PermitRootLogin: true
