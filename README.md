@@ -36,6 +36,16 @@ Note: when running `automotive-image-builder build` it is very helpful
 to pass also the option `--build-dir some/dir`, as that will then store intermediate data, such as downloaded
 rpms between runs, which saves a lot of time.
 
+## Installation and dependencies
+
+automotive-image-builder depends on osbuild extensions for automotive use.
+
+To install automotive-image-builder, refer to the
+[AutoSD documentation](https://sigs.centos.org/automotive/getting-started/proc_installing-automotive-image-builder/)
+
+Alternatively, the image builder can run from
+[a container](https://sigs.centos.org/automotive/getting-started/proc_running-automotive-image-builder-from-container/).
+
 ## Manifests
 
 automotive-image-builder supports two types of image manifests. The
