@@ -3,10 +3,11 @@
 import os
 import yaml
 import re
+import glob
 
 import jsonschema
 
-from . import exceptions
+from . import exceptions, log
 
 
 # Duplicate a dict and drop one key
@@ -103,12 +104,177 @@ class ExtraInclude:
         }
 
     def add_file_copy(self, contents, data):
+        # Handle glob patterns
+        try:
+            self._add_glob_files(contents, data)
+        except KeyError:
+            # Handle single file as before
+            self._add_file_to_content(contents, data)
+
+    def _add_glob_files(self, contents, data):
+        """Handle glob pattern file copying with support for limiting files.
+
+        Args:
+            contents: The contents object to add files to
+            data: Dictionary containing:
+                - source_glob: The glob pattern to match files
+                - path: Destination directory
+                - preserve_path: Whether to preserve directory structure (optional)
+                - max_files: Maximum number of files to process (default: 1000)
+                - allow_empty: Whether to allow empty matches (default: False)
+
+        Raises:
+            NoMatchingFilesError: When no files match the glob pattern and allow_empty is False
+            TooManyFilesError: When more than max_files are matched
+        """
+        source_glob = data["source_glob"]
+        dest_dir = data["path"]
+        preserve_path = data.get("preserve_path", False)
+        # Default limit to prevent ARG_MAX issues
+        max_files = data.get("max_files", 1000)
+        allow_empty = data.get("allow_empty", False)
+
+        try:
+            matched_files = self._find_glob_matches(source_glob)
+        except exceptions.NoMatchingFilesError:
+            if allow_empty:
+                contents.make_dirs.append({"path": dest_dir, "parents": True})
+                log.info(
+                    "Glob pattern '%s' matched no files, but allow_empty=True, "
+                    "so creating destination directory '%s'",
+                    source_glob,
+                    dest_dir,
+                )
+                return
+            raise
+
+        # Raise error if too many files are matched
+        if len(matched_files) > max_files:
+            raise exceptions.TooManyFilesError(
+                source_glob, len(matched_files), max_files
+            )
+
+        for file_path in matched_files:
+            dest_path = self._calculate_destination_path(
+                file_path, source_glob, dest_dir, preserve_path
+            )
+
+            if preserve_path:
+                self._ensure_parent_directory(contents, dest_path, dest_dir)
+
+            file_data = {"source_path": file_path, "path": dest_path}
+            self._add_file_to_content(contents, file_data)
+
+    def _find_glob_matches(self, source_glob):
+        """Find all files matching the glob pattern"""
+        # Make the glob pattern relative to basedir if not absolute
+        if not os.path.isabs(source_glob):
+            glob_pattern = os.path.join(self.basedir, source_glob)
+        else:
+            glob_pattern = source_glob
+
+        matched_files = [
+            f for f in glob.glob(glob_pattern, recursive=True) if os.path.isfile(f)
+        ]
+
+        if not matched_files:
+            raise exceptions.NoMatchingFilesError(source_glob)
+
+        return matched_files
+
+    def _calculate_destination_path(
+        self, file_path, source_glob, dest_dir, preserve_path
+    ):
+        """Calculate the destination path for a file based on preserve_path setting"""
+        if not preserve_path:
+            # Flatten: just use the filename
+            return os.path.join(dest_dir, os.path.basename(file_path))
+
+        # Preserve directory structure
+        if os.path.isabs(source_glob):
+            return self._calculate_absolute_glob_dest_path(
+                file_path, source_glob, dest_dir
+            )
+        else:
+            return self._calculate_relative_glob_dest_path(
+                file_path, source_glob, dest_dir
+            )
+
+    def _calculate_relative_glob_dest_path(self, file_path, source_glob, dest_dir):
+        """Calculate destination path for relative glob patterns"""
+        if ".." in source_glob:
+            return self._handle_parent_directory_glob(file_path, source_glob, dest_dir)
+        elif self._is_recursive_glob(source_glob):
+            return self._handle_recursive_glob(file_path, source_glob, dest_dir)
+        else:
+            return self._handle_normal_glob(file_path, dest_dir)
+
+    def _calculate_absolute_glob_dest_path(self, file_path, source_glob, dest_dir):
+        """Calculate destination path for absolute glob patterns"""
+        glob_pattern = source_glob
+        glob_base = os.path.dirname(glob_pattern.split("*")[0].rstrip("/"))
+        rel_path = os.path.relpath(file_path, glob_base)
+        return os.path.normpath(os.path.join(dest_dir, rel_path))
+
+    def _handle_parent_directory_glob(self, file_path, source_glob, dest_dir):
+        """Handle globs with parent directory references like '../aib/**/*.py'"""
+        glob_prefix = source_glob.split("*")[0].rstrip("/")
+        base_dir = os.path.normpath(os.path.join(self.basedir, glob_prefix))
+        rel_path = os.path.relpath(file_path, base_dir)
+        return os.path.normpath(os.path.join(dest_dir, rel_path))
+
+    def _handle_recursive_glob(self, file_path, source_glob, dest_dir):
+        """Handle recursive globs like 'test-data/**/*' or 'test-data/**/*.py'"""
+        if source_glob.endswith("/**/*"):
+            glob_prefix = source_glob[:-5]  # Remove '/**/*'
+        else:
+            # Handle cases like "test-data/**/*.py"
+            glob_prefix = source_glob.split("/**/*")[0]
+
+        if glob_prefix:
+            base_dir = os.path.normpath(os.path.join(self.basedir, glob_prefix))
+            rel_path = os.path.relpath(file_path, base_dir)
+        else:
+            # No prefix, use basedir
+            rel_path = os.path.relpath(file_path, self.basedir)
+
+        return os.path.normpath(os.path.join(dest_dir, rel_path))
+
+    def _handle_normal_glob(self, file_path, dest_dir):
+        """Handle normal glob patterns like 'files/*.conf'"""
+        rel_path = os.path.relpath(file_path, self.basedir)
+        return os.path.normpath(os.path.join(dest_dir, rel_path))
+
+    def _is_recursive_glob(self, source_glob):
+        """Check if the glob pattern is recursive (contains /**/)"""
+        return source_glob.endswith("/**/*") or "/**/*" in source_glob
+
+    def _ensure_parent_directory(self, contents, dest_path, dest_dir):
+        """Ensure parent directories are created when preserving paths"""
+        if os.path.dirname(dest_path) == dest_dir:
+            return  # No parent directory structure to preserve
+
+        parent_dir = os.path.dirname(dest_path)
+        if not parent_dir or parent_dir == "/":
+            return  # No valid parent directory
+
+        # Check if this directory is already in make_dirs
+        existing_dirs = [
+            d.get("path") if isinstance(d, dict) else d for d in contents.make_dirs
+        ]
+
+        if parent_dir not in existing_dirs:
+            # Add directory to make_dirs if it's not already there
+            contents.make_dirs.append({"path": parent_dir, "parents": True})
+
+    def _add_file_to_content(self, contents, file_data):
+        """Add a file to the content processing pipeline"""
         content_id = self.gen_id()
         self.file_content_inputs["inlinefile" + str(content_id)] = self.gen_file_input(
-            content_id, data
+            content_id, file_data
         )
         self.file_content_paths.append(self.gen_file_copy(content_id))
-        contents.file_content_copy.append(self.gen_file_copy_out(content_id, data))
+        contents.file_content_copy.append(self.gen_file_copy_out(content_id, file_data))
 
     def generate(self):
         extra_include_pipelines = []
