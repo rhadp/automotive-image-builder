@@ -1,0 +1,8 @@
+summary: Verify kernel options - cmdline, loglevel, and debug_logging
+id: d7b854fe-dbcc-4ecb-9218-563c6960ddb6
+require:
+  - qemu-kvm
+  - sshpass
+duration: 60m
+test: |
+    ./kernel-options.sh
