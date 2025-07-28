@@ -1,0 +1,5 @@
+summary: Verify that memory_limit and cpu_weight options are correctly included in the QM image
+id: 3a0874e8-5194-44e5-a02e-ab57827cbd98
+duration: 60m
+test: |
+    ./test-memory-limit-cpu-weight.sh

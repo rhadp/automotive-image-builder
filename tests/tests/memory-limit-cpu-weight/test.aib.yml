@@ -1,0 +1,6 @@
+name: memory_limit_cpu_weight_test
+qm:
+  memory_limit:
+    max: 100M
+    high: 80M
+  cpu_weight: 50
