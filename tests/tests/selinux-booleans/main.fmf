@@ -1,0 +1,8 @@
+summary: Verify that SELinux booleans configuration is properly added to the image
+id: aa926eb8-a22e-4a07-b595-9802e3fd2eed
+require:
+  - qemu-kvm
+  - sshpass
+duration: 60m
+test: |
+    ./selinux-booleans.sh
