@@ -2,10 +2,10 @@
 version: '2'
 mpp-vars:
   distro_name: autosd-sig
-  distro_version: 1
-  distro_baseurl: https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose
+  distro_version: 9
+  distro_baseurl: https://autosd.sig.centos.org/AutoSD-$distro_version/nightly/repos/AutoSD/compose
   distro_baseurl_repo: $distro_baseurl/AutoSD/$arch/os/
-  distro_chroot: centos-stream-9-$arch
+  distro_chroot: centos-stream-$distro_version-$arch
   uefi_vendor: centos
   kernel_package: kernel-automotive
   release_rpm: centos-release-autosd
@@ -16,7 +16,7 @@ mpp-vars:
       baseurl: $distro_baseurl/AutoSD/$arch/os/
       priority: 10
     - id: automotive
-      baseurl: https://mirror.stream.centos.org/SIGs/9-stream/automotive/$arch/packages-main/
+      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/automotive/$arch/packages-main/
   distro_devel_repos: []
   distro_debug_repos:
     - id: autosd-debug

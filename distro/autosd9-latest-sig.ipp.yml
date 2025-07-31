@@ -3,9 +3,9 @@ version: '2'
 mpp-vars:
   distro_name: autosd-latest-sig
   distro_version: 9
-  distro_baseurl: http://mirror.stream.centos.org/9-stream
+  distro_baseurl: http://mirror.stream.centos.org/$distro_version-stream
   distro_baseurl_repo: $distro_baseurl/BaseOS/$arch/os/
-  distro_chroot: centos-stream-9-$arch
+  distro_chroot: centos-stream-$distro_version-$arch
   linux_firmware_rpm: linux-firmware-automotive
   distro_repos:
     - id: baseos
@@ -13,9 +13,9 @@ mpp-vars:
     - id: appstream
       baseurl: $distro_baseurl/AppStream/$arch/os/
     - id: automotive
-      baseurl: https://mirror.stream.centos.org/SIGs/9-stream/automotive/$arch/packages-main/
+      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/automotive/$arch/packages-main/
     - id: autosd
-      baseurl: https://mirror.stream.centos.org/SIGs/9-stream/autosd/$arch/packages-main/
+      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/autosd/$arch/packages-main/
   distro_devel_repos:
     - id: crb
       baseurl: $distro_baseurl/CRB/$arch/os/
@@ -27,7 +27,7 @@ mpp-vars:
     - id: crb-debug
       baseurl: $distro_baseurl/CRB/$arch/debug/tree/
     - id: autosd-debug
-      baseurl: https://mirror.stream.centos.org/SIGs/9-stream/autosd/$arch/packages-main/debug/
+      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/autosd/$arch/packages-main/debug/
   distro_module_id: platform:el9
   distro_build_rpms:
     - python-toml
