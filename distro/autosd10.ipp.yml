@@ -1,0 +1,26 @@
+# AutoSD 9 - based on nightly autosd compose
+version: '2'
+mpp-vars:
+  distro_name: autosd
+  distro_version: 10
+  distro_baseurl: https://autosd.sig.centos.org/AutoSD-$distro_version/nightly/repos/AutoSD/compose
+  distro_baseurl_repo: $distro_baseurl/AutoSD/$arch/os/
+  distro_chroot: centos-stream-$distro_version-$arch
+  uefi_vendor: centos
+  kernel_package: kernel-automotive
+  release_rpm: centos-release-autosd
+  # Not yet available in CS10
+  #selinux_policy: automotive
+  distro_repos:
+    - id: autosd
+      baseurl: $distro_baseurl_repo
+      priority: 10
+  distro_devel_repos: []
+  distro_debug_repos:
+    - id: autosd-debug
+      baseurl: $distro_baseurl/AutoSD/$arch/debug/tree/
+  distro_module_id: platform:el10
+  distro_gpg_keys:
+    mpp-format-string: |
+      $centos10_gpg_key
+      $redhat_gpg_key
