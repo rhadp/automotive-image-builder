@@ -7,7 +7,7 @@ mpp-vars:
   distro_baseurl_repo: $distro_baseurl/BaseOS/$arch/os/
   distro_chroot: centos-stream-$distro_version-$arch
   is_autoinit_supported: false
-  kernel_package: kernel
+  # linux-firmware-automotive is not yet available
   linux_firmware_rpm: linux-firmware
   # No centos-release-autosd/automotive yet
   release_rpm: centos-release
@@ -18,9 +18,8 @@ mpp-vars:
       baseurl: $distro_baseurl/AppStream/$arch/os/
     - id: automotive
       baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/automotive/$arch/packages-main/
-# nothing tagged into autosd yet
-#    - id: autosd
-#      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/autosd/$arch/packages-main/
+    - id: autosd
+      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/autosd/$arch/packages-main/
   distro_devel_repos:
     - id: crb
       baseurl: $distro_baseurl/CRB/$arch/os/
@@ -31,9 +30,8 @@ mpp-vars:
       baseurl: $distro_baseurl/AppStream/$arch/debug/tree/
     - id: crb-debug
       baseurl: $distro_baseurl/CRB/$arch/debug/tree/
-# nothing tagged into autosd yet
-#    - id: autosd-debug
-#      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/autosd/$arch/packages-main/debug/
+    - id: autosd-debug
+      baseurl: https://mirror.stream.centos.org/SIGs/$distro_version-stream/autosd/$arch/packages-main/debug/
   distro_module_id: platform:el10
   distro_gpg_keys:
     mpp-format-string: |
