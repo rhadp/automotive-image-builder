@@ -163,7 +163,7 @@ yum_repos:
     gpgcheck: false
 
 
-# preinstall automotive-image-builder dependencies
+# preinstall automotive-image-builder and tests dependencies
 packages:
   - android-tools
   - osbuild
@@ -172,8 +172,10 @@ packages:
   - osbuild-lvm2
   - osbuild-ostree
   - ostree
+  - qemu-kvm
   - python3-jsonschema
   - python3-pyyaml
+  - sshpass
 
 power_state:
   delay: now
@@ -196,13 +198,19 @@ sudo curl -o /var/lib/libvirt/images/aib-tests.qcow2 \
     https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-9-latest.x86_64.qcow2
 ```
 
+Resize the default 10G disk for all tests to pass successfully:
+
+```shell
+sudo qemu-img resize /var/lib/libvirt/images/aib-tests.qcow2 +10G
+```
+
 And then let's create VM:
 
 ```shell
 cd tests
 sudo virt-install  \
      --name aib-tests \
-     --memory 16384  --cpu host-model --vcpus 4 --graphics none \
+     --memory 16384  --cpu host-model --vcpus 8 --graphics none \
      --os-variant centos-stream9 \
      --import \
      --disk /var/lib/libvirt/images/aib-tests.qcow2,format=qcow2,bus=virtio \
