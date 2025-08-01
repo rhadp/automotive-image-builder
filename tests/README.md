@@ -90,6 +90,10 @@ Following environment variable exists to customize test execution:
    - Contains the URL of the custom repository to install automotive-image-builder and its dependencies from
      (for example to test custom automotive-image-builder package)
    - Default value: _empty_
+- **`AIB_DISTRO`**
+   - Distribution used inside tests. Available distributions can be listed using `automotive-image-builder list-dist`
+     on the relevant platform.
+   - Default value: `autosd9-sig`
 - **`AIB_SRPM_DIR`**
    - Directory where a-i-b source RPM should be uploaded before tests execution
    - Default value: `/var/tmp/aib-srpm`
