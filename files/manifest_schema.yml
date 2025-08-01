@@ -187,7 +187,7 @@ $defs:
         type: boolean
 
   partition:
-    type object:
+    type: object
     additionalProperties: false
     properties:
       rpms:
@@ -260,7 +260,6 @@ $defs:
           doc_path:
             description: Output path for the SBOM file
             type: string
-
 
   static_network:
     type: object
