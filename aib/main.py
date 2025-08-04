@@ -623,6 +623,9 @@ def _build(args, tmpdir, runner):
     if args.cache_max_size:
         cmdline += ["--cache-max-size=" + args.cache_max_size]
 
+    # Add JSONSeqMonitor for progress monitoring
+    cmdline += ["--monitor", "JSONSeqMonitor"]
+
     has_repo = False
     exports = []
     # Rewrite exports according to export_data
@@ -641,7 +644,7 @@ def _build(args, tmpdir, runner):
         # Download sources on host, using no exports
 
         cmdline += [osbuild_manifest]
-        runner.run_in_container(cmdline)
+        runner.run_in_container(cmdline, capture_output=args.verbose)
 
         # Now do the build in the vm
 
@@ -699,7 +702,9 @@ def _build(args, tmpdir, runner):
 
         cmdline += [osbuild_manifest]
 
-        runner.run_in_container(cmdline, need_osbuild_privs=True)
+        runner.run_in_container(
+            cmdline, need_osbuild_privs=True, capture_output=args.verbose
+        )
 
     if args.ostree_repo:
         repodir = os.path.join(outputdir, "ostree-commit/repo")

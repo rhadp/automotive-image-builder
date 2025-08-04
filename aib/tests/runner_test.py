@@ -50,21 +50,27 @@ def test_run_args_root(
     cmd = ["touch", "example"]
     runner.run_as_root(cmd)
 
-    subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+    subprocess_run.assert_called_once_with(
+        ListNotContaining("podman"), capture_output=False, check=True
+    )
     if use_sudo_for_root:
-        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
+        subprocess_run.assert_called_once_with(
+            AnyListContaining("sudo"), capture_output=False, check=True
+        )
 
 
 @pytest.mark.parametrize("use_sudo_for_root", [True, False])
 @pytest.mark.parametrize(
     "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
-@patch("aib.runner.subprocess")
+@patch("aib.runner.OSBuildProgressMonitor")
 def test_run_args_container(
-    subprocess_mock, use_sudo_for_root, use_container, use_user_container
+    progress_monitor_mock, use_sudo_for_root, use_container, use_user_container
 ):
-    subprocess_run = MagicMock()
-    subprocess_mock.run = subprocess_run
+    monitor_instance = MagicMock()
+    monitor_instance.run.return_value = 0
+    progress_monitor_mock.return_value = monitor_instance
+
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
@@ -74,27 +80,31 @@ def test_run_args_container(
     cmd = ["touch", "example"]
     runner.run_in_container(cmd)
 
+    progress_monitor_mock.assert_called_once_with(verbose=False)
+
     if use_container or use_user_container:
-        subprocess_run.assert_called_once_with(AnyListContaining("podman"), check=True)
+        monitor_instance.run.assert_called_once_with(AnyListContaining("podman"))
     else:
-        subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+        monitor_instance.run.assert_called_once_with(ListNotContaining("podman"))
 
     if use_sudo_for_root and not use_user_container:
-        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
+        monitor_instance.run.assert_called_once_with(AnyListContaining("sudo"))
     else:
-        subprocess_run.assert_called_once_with(ListNotContaining("sudo"), check=True)
+        monitor_instance.run.assert_called_once_with(ListNotContaining("sudo"))
 
 
 @pytest.mark.parametrize("use_sudo_for_root", [True, False])
 @pytest.mark.parametrize(
     "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
-@patch("aib.runner.subprocess")
+@patch("aib.runner.OSBuildProgressMonitor")
 def test_run_args_osbuild(
-    subprocess_mock, use_sudo_for_root, use_container, use_user_container
+    progress_monitor_mock, use_sudo_for_root, use_container, use_user_container
 ):
-    subprocess_run = MagicMock()
-    subprocess_mock.run = subprocess_run
+    monitor_instance = MagicMock()
+    monitor_instance.run.return_value = 0
+    progress_monitor_mock.return_value = monitor_instance
+
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
@@ -104,15 +114,17 @@ def test_run_args_osbuild(
     cmd = ["touch", "example"]
     runner.run_in_container(cmd, need_osbuild_privs=True)
 
+    progress_monitor_mock.assert_called_once_with(verbose=False)
+
     if use_container or use_user_container:
-        subprocess_run.assert_called_once_with(AnyListContaining("podman"), check=True)
+        monitor_instance.run.assert_called_with(AnyListContaining("podman"))
     else:
-        subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+        monitor_instance.run.assert_called_with(ListNotContaining("podman"))
 
     if use_sudo_for_root and not use_user_container:
-        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
+        monitor_instance.run.assert_called_with(AnyListContaining("sudo"))
     else:
-        subprocess_run.assert_called_once_with(ListNotContaining("sudo"), check=True)
+        monitor_instance.run.assert_called_with(ListNotContaining("sudo"))
 
 
 @pytest.mark.parametrize("use_sudo_for_root", [True, False])
@@ -135,14 +147,22 @@ def test_run_args_user(
     runner.run_as_user(cmd)
 
     if use_container or use_user_container:
-        subprocess_run.assert_called_once_with(AnyListContaining("podman"), check=True)
+        subprocess_run.assert_called_once_with(
+            AnyListContaining("podman"), capture_output=False, check=True
+        )
     else:
-        subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+        subprocess_run.assert_called_once_with(
+            ListNotContaining("podman"), capture_output=False, check=True
+        )
 
     if use_sudo_for_root and use_container:
-        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
+        subprocess_run.assert_called_once_with(
+            AnyListContaining("sudo"), capture_output=False, check=True
+        )
     else:
-        subprocess_run.assert_called_once_with(ListNotContaining("sudo"), check=True)
+        subprocess_run.assert_called_once_with(
+            ListNotContaining("sudo"), capture_output=False, check=True
+        )
 
 
 @pytest.mark.parametrize(

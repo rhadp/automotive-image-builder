@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 from . import log
+from .progress import OSBuildProgressMonitor
 
 # Runner is a mechanism to run commands in a different context.
 # There are two primary types of contexts:
@@ -117,6 +118,7 @@ class Runner:
         as_root=False,
         as_user_in_container=False,
         need_osbuild_privs=False,
+        with_progress=False,
         capture_output=False,
     ):
         if use_container:
@@ -140,16 +142,27 @@ class Runner:
             ]
             cmdline = sudo_cmd + cmdline
 
-        log.debug("Running: %s", shlex.join(cmdline))
+        if with_progress:
+            log.debug("Running with progress: %s", shlex.join(cmdline))
 
-        try:
-            if capture_output:
-                r = subprocess.run(cmdline, capture_output=True, check=True)
-                return r.stdout.decode("utf-8").rstrip()
-            else:
-                subprocess.run(cmdline, check=True)
-        except subprocess.CalledProcessError:
-            sys.exit(1)  # cmd will have printed the error
+            progress_monitor = OSBuildProgressMonitor(verbose=capture_output)
+
+            try:
+                return_code = progress_monitor.run(cmdline)
+                if return_code != 0:
+                    sys.exit(return_code)
+            except (subprocess.CalledProcessError, OSError) as e:
+                log.error("Error running osbuild with progress: %s", e)
+                sys.exit(1)
+        else:
+            log.debug("Running: %s", shlex.join(cmdline))
+
+            try:
+                r = subprocess.run(cmdline, capture_output=capture_output, check=True)
+                if capture_output:
+                    return r.stdout.decode("utf-8").rstrip()
+            except subprocess.CalledProcessError:
+                sys.exit(1)  # cmd will have printed the error
 
     # Run the commandline as root, i.e. with sudo if not already root
     def run_as_root(
@@ -188,6 +201,7 @@ class Runner:
             use_container=use_container,
             as_root=as_root,
             need_osbuild_privs=need_osbuild_privs,
+            with_progress=True,
         )
 
     # Run commandline as user, either directly, or in a container, it
