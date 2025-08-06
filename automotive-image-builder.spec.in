@@ -19,7 +19,7 @@ Requires:       ostree
 Requires:       python3-dnf
 Requires:       python3-jsonschema
 Requires:       python3-pyyaml
-Requires:       python3-rich
+Recommends:     python3-rich
 
 %description
 Tool to build (and run) automotive images

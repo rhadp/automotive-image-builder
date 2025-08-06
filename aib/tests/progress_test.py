@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 from aib.progress import (
     OSBuildProgressMonitor,
     ProgressStep,
+    ProgressArgs,
     NestedProgressInfo,
     StageEventInfo,
 )
@@ -255,6 +256,47 @@ class TestOSBuildProgressMonitor(unittest.TestCase):
             result = self.monitor.run(["invalid-command"])
 
         self.assertEqual(result, 1)
+
+    def test_run_with_fallback_progress(self):
+        """Test command execution with fallback progress bar."""
+        # Test that monitor can be created regardless of rich availability
+        monitor = OSBuildProgressMonitor(verbose=False)
+        self.assertIsNotNone(monitor.console)
+
+        # Test that _progress_args returns a ProgressArgs object
+        progress_args = monitor._progress_args()
+        self.assertIsInstance(progress_args, ProgressArgs)
+        self.assertIsInstance(progress_args.columns, list)
+        self.assertIsInstance(progress_args.kwargs, dict)
+
+
+class TestProgressArgs(unittest.TestCase):
+    def test_progress_args_creation(self):
+        """Test ProgressArgs dataclass creation."""
+        # Test with default values
+        args = ProgressArgs()
+        self.assertEqual(args.columns, [])
+        self.assertEqual(args.kwargs, {})
+
+        # Test with custom values
+        columns = ["col1", "col2"]
+        kwargs = {"key": "value"}
+        args = ProgressArgs(columns=columns, kwargs=kwargs)
+        self.assertEqual(args.columns, columns)
+        self.assertEqual(args.kwargs, kwargs)
+
+    def test_progress_args_from_monitor(self):
+        """Test that OSBuildProgressMonitor._progress_args returns ProgressArgs."""
+        monitor = OSBuildProgressMonitor(verbose=False)
+        progress_args = monitor._progress_args()
+
+        self.assertIsInstance(progress_args, ProgressArgs)
+        self.assertIn("console", progress_args.kwargs)
+        self.assertIn("refresh_per_second", progress_args.kwargs)
+
+        # Test that kwargs contain expected values
+        self.assertEqual(progress_args.kwargs["refresh_per_second"], 10)
+        self.assertEqual(progress_args.kwargs["console"], monitor.console)
 
 
 class TestNestedProgressInfo(unittest.TestCase):

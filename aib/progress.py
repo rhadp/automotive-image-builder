@@ -1,16 +1,176 @@
 import json
+import importlib.util
 import subprocess
+import sys
+import time
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
-from rich.console import Console
-from rich.progress import (
-    Progress,
-    BarColumn,
-    TextColumn,
-    TimeRemainingColumn,
-    SpinnerColumn,
-)
+try:
+    from rich.console import Console
+    from rich.progress import (
+        Progress,
+        BarColumn,
+        TextColumn,
+        TimeRemainingColumn,
+        SpinnerColumn,
+    )
+except (ModuleNotFoundError, ImportError):
+    import re
+
+    class Task:
+        """Represents a progress task."""
+
+        def __init__(self, task_id: int, description: str, total: int = 100):
+            self.id = task_id
+            self.description = description
+            self.total = total
+            self.completed = 0.0
+            self.started = time.time()
+
+        @property
+        def percentage(self) -> float:
+            """Calculate completion percentage."""
+            if self.total == 0:
+                return 0.0
+            return min(100.0, (self.completed / self.total) * 100.0)
+
+        @property
+        def remaining_time(self) -> str:
+            """Estimate remaining time."""
+            if self.completed <= 0:
+                return "??:??"
+
+            elapsed = time.time() - self.started
+            if elapsed <= 0:
+                return "??:??"
+
+            rate = self.completed / elapsed
+            if rate <= 0:
+                return "??:??"
+
+            remaining = (self.total - self.completed) / rate
+            minutes, seconds = divmod(int(remaining), 60)
+            return f"{minutes:02d}:{seconds:02d}"
+
+    class Progress:
+        """Simple progress bar fallback."""
+
+        BAR_WIDTH = 30
+
+        def __init__(self, *_columns, console=None, refresh_per_second=10):
+            self.tasks = {}
+            self.task_counter = 0
+            self.refresh_per_second = refresh_per_second
+            self.last_refresh = 0
+            self.in_context = False
+            if console is not None:
+                console.progress = self
+
+        def __enter__(self):
+            self.in_context = True
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.in_context = False
+            # Print final newline to clean up
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+
+        def add_task(self, description: str, total: int = 100) -> int:
+            """Add a new progress task."""
+            task_id = self.task_counter
+            self.tasks[task_id] = Task(task_id, description, total)
+            self.task_counter += 1
+            self._maybe_refresh()
+            return task_id
+
+        def update(
+            self,
+            task_id: int,
+            completed: Optional[float] = None,
+            description: Optional[str] = None,
+            total: Optional[int] = None,
+        ):
+            """Update a progress task."""
+            try:
+                task = self.tasks[task_id]
+            except KeyError:
+                return
+
+            if completed is not None:
+                task.completed = completed
+            if description is not None:
+                task.description = description
+            if total is not None:
+                task.total = total
+
+            self._maybe_refresh()
+
+        def _maybe_refresh(self):
+            """Refresh display if enough time has passed."""
+            now = time.time()
+            if now - self.last_refresh >= (1.0 / self.refresh_per_second):
+                self._refresh()
+                self.last_refresh = now
+
+        def _refresh(self):
+            """Refresh the progress display."""
+            if not self.in_context or not self.tasks:
+                return
+
+            task = next(iter(self.tasks.values()))
+            completed_width = int((task.percentage / 100.0) * self.BAR_WIDTH)
+            progress_bar = "█" * completed_width + "░" * (
+                self.BAR_WIDTH - completed_width
+            )
+
+            clean_desc = re.sub(r"\[[^\]]*\]", "", task.description)
+            desc = clean_desc[:40] + "..." if len(clean_desc) > 40 else clean_desc
+            progress_line = (
+                f"\r {desc} │{progress_bar}│ "
+                f"{task.percentage:5.1f}% ETA {task.remaining_time}"
+            )
+
+            # Clear the line and write the new progress line
+            sys.stdout.write(f"\r{' ' * 100}\r{progress_line}")
+            sys.stdout.flush()
+
+    class Console:
+        """Simple console fallback for when rich is not available."""
+
+        def __init__(self):
+            self._progress = None
+
+        @property
+        def progress(self):
+            return self._progress
+
+        @progress.setter
+        def progress(self, progress: Progress):
+            self._progress = progress
+
+        def print(self, text: str, **_kwargs):
+            """Print text to stdout, stripping rich markup."""
+            text = re.sub(r"\[[^\]]*\]", "", text)
+            if self.progress is not None and self.progress.in_context:
+                # Clear the current progress line completely
+                sys.stdout.write(f"\r{' ' * 100}\r")
+                sys.stdout.flush()
+                print(text)
+                # Redraw the progress bar after printing the text
+                self.progress._refresh()
+                return
+            # No progress bar active, just print the message
+            print(text)
+
+
+@dataclass
+class ProgressArgs:
+    """Progress arguments for rich Progress constructor."""
+
+    columns: List[Any] = field(default_factory=list)
+    kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -228,19 +388,34 @@ class OSBuildProgressMonitor:
         except (IOError, OSError) as e:
             self.console.print(f"[red]Error monitoring output: {e}[/red]")
 
+    def _progress_args(self) -> ProgressArgs:
+        if importlib.util.find_spec("rich") is not None:
+            progress_columns = [
+                SpinnerColumn(
+                    finished_text="[green][[/green][yellow]🗸[/yellow][green]][/green]"
+                ),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                TimeRemainingColumn(),
+            ]
+            progress_kwargs = {
+                "console": self.console,
+                "refresh_per_second": 10,
+            }
+            return ProgressArgs(columns=progress_columns, kwargs=progress_kwargs)
+
+        return ProgressArgs(
+            kwargs={
+                "console": self.console,
+                "refresh_per_second": 10,
+            }
+        )
+
     def run(self, cmdline: list, **subprocess_kwargs) -> int:
         """Run a command and monitor its progress."""
-        with Progress(
-            SpinnerColumn(
-                finished_text="[green][[/green][yellow]🗸[/yellow][green]][/green]"
-            ),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            TimeRemainingColumn(),
-            console=self.console,
-            refresh_per_second=10,  # More frequent updates for smoother progress
-        ) as progress:
+        progress_args = self._progress_args()
+        with Progress(*progress_args.columns, **progress_args.kwargs) as progress:
 
             # Start with unknown total - will be updated when pipeline info is received
             task_id = progress.add_task("Preparing build...", total=100)
