@@ -1,0 +1,35 @@
+name: minimal-boot
+
+content:
+  rpms: []
+  systemd:
+    enabled_services:
+      - test-runner.service
+  make_dirs:
+    - path: /usr/tests
+  add_files:
+    - path: /usr/tests/dmesg_clean.sh
+      source_path: ../../image-tests/dmesg_clean.sh
+    - path: /usr/tests/systemd_running.sh
+      source_path: ../../image-tests/systemd_running.sh
+    - path: /usr/tests/selinux_check.sh
+      source_path: ../../image-tests/selinux_check.sh
+    - path: /usr/tests/run-all.sh
+      source_path: ../../image-tests/run-all.sh
+    - path: /etc/systemd/system/test-runner.service
+      source_path: ../../image-tests/test-runner.service
+  chmod_files:
+    - path: /usr/tests/dmesg_clean.sh
+      mode: "755"
+    - path: /usr/tests/systemd_running.sh
+      mode: "755"
+    - path: /usr/tests/selinux_check.sh
+      mode: "755"
+    - path: /usr/tests/run-all.sh
+      mode: "755"
+    - path: /etc/systemd/system/test-runner.service
+      mode: "644"
+
+qm:
+  content:
+    rpms: []
