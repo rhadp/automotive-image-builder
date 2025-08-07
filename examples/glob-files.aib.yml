@@ -1,0 +1,142 @@
+name: example-glob-files
+version: "1.0"
+
+content:
+  # Install some basic packages
+  rpms:
+    - bash
+    - coreutils
+    - tree
+
+  # Create destination directories
+  make_dirs:
+    - path: /etc/app/files
+      parents: true
+    - path: /etc/app/aib
+    - path: /etc/app/aib2
+
+  # Add files using different methods
+  add_files:
+    # Traditional single file copy
+    - path: /etc/app/README.md
+      source_path: ../README.md
+
+    # Glob pattern: Copy all .conf files from config/ directory, flattened
+    # Allow empty: Create a drop-in directory even if no files match
+    # This is useful for creating configuration directories that may be
+    # populated later via package managers or configuration management tools
+    # Note: max_files parameter limits glob matches and errors if exceeded
+    # (default: 1000 files)
+    # No limit needed for small directories.
+    - path: /etc/app/files
+      source_glob: "../files/*.conf"
+      preserve_path: false
+      allow_empty: true
+
+    # Example: Large log directory with strict limit
+    # This would fail with TooManyFilesError if more than 10 files exist
+    # - path: /var/log/app
+    #   source_glob: "/var/log/myapp/*.log"
+    #   preserve_path: false
+    #   max_files: 10
+
+    # Glob pattern: Copy all .py files recursively, preserving directory structure
+    - path: /etc/app/aib
+      source_glob: "../aib/**/*.py"
+      preserve_path: true
+
+    # Glob pattern: Copy all the aib sources recursively, preserving directory structure
+    # Limit to 50 files, will fail with TooManyFilesError if more files exist
+    - path: /etc/app/aib2
+      source_glob: "../aib/**/*"
+      preserve_path: true
+      max_files: 50
+
+
+auth:
+  # "password"
+  root_password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.
+
+# Outcome when you build this image:
+# # tree /etc/app/
+#/etc/app/
+#├── aib
+#│   ├── exceptions.py
+#│   ├── exports.py
+#│   ├── __init__.py
+#│   ├── main.py
+#│   ├── ostree.py
+#│   ├── runner.py
+#│   ├── simple.py
+#│   ├── tests
+#│   │   ├── builder_options_test.py
+#│   │   ├── exceptions_test.py
+#│   │   ├── exports_test.py
+#│   │   ├── __init__.py
+#│   │   ├── manifest_test.py
+#│   │   ├── ostree_test.py
+#│   │   ├── runner_test.py
+#│   │   ├── simple_test.py
+#│   │   ├── utils_test.py
+#│   │   ├── version_test.py
+#│   │   ├── vmhelper_test.py
+#│   │   └── vm_test.py
+#│   ├── utils.py
+#│   ├── version.py
+#│   ├── vmhelper.py
+#│   └── vm.py
+#├── aib2
+#│   ├── exceptions.py
+#│   ├── exports.py
+#│   ├── __init__.py
+#│   ├── main.py
+#│   ├── ostree.py
+#│   ├── __pycache__
+#│   │   ├── exceptions.cpython-313.pyc
+#│   │   ├── exports.cpython-313.pyc
+#│   │   ├── __init__.cpython-313.pyc
+#│   │   ├── main.cpython-313.pyc
+#│   │   ├── ostree.cpython-313.pyc
+#│   │   ├── runner.cpython-313.pyc
+#│   │   ├── simple.cpython-313.pyc
+#│   │   ├── utils.cpython-313.pyc
+#│   │   ├── version.cpython-313.pyc
+#│   │   ├── vm.cpython-313.pyc
+#│   │   └── vmhelper.cpython-313.pyc
+#│   ├── runner.py
+#│   ├── simple.py
+#│   ├── tests
+#│   │   ├── builder_options_test.py
+#│   │   ├── exceptions_test.py
+#│   │   ├── exports_test.py
+#│   │   ├── __init__.py
+#│   │   ├── manifest_test.py
+#│   │   ├── ostree_test.py
+#│   │   ├── __pycache__
+#│   │   │   ├── builder_options_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── exceptions_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── exports_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── __init__.cpython-313.pyc
+#│   │   │   ├── manifest_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── ostree_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── runner_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── simple_test.cpython-313.pyc
+#│   │   │   ├── simple_test.cpython-313-pytest-8.3.4.pyc
+#│   │   │   ├── simple_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── utils_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── version_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   ├── vmhelper_test.cpython-313-pytest-8.4.1.pyc
+#│   │   │   └── vm_test.cpython-313-pytest-8.4.1.pyc
+#│   │   ├── runner_test.py
+#│   │   ├── simple_test.py
+#│   │   ├── utils_test.py
+#│   │   ├── version_test.py
+#│   │   ├── vmhelper_test.py
+#│   │   └── vm_test.py
+#│   ├── utils.py
+#│   ├── version.py
+#│   ├── vmhelper.py
+#│   └── vm.py
+#├── files
+#│   └── dnf-aibvm-init.conf
+#└── README.md
