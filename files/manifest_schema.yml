@@ -386,7 +386,7 @@ $defs:
                 minimum: 0
                 default: 0
                 description: |
-                  Size of /var/qm partition relative to the total /var size as computed by relative_size. 0 to disable.
+                  Size of /var/qm partition relative to total image size. 0 to disable.
 
                   Note: This is only included if qm is enabled.
                 type: number
