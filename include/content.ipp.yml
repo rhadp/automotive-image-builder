@@ -280,6 +280,27 @@ mpp-vars:
           mountpoint: /boot
           minsize:
             mpp-format-string: '{bootpart_size * 512}'
+      - mpp-if: use_ukibootpart
+        then:
+          part_label: ukiboot_a
+          part_type: $partition_type_ukiboot
+          fs_type: none
+          minsize:
+            mpp-format-string: '{ukibootpart_size * 512}'
+      - mpp-if: use_ukibootpart
+        then:
+          part_label: ukiboot_b
+          part_type: $partition_type_ukiboot
+          fs_type: none
+          minsize:
+            mpp-format-string: '{ukibootpart_size * 512}'
+      - mpp-if: use_ukibootpart
+        then:
+          part_label: ukibootctl
+          part_type: $partition_type_ukibootctl
+          fs_type: none
+          minsize:
+            mpp-format-string: '{ukibootctlpart_size * 512}'
       - mpp-if: _use_separate_var and _varpart_size > 0
         then:
           part_label: var
