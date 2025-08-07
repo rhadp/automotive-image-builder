@@ -1,0 +1,23 @@
+name: selinux-booleans
+
+content:
+  rpms:
+    - openssh-server
+  systemd:
+    enabled_services:
+      - sshd.service
+
+auth:
+  # "password"
+  root_password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.
+  sshd_config:
+    PasswordAuthentication: true
+    PermitRootLogin: true
+
+# SELinux booleans options to be set in the image
+image:
+  selinux_booleans:
+    selinuxuser_tcp_server: true
+    httpd_can_network_connect: true
+    selinuxuser_ping: false
+    deny_bluetooth: true

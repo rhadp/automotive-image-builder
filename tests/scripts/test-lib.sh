@@ -254,3 +254,68 @@ build() {
    save_to_tmt_test_data build.log
 }
 
+# Check if the image was created
+assert_image_exists() {
+    local image=$1
+    if [ ! -f "$image" ]; then
+        echo_fail "Image build failed: $image not found"
+        exit 1
+    fi
+}
+
+# Start the VM and return its PID
+run_vm() {
+    local image=$1
+    local ssh_port=${2:-2222}
+    automotive-image-runner --ssh-port "$ssh_port" --nographics "$image" > /dev/null 2>&1 &
+    local pid=$!
+    >&2 echo "INFO: VM running at pid: $pid"
+    echo "$pid"
+}
+
+# Wait until VM SSH is available
+wait_for_vm_up() {
+    local retry=${1:-0}
+    local max_retries=${2:-60}
+    local wait_time=${3:-3}
+    local ssh_port=${4:-2222}
+    local password=${5:-password}
+    local result=1
+    local ssh_cmd="sshpass -p$password ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=3 -p $ssh_port root@localhost"
+
+    while [ $result -ne 0 ]; do
+        sleep $wait_time
+        $ssh_cmd true
+        result=$?
+        retry=$(( retry + 1 ))
+        if [ $retry -ge $max_retries ]; then
+            echo_fail "SSH connection failed $retry times"
+            return 1
+        fi
+    done
+    return 0
+}
+
+# Run a command inside the VM
+run_vm_command() {
+    local cmd=$1
+    local ssh_port=${2:-2222}
+    local password=${3:-password}
+    local ssh_cmd="sshpass -p$password ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=3 -p $ssh_port root@localhost"
+    echo $($ssh_cmd "$cmd")
+}
+
+# Kill the given VM by PID
+stop_vm() {
+    local pid="$1"
+    if ps -p "$pid" > /dev/null; then
+        kill --timeout 2000 TERM --timeout 1000 KILL "$pid"
+        wait "$pid" 2>/dev/null || true
+    fi
+}
+
+# Kill any leftover of QEMU processes
+stop_all_qemus() {
+    ps aux | grep 'qemu-kvm' | grep 'hostfwd=tcp::[0-9]\+-:22' | awk '{print $2}' | xargs -r kill -9
+}
+
