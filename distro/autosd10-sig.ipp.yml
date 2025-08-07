@@ -2,15 +2,17 @@
 version: '2'
 mpp-vars:
   distro_name: autosd-sig
-  distro_version: 9
+  distro_version: 10
   distro_baseurl: https://autosd.sig.centos.org/AutoSD-$distro_version/nightly/repos/AutoSD/compose
   distro_baseurl_repo: $distro_baseurl/AutoSD/$arch/os/
   distro_chroot: centos-stream-$distro_version-$arch
   uefi_vendor: centos
   kernel_package: kernel-automotive
   release_rpm: centos-release-autosd
-  selinux_policy: automotive   # Available in nightly repo
-  linux_firmware_rpm: linux-firmware-automotive   # Available in sig repo
+  # Not yet available in CS 10
+  #selinux_policy: automotive
+  # linux-firmware-automotive is not yet available
+  linux_firmware_rpm: linux-firmware
   distro_repos:
     - id: autosd
       baseurl: $distro_baseurl/AutoSD/$arch/os/
@@ -21,9 +23,7 @@ mpp-vars:
   distro_debug_repos:
     - id: autosd-debug
       baseurl: $distro_baseurl/AutoSD/$arch/debug/tree/
-  distro_module_id: platform:el9
-  distro_build_rpms:
-    - python-toml
+  distro_module_id: platform:el10
   distro_gpg_keys:
     mpp-format-string: |
       $centos9_gpg_key
