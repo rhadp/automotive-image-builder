@@ -78,3 +78,25 @@ class NotAllowedFusa(AIBException):
 
     def __str__(self):
         return f"{self.option} is not allowed when using --fusa"
+
+
+class NoMatchingFilesError(AIBException):
+    def __init__(self, glob_pattern):
+        self.glob_pattern = glob_pattern
+
+    def __str__(self):
+        return f"No files matched glob pattern: {self.glob_pattern}"
+
+
+class TooManyFilesError(AIBException):
+    def __init__(self, glob_pattern, matched_count, max_files):
+        self.glob_pattern = glob_pattern
+        self.matched_count = matched_count
+        self.max_files = max_files
+
+    def __str__(self):
+        return (
+            f"Glob pattern '{self.glob_pattern}' matched {self.matched_count} files, "
+            f"but max_files limit is {self.max_files}. Consider using more specific "
+            f"patterns or increase max_files if needed."
+        )

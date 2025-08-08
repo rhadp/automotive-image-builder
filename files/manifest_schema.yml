@@ -113,6 +113,31 @@ $defs:
         required:
           - path
           - text
+      - additionalProperties: false
+        description: Add files using glob pattern
+        required:
+          - path
+          - source_glob
+        properties:
+          path:
+            description: The absolute destination pathname of the added file.
+            $ref: "#/$defs/abs_path"
+          source_glob:
+            description: The glob pattern (absolute or relative to manifest) to match files for copying
+            type: string
+          preserve_path:
+            description: If true, preserve the directory structure of matched files. If false, flatten files to path.
+            type: boolean
+            default: false
+          max_files:
+            description: Maximum number of files to process from glob pattern. Raises TooManyFilesError if exceeded.
+            type: integer
+            minimum: 1
+            default: 1000
+          allow_empty:
+            description: If true, allow glob patterns with no matches. Useful for creating drop-in directories.
+            type: boolean
+            default: false
 
   remove_file:
     description: Remove an installed file

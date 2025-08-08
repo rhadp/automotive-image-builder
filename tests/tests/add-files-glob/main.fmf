@@ -1,0 +1,5 @@
+summary: Verify that custom files and directories are properly added to the image using a glob
+id: 158155cf-3a4d-4738-be85-1e3eee883047
+duration: 60m
+test: |
+    ./test-glob-files.sh

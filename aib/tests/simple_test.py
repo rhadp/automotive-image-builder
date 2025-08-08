@@ -730,3 +730,637 @@ def mock_open_manifest_schema():
         },
     }
     return mock_open(read_data=yaml.dump(schema_content))
+
+
+class TestExtraIncludeGlob(unittest.TestCase):
+    """Test the new glob functionality in ExtraInclude class."""
+
+    def setUp(self):
+        """Create a temporary directory structure for testing."""
+        self.test_dir = tempfile.mkdtemp()
+        self.addCleanup(self._cleanup_test_dir)
+
+        # Create test directory structure
+        # test_dir/
+        #   ├── files/
+        #   │   ├── config1.conf
+        #   │   ├── config2.conf
+        #   │   └── readme.txt
+        #   ├── subdir1/
+        #   │   ├── app.log
+        #   │   └── data.py
+        #   └── subdir2/
+        #       ├── system.log
+        #       └── utils.py
+
+        self.files_dir = os.path.join(self.test_dir, "files")
+        self.subdir1 = os.path.join(self.test_dir, "subdir1")
+        self.subdir2 = os.path.join(self.test_dir, "subdir2")
+
+        os.makedirs(self.files_dir)
+        os.makedirs(self.subdir1)
+        os.makedirs(self.subdir2)
+
+        # Create test files
+        test_files = {
+            "files/config1.conf": "# Configuration 1\nkey1=value1\n",
+            "files/config2.conf": "# Configuration 2\nkey2=value2\n",
+            "files/readme.txt": "This is a readme file\n",
+            "subdir1/app.log": "Application log entry\n",
+            "subdir1/data.py": "# Python data module\ndata = [1, 2, 3]\n",
+            "subdir2/system.log": "System log entry\n",
+            "subdir2/utils.py": "# Python utilities\ndef helper(): pass\n",
+        }
+
+        for rel_path, content in test_files.items():
+            full_path = os.path.join(self.test_dir, rel_path)
+            with open(full_path, "w") as f:
+                f.write(content)
+
+    def _cleanup_test_dir(self):
+        """Clean up the temporary test directory."""
+        import shutil
+
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_glob_files_flatten(self):
+        """Test glob file copying with flattened structure."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        # Mock contents object
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test flattening .conf files
+        data = {
+            "source_glob": "files/*.conf",
+            "path": "/etc/config",
+            "preserve_path": False,
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Verify that two files were processed
+        self.assertEqual(len(contents.file_content_copy), 2)
+
+        # Verify the destination paths are flattened
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///etc/config/config1.conf",
+            "tree:///etc/config/config2.conf",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+        # Verify file_content_inputs were created
+        self.assertEqual(len(extra_include.file_content_inputs), 2)
+
+    def test_glob_files_preserve_path(self):
+        """Test glob file copying with path preservation."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test preserving paths for .py files with recursive glob pattern
+        data = {"source_glob": "**/*.py", "path": "/app/python", "preserve_path": True}
+
+        extra_include._add_glob_files(contents, data)
+
+        # Verify that two Python files were processed
+        self.assertEqual(len(contents.file_content_copy), 2)
+
+        # With the fix, **/*.py patterns now correctly preserve directory structure
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///app/python/subdir1/data.py",
+            "tree:///app/python/subdir2/utils.py",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+    def test_glob_files_preserve_path_recursive_working(self):
+        """Test glob file copying with path preservation using explicit subdirectory patterns."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test preserving paths using wildcard subdir pattern
+        data = {
+            "source_glob": "subdir*/*.py",
+            "path": "/app/python",
+            "preserve_path": True,
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Verify that two Python files were processed
+        self.assertEqual(len(contents.file_content_copy), 2)
+
+        # With the fix, subdir*/*.py patterns now correctly preserve directory structure
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///app/python/subdir1/data.py",
+            "tree:///app/python/subdir2/utils.py",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+    def test_glob_files_preserve_path_real_directory(self):
+        """Test glob file copying with path preservation from a real directory path."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test preserving paths with a real directory (no wildcards in directory part)
+        data = {
+            "source_glob": "files/*.conf",
+            "path": "/etc/config",
+            "preserve_path": True,
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Verify that two files were processed
+        self.assertEqual(len(contents.file_content_copy), 2)
+
+        # With preserve_path=True, the full relative path is preserved including 'files' directory
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///etc/config/files/config1.conf",
+            "tree:///etc/config/files/config2.conf",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+    def test_glob_files_preserve_path_with_subdirectory(self):
+        """Test glob file copying with path preservation from a subdirectory."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test preserving paths when globbing from a specific subdirectory
+        data = {"source_glob": "subdir1/*", "path": "/app/logs", "preserve_path": True}
+
+        extra_include._add_glob_files(contents, data)
+
+        # Verify that two files from subdir1 were processed
+        self.assertEqual(len(contents.file_content_copy), 2)
+
+        # Verify the destination paths preserve relative structure including subdir1
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///app/logs/subdir1/app.log",
+            "tree:///app/logs/subdir1/data.py",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+    def test_glob_files_no_matches_error(self):
+        """Test that an error is raised when no files match the glob pattern."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+
+        contents = MockContents()
+
+        # Test with a pattern that matches no files
+        data = {
+            "source_glob": "nonexistent/*.xyz",
+            "path": "/tmp/test",
+            "preserve_path": False,
+        }
+
+        with self.assertRaises(exceptions.NoMatchingFilesError) as context:
+            extra_include._add_glob_files(contents, data)
+
+        self.assertIn("No files matched glob pattern", str(context.exception))
+        self.assertEqual(context.exception.glob_pattern, "nonexistent/*.xyz")
+
+    def test_glob_files_max_files_limit(self):
+        """Test that glob pattern raises TooManyFilesError when max_files limit is exceeded."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        # Create more files than the limit
+        for i in range(5):
+            with open(os.path.join(self.test_dir, f"test_file_{i}.txt"), "w") as f:
+                f.write(f"content {i}")
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+
+        contents = MockContents()
+
+        data = {"source_glob": "test_file_*.txt", "path": "/tmp/test", "max_files": 3}
+
+        # Should raise TooManyFilesError
+        with self.assertRaises(exceptions.TooManyFilesError) as cm:
+            extra_include._add_glob_files(contents, data)
+
+        # Check the error message contains expected information
+        error_message = str(cm.exception)
+        self.assertIn("matched 5 files", error_message)
+        self.assertIn("max_files limit is 3", error_message)
+        self.assertIn("test_file_*.txt", error_message)
+
+        # Should not process any files due to error
+        self.assertEqual(len(contents.file_content_copy), 0)
+
+    def test_glob_files_default_preserve_path(self):
+        """Test that preserve_path defaults to False when not specified."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+
+        contents = MockContents()
+
+        # Test without preserve_path specified (should default to False)
+        data = {
+            "source_glob": "files/*.conf",
+            "path": "/etc/config",
+            # preserve_path not specified
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Verify files are flattened (preserve_path=False behavior)
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///etc/config/config1.conf",
+            "tree:///etc/config/config2.conf",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+    def test_glob_files_absolute_path(self):
+        """Test glob functionality with absolute paths."""
+        extra_include = ExtraInclude("/some/other/dir")  # Different basedir
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test with absolute glob pattern
+        absolute_glob = os.path.join(self.test_dir, "files", "*.conf")
+        data = {
+            "source_glob": absolute_glob,
+            "path": "/etc/config",
+            "preserve_path": False,
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Verify that files were still found and processed
+        self.assertEqual(len(contents.file_content_copy), 2)
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///etc/config/config1.conf",
+            "tree:///etc/config/config2.conf",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+    def test_add_file_copy_integration(self):
+        """Test that add_file_copy properly delegates to _add_glob_files."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test that add_file_copy calls _add_glob_files for glob patterns
+        data = {
+            "source_glob": "files/*.conf",
+            "path": "/etc/config",
+            "preserve_path": False,
+        }
+
+        extra_include.add_file_copy(contents, data)
+
+        # Verify that glob processing occurred
+        self.assertEqual(len(contents.file_content_copy), 2)
+
+        # Test that add_file_copy still handles regular files
+        regular_file_data = {
+            "source_path": "files/readme.txt",
+            "path": "/etc/readme.txt",
+        }
+
+        extra_include.add_file_copy(contents, regular_file_data)
+
+        # Should now have 3 files total (2 glob + 1 regular)
+        self.assertEqual(len(contents.file_content_copy), 3)
+
+    def test_glob_files_make_dirs_integration(self):
+        """Test that directories are added to make_dirs when preserve_path=True creates subdirectories."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test with preserve_path=True that creates subdirectories
+        data = {"source_glob": "**/*.py", "path": "/app/python", "preserve_path": True}
+        extra_include._add_glob_files(contents, data)
+
+        # Should have added directories to make_dirs
+        self.assertEqual(len(contents.make_dirs), 2)
+
+        # Check that the correct directories were added
+        created_dirs = [d["path"] for d in contents.make_dirs]
+        expected_dirs = ["/app/python/subdir1", "/app/python/subdir2"]
+        self.assertEqual(sorted(created_dirs), sorted(expected_dirs))
+
+        # All make_dirs entries should have parents=True
+        for dir_entry in contents.make_dirs:
+            self.assertEqual(dir_entry["parents"], True)
+
+        # Generate the manifest - should only have copy stage now
+        result = extra_include.generate()
+        pipeline = result["pipelines"][0]
+        self.assertEqual(len(pipeline["stages"]), 1)
+        copy_stage = pipeline["stages"][0]
+        self.assertEqual(copy_stage["type"], "org.osbuild.copy")
+
+    def test_glob_files_no_make_dirs_when_flattened(self):
+        """Test that no directories are added to make_dirs when preserve_path=False (flattened)."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test with preserve_path=False (flattened)
+        data = {
+            "source_glob": "**/*.py",
+            "path": "/app/python",
+            "preserve_path": False,
+        }
+        extra_include._add_glob_files(contents, data)
+
+        # Should not have added any directories to make_dirs since files are flattened
+        self.assertEqual(len(contents.make_dirs), 0)
+
+        # Generate the manifest to check stages
+        result = extra_include.generate()
+
+        # Should have pipelines
+        self.assertEqual(len(result["pipelines"]), 1)
+        pipeline = result["pipelines"][0]
+
+        # Should have only 1 stage: copy (no mkdir needed for flattened files)
+        self.assertEqual(len(pipeline["stages"]), 1)
+        copy_stage = pipeline["stages"][0]
+        self.assertEqual(copy_stage["type"], "org.osbuild.copy")
+
+    def test_glob_files_no_duplicate_make_dirs(self):
+        """Test that duplicate directories are not added to make_dirs."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Add files to same subdirectory twice
+        data1 = {"source_glob": "subdir1/*.py", "path": "/app", "preserve_path": True}
+        extra_include._add_glob_files(contents, data1)
+
+        data2 = {"source_glob": "subdir1/*.log", "path": "/app", "preserve_path": True}
+        extra_include._add_glob_files(contents, data2)
+
+        # Should only have one entry for /app/subdir1 even though we added files from it twice
+        self.assertEqual(len(contents.make_dirs), 1)
+        self.assertEqual(contents.make_dirs[0]["path"], "/app/subdir1")
+
+    def test_glob_files_with_parent_dir_references(self):
+        """Test glob patterns that use ../ and could generate invalid paths."""
+        # Create a basedir that simulates the examples directory
+        examples_dir = os.path.join(self.test_dir, "examples")
+        os.makedirs(examples_dir)
+
+        # Create some test files in sibling directory to examples
+        aib_dir = os.path.join(self.test_dir, "aib")
+        os.makedirs(aib_dir)
+        with open(os.path.join(aib_dir, "test_file.py"), "w") as f:
+            f.write("# test file")
+
+        extra_include = ExtraInclude(examples_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test glob pattern that goes up a directory level (like in glob-files.aib.yml)
+        data = {
+            "source_glob": "../aib/*.py",
+            "path": "/etc/app/aib",
+            "preserve_path": True,
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Should have processed the file
+        self.assertEqual(len(contents.file_content_copy), 1)
+
+        # The destination path should not contain "../" sequences
+        dest_path = contents.file_content_copy[0]["to"]
+        self.assertNotIn("..", dest_path)
+
+        # Since the relative path contains "..", it should fall back to basename
+        expected_path = "tree:///etc/app/aib/test_file.py"
+        self.assertEqual(dest_path, expected_path)
+
+    def test_glob_files_recursive_directory_contents(self):
+        """Test glob patterns with /**/* that copy directory contents without the directory itself."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test pattern that should copy contents of subdir1 without the subdir1 directory itself
+        data = {
+            "source_glob": "subdir1/**/*",
+            "path": "/app/extracted",
+            "preserve_path": True,
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Should have processed the files from subdir1
+        self.assertEqual(len(contents.file_content_copy), 2)
+
+        # Files should be copied without the subdir1 prefix
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///app/extracted/app.log",
+            "tree:///app/extracted/data.py",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+        # No directories should be created since files go directly to the destination
+        self.assertEqual(len(contents.make_dirs), 0)
+
+    def test_glob_files_recursive_with_subdirs(self):
+        """Test glob patterns with /**/* that include subdirectories."""
+        extra_include = ExtraInclude(self.test_dir)
+
+        # Create additional nested structure
+        nested_dir = os.path.join(self.test_dir, "subdir1", "nested")
+        os.makedirs(nested_dir)
+        with open(os.path.join(nested_dir, "deep.txt"), "w") as f:
+            f.write("deep file")
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test pattern that should copy all contents recursively
+        data = {
+            "source_glob": "subdir1/**/*",
+            "path": "/app/extracted",
+            "preserve_path": True,
+        }
+
+        extra_include._add_glob_files(contents, data)
+
+        # Should have processed all files including nested ones
+        self.assertEqual(len(contents.file_content_copy), 3)
+
+        # Check that nested structure is preserved but subdir1 prefix is stripped
+        dest_paths = [entry["to"] for entry in contents.file_content_copy]
+        expected_paths = [
+            "tree:///app/extracted/app.log",
+            "tree:///app/extracted/data.py",
+            "tree:///app/extracted/nested/deep.txt",
+        ]
+        self.assertEqual(sorted(dest_paths), sorted(expected_paths))
+
+        # Should create the nested directory
+        self.assertEqual(len(contents.make_dirs), 1)
+        self.assertEqual(contents.make_dirs[0]["path"], "/app/extracted/nested")
+
+    def test_glob_files_allow_empty_true(self):
+        """Test that allow_empty=True creates destination directory when no files match"""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test pattern that matches nothing
+        data = {
+            "source_glob": "nonexistent/*.xyz",
+            "path": "/drop/in/dir",
+            "allow_empty": True,
+        }
+
+        # Should not raise exception and should create directory
+        extra_include._add_glob_files(contents, data)
+
+        # Should have no files copied
+        self.assertEqual(len(contents.file_content_copy), 0)
+
+        # Should create the destination directory
+        self.assertEqual(len(contents.make_dirs), 1)
+        self.assertEqual(contents.make_dirs[0]["path"], "/drop/in/dir")
+        self.assertTrue(contents.make_dirs[0]["parents"])
+
+    def test_glob_files_allow_empty_false_raises_exception(self):
+        """Test that allow_empty=False (default) raises NoMatchingFilesError when no files match"""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test pattern that matches nothing with default allow_empty=False
+        data = {
+            "source_glob": "nonexistent/*.xyz",
+            "path": "/some/dir",
+        }
+
+        # Should raise NoMatchingFilesError
+        with self.assertRaises(exceptions.NoMatchingFilesError) as cm:
+            extra_include._add_glob_files(contents, data)
+
+        self.assertIn("nonexistent/*.xyz", str(cm.exception))
+
+        # Should have no files copied and no directories created
+        self.assertEqual(len(contents.file_content_copy), 0)
+        self.assertEqual(len(contents.make_dirs), 0)
+
+    def test_glob_files_allow_empty_explicit_false(self):
+        """Test that explicitly setting allow_empty=False raises exception when no files match"""
+        extra_include = ExtraInclude(self.test_dir)
+
+        class MockContents:
+            def __init__(self):
+                self.file_content_copy = []
+                self.make_dirs = []
+
+        contents = MockContents()
+
+        # Test pattern that matches nothing with explicit allow_empty=False
+        data = {
+            "source_glob": "missing/*.txt",
+            "path": "/some/dir",
+            "allow_empty": False,
+        }
+
+        # Should raise NoMatchingFilesError
+        with self.assertRaises(exceptions.NoMatchingFilesError) as cm:
+            extra_include._add_glob_files(contents, data)
+
+        self.assertIn("missing/*.txt", str(cm.exception))
