@@ -18,22 +18,28 @@ import tempfile
 import time
 
 is_verbose = False
+
+
 def print_verbose(s):
     if is_verbose:
         print(s)
 
+
 def print_error(s):
     print(s, file=sys.stderr)
+
 
 def exit_error(s):
     print_error("Error: " + s)
     sys.exit(1)
 
+
 def bool_arg(val):
     return "on" if val else "off"
 
+
 def find_qemu(arch):
-    binary_names = [ f"qemu-system-{arch}" ]
+    binary_names = [f"qemu-system-{arch}"]
     if arch == platform.machine():
         binary_names.append("qemu-kvm")
 
@@ -56,9 +62,10 @@ def find_qemu(arch):
 
     exit_error(f"Can't find {binary_name}")
 
+
 def download_aboot_u_boot(arch, dest_path):
-    with tempfile.TemporaryDirectory(prefix=f"runvm-uboot") as tmpdir:
-        autosigrepo="https://mirror.stream.centos.org/SIGs/9-stream/automotive"
+    with tempfile.TemporaryDirectory(prefix="runvm-uboot") as tmpdir:
+        autosigrepo = "https://mirror.stream.centos.org/SIGs/9-stream/automotive"
         subprocess.run(["dnf", "download", "-q",
                         "--downloaddir", tmpdir,
                         "--disablerepo", "*",
@@ -69,6 +76,7 @@ def download_aboot_u_boot(arch, dest_path):
         subprocess.run(["cpio", "-id", "--quiet", "-D", tmpdir], stdin=p1.stdout, check=True)
         subprocess.run(["cp", os.path.join(tmpdir, "boot/u-boot.bin"), dest_path], check=True)
 
+
 def qemu_available_accels(qemu):
     cmd = qemu + ' -accel help'
     info = subprocess.check_output(cmd.split(" ")).decode('utf-8')
@@ -78,8 +86,10 @@ def qemu_available_accels(qemu):
             accel_list.append(accel)
     return accel_list
 
+
 def random_id():
     return binascii.b2a_hex(os.urandom(8)).decode('utf8')
+
 
 def machine_id():
     try:
@@ -91,20 +101,22 @@ def machine_id():
             import plistlib
             cmd = "ioreg -rd1 -c IOPlatformExpertDevice -a"
             plist_data = subprocess.check_output(cmd.split(" "))
-            mid = plistlib.loads(plist_data)[0]["IOPlatformUUID"].replace("-","")
+            mid = plistlib.loads(plist_data)[0]["IOPlatformUUID"].replace("-", "")
         else:
             # fallback for the other distros
             hostname = socket.gethostname()
-            mid = ''.join(hex(ord(x))[2:] for x in (hostname*16)[:16])
+            mid = ''.join(hex(ord(x))[2:] for x in (hostname * 16)[:16])
 
     return mid
+
 
 def generate_mac_address():
     # create a new mac address based on our machine id
     data = machine_id()
 
-    maclst = ["FE"] + [data[x:x+2] for x in range(-12, -2, 2)]
-    return  ":".join(maclst)
+    maclst = ["FE"] + [data[x:x + 2] for x in range(-12, -2, 2)]
+    return ":".join(maclst)
+
 
 def run_http_server(path):
     writer, reader = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -117,9 +129,9 @@ def run_http_server(path):
 
         class HTTPHandler(http.server.SimpleHTTPRequestHandler):
             def log_message(self, format, *args):
-                pass # Silence logs
+                pass  # Silence logs
 
-        httpd = socketserver.TCPServer(("127.0.0.1", 0),  HTTPHandler)
+        httpd = socketserver.TCPServer(("127.0.0.1", 0), HTTPHandler)
         writer.send(str(httpd.server_address[1]).encode("utf8"))
         writer.close()
 
@@ -128,12 +140,13 @@ def run_http_server(path):
 
     # Parent
     writer.close()
-    atexit.register(os.kill, child_pid,signal.SIGTERM)
+    atexit.register(os.kill, child_pid, signal.SIGTERM)
 
     http_port = int(reader.recv(128).decode("utf8"))
     reader.close()
 
     return http_port
+
 
 def run_virtiofs_server(socket, sharedir):
     vio_args = [
@@ -148,6 +161,7 @@ def run_virtiofs_server(socket, sharedir):
         ]
     print_verbose(f"Running: {' '.join(vio_args)}")
     return subprocess.Popen(vio_args)
+
 
 def find_ovmf(args):
     dirs = [
@@ -164,11 +178,12 @@ def find_ovmf(args):
             suffix = ".secboot"
         else:
             suffix = ""
-        if (os.path.exists(f"{path}/OVMF_CODE{suffix}.fd") and
-            os.path.exists(f"{path}/OVMF_VARS{suffix}.fd")):
+        if (os.path.exists(f"{path}/OVMF_CODE{suffix}.fd")
+                and os.path.exists(f"{path}/OVMF_VARS{suffix}.fd")):
             return path
 
     raise RuntimeError("Could not find OMVF")
+
 
 qemu_dirs = [
     "/usr/local/share/qemu",
@@ -177,6 +192,7 @@ qemu_dirs = [
     "/usr/share/qemu"
 ]
 
+
 # location can differ depending on how qemu is installed
 def find_edk2():
     for path in qemu_dirs:
@@ -184,6 +200,7 @@ def find_edk2():
             return path
 
     raise RuntimeError("Could not find edk2 directory")
+
 
 def find_edk2_code_fd():
     files = [
@@ -199,15 +216,17 @@ def find_edk2_code_fd():
 
     raise RuntimeError("Could not find edk2 code fd file")
 
+
 def qemu_run_command(qmp_socket_path, command):
     sock2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock2.connect(qmp_socket_path)
-    r = sock2.recv(1024)
+    _ = sock2.recv(1024)
     sock2.send('{"execute":"qmp_capabilities"}\n'.encode("utf8"))
-    r = sock2.recv(1024)
+    _ = sock2.recv(1024)
     sock2.send(f'{command}\n'.encode("utf8"))
-    r = sock2.recv(1024)
+    _ = sock2.recv(1024)
     sock2.close()
+
 
 def virtio_serial_connect(virtio_socket_path):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -219,11 +238,12 @@ def virtio_serial_connect(virtio_socket_path):
         except FileNotFoundError:
             pass
 
-def available_tcp_port(port_range_from = 1024):
+
+def available_tcp_port(port_range_from=1024):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     port = port_range_from
-    port_range_to = port_range_from + 32 # limit for retry
+    port_range_to = port_range_from + 32  # limit for retry
     while port < port_range_to:
         try:
             s.bind(('', port))
@@ -234,29 +254,32 @@ def available_tcp_port(port_range_from = 1024):
     s.close()
     return port
 
+
 class WatchdogCommand:
     START = 1
     STOP = 2
 
-    def __init__(self, op, arg = None):
+    def __init__(self, op, arg=None):
         self.op = op
         self.arg = arg
+
 
 def parse_watchdog_commands(sock):
     commands = []
     data = sock.recv(16).decode("utf8")
-    for l in data.splitlines():
-        if l.startswith("START"):
+    for line in data.splitlines():
+        if line.startswith("START"):
             try:
-                arg = int(l[5:])
+                arg = int(line[5:])
             except ValueError:
-                arg = 30 # Default if not specified
-            commands.append( WatchdogCommand(WatchdogCommand.START, arg) )
-        elif l.startswith("STOP"):
-            commands.append( WatchdogCommand(WatchdogCommand.STOP) )
+                arg = 30  # Default if not specified
+            commands.append(WatchdogCommand(WatchdogCommand.START, arg))
+        elif line.startswith("STOP"):
+            commands.append(WatchdogCommand(WatchdogCommand.STOP))
         else:
-            print_verbose(f"Unsupported watchdog command {l}")
+            print_verbose(f"Unsupported watchdog command {line}")
     return commands
+
 
 def run_watchdog(watch_socket_path, qmp_socket_path):
     sock = virtio_serial_connect(watch_socket_path)
@@ -269,7 +292,7 @@ def run_watchdog(watch_socket_path, qmp_socket_path):
 
     while True:
         timeout = None
-        if watchdog_timeout != None:
+        if watchdog_timeout is not None:
             timeout = max(watchdog_timeout - time.time(), 0) * 1000
 
         poll_res = p.poll(timeout)
@@ -284,11 +307,11 @@ def run_watchdog(watch_socket_path, qmp_socket_path):
                     print_verbose(f"Starting watchdog for {cmd.arg} sec")
                     watchdog_timeout = time.time() + cmd.arg
                 if cmd.op == WatchdogCommand.STOP:
-                    print_verbose(f"Stopped watchdog")
+                    print_verbose("Stopped watchdog")
                     watchdog_timeout = None
 
-        if watchdog_timeout != None and time.time() >= watchdog_timeout:
-            print_verbose(f"Triggering watchdog")
+        if watchdog_timeout is not None and time.time() >= watchdog_timeout:
+            print_verbose("Triggering watchdog")
             qemu_run_command(qmp_socket_path, '{"execute": "system_reset"}')
 
             # Queue a new timeout in case the next boot fails, until disabled
@@ -301,25 +324,25 @@ def main():
     parser.add_argument("--arch", default=platform.machine(), action="store",
                         help=f"Arch to run for (default {platform.machine()})")
     parser.add_argument("--publish-dir", action="store",
-                        help=f"Publish the specified directory over http in the vm")
+                        help="Publish the specified directory over http in the vm")
     parser.add_argument("--memory", default="2G",
-                        help=f"Memory size (default 2G)")
+                        help="Memory size (default 2G)")
     parser.add_argument("--vga", default=False, action="store_true",
-                        help=f"Use vga graphics instead of the default virtio-gpu")
+                        help="Use vga graphics instead of the default virtio-gpu")
     parser.add_argument("--nographics", default=False, action="store_true",
-                        help=f"Run without graphics")
+                        help="Run without graphics")
     parser.add_argument("--nosmp", default=False, action="store_true",
-                        help=f"Use a single core")
+                        help="Use a single core")
     parser.add_argument("--aboot", default=False, action="store_true",
-                        help=f"Boot with aboot")
+                        help="Boot with aboot")
     parser.add_argument("--watchdog", default=False, action="store_true",
-                        help=f"Enable watchdog")
+                        help="Enable watchdog")
     parser.add_argument("--tpm2", default=False, action="store_true",
-                        help=f"Enable TPM2")
+                        help="Enable TPM2")
     parser.add_argument("--nvme", default=False, action="store_true",
-                        help=f"Use nvme instead of virtio")
+                        help="Use nvme instead of virtio")
     parser.add_argument("--snapshot", default=False, action="store_true",
-                        help=f"Work on a snapshot  of the image")
+                        help="Work on a snapshot  of the image")
     parser.add_argument("--ovmf-dir", action="store",
                         help="Specify directory for OVMF files (Open Virtual Machine Firmware)")
     parser.add_argument("--secureboot", dest="secureboot", action="store_true", default=False,
@@ -331,15 +354,15 @@ def main():
     parser.add_argument("--cdrom", action="store",
                         help="Specify .iso to load")
     parser.add_argument("--noaccel", default=False, action="store_true",
-                        help=f"Disable acceleration (kvm or hvf)")
+                        help="Disable acceleration (kvm or hvf)")
     parser.add_argument("--sharedir", action="store",
-                        help=f"Share directory using virtiofs")
+                        help="Share directory using virtiofs")
     parser.add_argument("--ip", default=None,
-                        help=f"IP address of that the VM is configured for, defaults to: 10.0.2.15")
+                        help="IP address of that the VM is configured for, defaults to: 10.0.2.15")
     parser.add_argument("--network", default="10.0.2.0/24",
-                        help=f"Network IP range to use, defaults to: 10.0.2.0/24")
+                        help="Network IP range to use, defaults to: 10.0.2.0/24")
     parser.add_argument("--serial-socket",
-                        help=f"Unix socket to redirect serial output to")
+                        help="Unix socket to redirect serial output to")
     parser.add_argument("image", type=str, help="The image to boot")
     parser.add_argument('extra_args', nargs=argparse.REMAINDER, metavar="...", help="extra qemu arguments")
 
@@ -384,17 +407,17 @@ def main():
     elif args.arch == "aarch64":
         machine = "virt"
         default_cpu = "cortex-a57"
-        num_cpus = min(os.cpu_count(), 8) # for up to 8 cores (limitation of qemu-system-aarch64)
+        num_cpus = min(os.cpu_count(), 8)  # for up to 8 cores (limitation of qemu-system-aarch64)
         if sys.platform == "darwin":
             qemu_args += [
-                "-device", "virtio-gpu-pci", # for display
-                "-display", "default,show-cursor=on", # for display
-                "-device", "qemu-xhci", # for keyboard
-                "-device", "usb-kbd", # for keyboard
-                "-device", "usb-tablet", # for mouse
+                "-device", "virtio-gpu-pci",  # for display
+                "-display", "default,show-cursor=on",  # for display
+                "-device", "qemu-xhci",  # for keyboard
+                "-device", "usb-kbd",  # for keyboard
+                "-device", "usb-tablet",  # for mouse
             ]
         if args.aboot:
-            args.memory = "4G" # this is hardcoded in our dtb files
+            args.memory = "4G"  # this is hardcoded in our dtb files
             qemu_args += [
                 "-bios", aboot_bios
             ]
@@ -440,7 +463,7 @@ def main():
         "-cpu", "host" if accel_enabled else default_cpu
     ]
 
-    guestfwds=""
+    guestfwds = ""
 
     if args.publish_dir:
         if shutil.which("netcat") is None:
@@ -466,7 +489,6 @@ def main():
     for local, remote in portfwd.items():
         print_verbose(f"port: {local} → {remote}")
 
-
     ip = args.ip or ""
     fwds = [f"hostfwd=tcp::{h}-{ip}:{g}" for h, g in portfwd.items()]
 
@@ -487,10 +509,10 @@ def main():
         if args.arch != "x86_64":
             exit_error(f"-vga is not supported on {args.arch}")
         # On x86, vga is already the default
-    else: # Default is virtio-gpu
+    else:  # Default is virtio-gpu
         # vga is on by default on x86, disable
         if args.arch == "x86_64":
-            qemu_args += [ "-vga", "none" ]
+            qemu_args += ["-vga", "none"]
         qemu_args += [
             "-device", "virtio-gpu-pci",
             "-device", "virtio-keyboard-pci",
@@ -529,7 +551,7 @@ def main():
             tpm2_path = ".tpm2_state"
         os.makedirs(tpm2_path, exist_ok=True)
 
-        swtpm_args = ["swtpm", "socket", "--tpm2", "--tpmstate", f"dir={tpm2_path}", "--ctrl", f"type=unixio,path={tpm2_socket}" ]
+        swtpm_args = ["swtpm", "socket", "--tpm2", "--tpmstate", f"dir={tpm2_path}", "--ctrl", f"type=unixio,path={tpm2_socket}"]
         res = subprocess.Popen(swtpm_args)
 
         qemu_args += [
@@ -543,10 +565,10 @@ def main():
     # Chose disk device
     disk_if = "none"
     if args.nvme:
-        qemu_args += [ "-device", "nvme,serial=deadbeef,drive=rootdisk"  ]
+        qemu_args += ["-device", "nvme,serial=deadbeef,drive=rootdisk"]
     elif args.aboot:
         # virtio-blk-pci doesn't work with aboot, so use virtio-blk-device
-        qemu_args += [ "-device", "virtio-blk-device,scsi=off,drive=rootdisk"  ]
+        qemu_args += ["-device", "virtio-blk-device,scsi=off,drive=rootdisk"]
     else:
         # Default "if=virtio", typically a pci based virtio device
         disk_if = "virtio"
@@ -577,7 +599,7 @@ def main():
         qemu_args += [
             "-chardev", "socket,id=char0,path=" + vhostsocket,
             "-device", "vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=host",
-            "-object", "memory-backend-file,id=mem,size="+str(args.memory)+",mem-path=/dev/shm,share=on",
+            "-object", "memory-backend-file,id=mem,size=" + str(args.memory) + ",mem-path=/dev/shm,share=on",
             "-numa", "node,memdev=mem"
         ]
         print(f"Sharing directory {args.sharedir}, mount using 'mount -t virtiofs host /mnt'")
