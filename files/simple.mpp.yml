@@ -126,6 +126,8 @@ pipelines:
           disable_dracut: true
           exclude:
             docs: true
+          ostree_booted:
+            mpp-eval: use_ostree
         inputs:
           packages:
             type: org.osbuild.files
