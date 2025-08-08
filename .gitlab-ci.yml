@@ -202,6 +202,16 @@ trigger-pipeline:
       when: never
     - !reference [.trigger-template, rules]
 
+.prepare-aws-setup: &prepare-aws-setup
+  - mkdir -p ~/.config
+  - 'echo "client:" > ~/.config/duffy'
+  - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
+  - 'echo "  auth:" >> ~/.config/duffy'
+  - 'echo "    name:" $duffy_name >> ~/.config/duffy'
+  - 'echo "    key:" $duffy_key >> ~/.config/duffy'
+  - base64 -d $ssh_key > automotive_sig.ssh
+  - chmod 600 automotive_sig.ssh
+  - pip install "duffy[client]"
 
 build_doc_demos:
   stage: test
@@ -209,16 +219,8 @@ build_doc_demos:
   before_script:
     - apt-get update
     - apt-get install -y jq less
-    - mkdir -p ~/.config
-    - 'echo "client:" > ~/.config/duffy'
-    - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
-    - 'echo "  auth:" >> ~/.config/duffy'
-    - 'echo "    name:" $duffy_name >> ~/.config/duffy'
-    - 'echo "    key:" $duffy_key >> ~/.config/duffy'
-    - base64 -d $ssh_key > automotive_sig.ssh
-    - chmod 600 automotive_sig.ssh
+    - *prepare-aws-setup
   script:
-    - pip install "duffy[client]"
     - sh tests/run_aws.sh
   allow_failure: true
   artifacts:
@@ -236,18 +238,8 @@ integration_tests:
     - dnf config-manager --set-enabled crb
     - dnf install -y python3-pip jq less rsync openssh-clients epel-release
     - dnf install -y tmt tmt+report-junit
-    - pip install "duffy[client]"
-    - mkdir -p ~/.config
-    - 'echo "client:" > ~/.config/duffy'
-    - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
-    - 'echo "  auth:" >> ~/.config/duffy'
-    - 'echo "    name:" $duffy_name >> ~/.config/duffy'
-    - 'echo "    key:" $duffy_key >> ~/.config/duffy'
-    - base64 -d $ssh_key > automotive_sig.ssh
-    - chmod 600 automotive_sig.ssh
+    - *prepare-aws-setup
   script:
-    - echo "CI_PIPELINE_SOURCE = $CI_PIPELINE_SOURCE"
-    - pip install "duffy[client]"
     - sh ci-scripts/run_tmt_tests.sh
   artifacts:
     paths:
