@@ -33,6 +33,7 @@ mpp-vars:
     bin:x:1:
     cdrom:x:11:
     chrony:x:995:
+    clock:x:103:
     daemon:x:2:
     dbus:x:81:
     dialout:x:18:
