@@ -1,11 +1,23 @@
 #!/bin/bash
 
+
+AIB_DISTRO=${1:-autosd9-sig}
+# Base repository for AIB packages needs to be aligned with requested distro
+if [[ "${AIB_DISTRO}" == *"autosd9"* ]]; then
+    AIB_BASE_REPO="https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose/AutoSD/\$arch/os/"
+    CS_VERSION=9
+else
+    AIB_BASE_REPO="https://autosd.sig.centos.org/AutoSD-10/nightly/repos/AutoSD/compose/AutoSD/\$arch/os/"
+    CS_VERSION=10
+fi
+
+
 if [ ! -f duffy.session ]; then
 echo "Retrieving an AWS instance"
 set +x
 duffy client \
  request-session \
- pool=metal-ec2-c5n-centos-9s-x86_64,quantity=1 > duffy.session
+ pool=metal-ec2-c5n-centos-${CS_VERSION}s-x86_64,quantity=1 > duffy.session
 fi
 
 set -x
@@ -40,6 +52,8 @@ cd tests && tmt run -v \
   -eNODE=$ip \
   -eNODE_SSH_KEY=$PWD/../automotive_sig.ssh \
   -eBUILD_AIB_RPM=yes \
+  -eAIB_DISTRO=$AIB_DISTRO \
+  -eAIB_BASE_REPO=$AIB_BASE_REPO \
   plan --name connect
 
 success=$?

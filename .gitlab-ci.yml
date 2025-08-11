@@ -202,6 +202,21 @@ trigger-pipeline:
       when: never
     - !reference [.trigger-template, rules]
 
+.prepare-aws-setup: &prepare-aws-setup
+  - mkdir -p ~/.config
+  - 'echo "client:" > ~/.config/duffy'
+  - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
+  - 'echo "  auth:" >> ~/.config/duffy'
+  - 'echo "    name:" $duffy_name >> ~/.config/duffy'
+  - 'echo "    key:" $duffy_key >> ~/.config/duffy'
+  - base64 -d $ssh_key > automotive_sig.ssh
+  - chmod 600 automotive_sig.ssh
+  - pip install "duffy[client]"
+
+.prepare-cs-tmt-setup: &prepare-cs-tmt-setup
+  - dnf config-manager --set-enabled crb
+  - dnf install -y python3-pip jq less rsync openssh-clients epel-release
+  - dnf install -y tmt tmt+report-junit
 
 build_doc_demos:
   stage: test
@@ -209,16 +224,8 @@ build_doc_demos:
   before_script:
     - apt-get update
     - apt-get install -y jq less
-    - mkdir -p ~/.config
-    - 'echo "client:" > ~/.config/duffy'
-    - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
-    - 'echo "  auth:" >> ~/.config/duffy'
-    - 'echo "    name:" $duffy_name >> ~/.config/duffy'
-    - 'echo "    key:" $duffy_key >> ~/.config/duffy'
-    - base64 -d $ssh_key > automotive_sig.ssh
-    - chmod 600 automotive_sig.ssh
+    - *prepare-aws-setup
   script:
-    - pip install "duffy[client]"
     - sh tests/run_aws.sh
   allow_failure: true
   artifacts:
@@ -226,29 +233,35 @@ build_doc_demos:
       - logs
     when: always
 
-integration_tests:
+integration_tests_9:
   stage: test
   image: quay.io/centos/centos:stream9
   needs:
     - job: packit-srpm-build
       artifacts: true
   before_script:
-    - dnf config-manager --set-enabled crb
-    - dnf install -y python3-pip jq less rsync openssh-clients epel-release
-    - dnf install -y tmt tmt+report-junit
-    - pip install "duffy[client]"
-    - mkdir -p ~/.config
-    - 'echo "client:" > ~/.config/duffy'
-    - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
-    - 'echo "  auth:" >> ~/.config/duffy'
-    - 'echo "    name:" $duffy_name >> ~/.config/duffy'
-    - 'echo "    key:" $duffy_key >> ~/.config/duffy'
-    - base64 -d $ssh_key > automotive_sig.ssh
-    - chmod 600 automotive_sig.ssh
+    - *prepare-cs-tmt-setup
+    - *prepare-aws-setup
   script:
-    - echo "CI_PIPELINE_SOURCE = $CI_PIPELINE_SOURCE"
-    - pip install "duffy[client]"
-    - sh ci-scripts/run_tmt_tests.sh
+    - sh ci-scripts/run_tmt_tests.sh autosd9-sig
+  artifacts:
+    paths:
+      - tmt-run
+    when: always
+
+integration_tests_10:
+  stage: test
+  # TODO: Switch to CS10 once tmt is available in EPEL10
+  image: quay.io/centos/centos:stream9
+  needs:
+    - job: packit-srpm-build
+      artifacts: true
+  before_script:
+    - *prepare-cs-tmt-setup
+    - *prepare-aws-setup
+  script:
+    # TODO: change to autosd10-sig once automotive-image-builder-1.1.0 with proper AutoSD 10 support is released
+    - sh ci-scripts/run_tmt_tests.sh autosd10-latest-sig
   artifacts:
     paths:
       - tmt-run

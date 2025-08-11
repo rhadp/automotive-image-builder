@@ -90,6 +90,10 @@ Following environment variable exists to customize test execution:
    - Contains the URL of the custom repository to install automotive-image-builder and its dependencies from
      (for example to test custom automotive-image-builder package)
    - Default value: _empty_
+- **`AIB_DISTRO`**
+   - Distribution used inside tests. Available distributions can be listed using `automotive-image-builder list-dist`
+     on the relevant platform.
+   - Default value: `autosd9-sig`
 - **`AIB_SRPM_DIR`**
    - Directory where a-i-b source RPM should be uploaded before tests execution
    - Default value: `/var/tmp/aib-srpm`
@@ -129,6 +133,8 @@ dnf install tmt-all
 ## Setting up a VM to run integration tests
 
 Following sections provides detailed guide to prepare a VM to run integration tests agains on your local machine.
+Currently it's possible to run tests on CS9 or CS10 VMs, the overall steps are very similar for both versions,
+differences will be highlighted.
 
 ### Generating SSH keys to access the VM
 
@@ -150,7 +156,7 @@ VM, where tests will be executed, will be configured using following cloud-init 
 users:
   - name: root
     ssh_authorized_keys:
-      - <PUBLIC SSH KEY>
+      - @PUBLIC SSH KEY@
 
 ssh:
   disable_root: false
@@ -158,12 +164,12 @@ ssh:
 yum_repos:
   aib-base-repo:
     name: AIB Base Repository
-    baseurl: https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose/AutoSD/${arch}/os/
+    baseurl: @AIB BASE REPO URL@
     enabled: true
     gpgcheck: false
 
 
-# preinstall automotive-image-builder dependencies
+# preinstall automotive-image-builder and tests dependencies
 packages:
   - android-tools
   - osbuild
@@ -172,8 +178,10 @@ packages:
   - osbuild-lvm2
   - osbuild-ostree
   - ostree
+  - qemu-kvm
   - python3-jsonschema
   - python3-pyyaml
+  - sshpass
 
 power_state:
   delay: now
@@ -183,8 +191,12 @@ power_state:
   condition: true
 ```
 
-Please save above content into `/tmp/user-data.yml` and replace `<PUBLIC SSH KEY`> with the content of
-`~/.ssh/aib-tests.pub` file created in the previous section.
+Please save above content into `/tmp/user-data.yml` and replace:
+
+- `@PUBLIC SSH KEY@` with the content of `~/.ssh/aib-tests.pub` file created in the previous section.
+- `@AIB BASE REPO URL@` depending on the OS version used
+   - CS9: `https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose/AutoSD/${arch}/os/`
+   - CS10: `https://autosd.sig.centos.org/AutoSD-10/nightly/repos/AutoSD/compose/AutoSD/${arch}/os/`
 
 
 ### Creating the VM
@@ -192,24 +204,36 @@ Please save above content into `/tmp/user-data.yml` and replace `<PUBLIC SSH KEY
 CentOS Stream base image casn be downloaded using following command:
 
 ```shell
-sudo curl -o /var/lib/libvirt/images/aib-tests.qcow2 \
-    https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-9-latest.x86_64.qcow2
+sudo curl -o /var/lib/libvirt/images/aib-tests.qcow2 @IMAGE URL@
+```
+
+Please replace `@IMAGE URL@` with the real URL depending on the OS version used:
+- CS9: `https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-9-latest.x86_64.qcow2`
+- CS10: `https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2`
+
+Resize the default 10G disk for all tests to pass successfully:
+
+```shell
+sudo qemu-img resize /var/lib/libvirt/images/aib-tests.qcow2 +10G
 ```
 
 And then let's create VM:
 
 ```shell
-cd tests
 sudo virt-install  \
      --name aib-tests \
-     --memory 16384  --cpu host-model --vcpus 4 --graphics none \
-     --os-variant centos-stream9 \
+     --memory 16384  --cpu host-model --vcpus 8 --graphics none \
+     --os-variant @OS VARIANT@ \
      --import \
      --disk /var/lib/libvirt/images/aib-tests.qcow2,format=qcow2,bus=virtio \
      --network default  \
      --cloud-init disable=on,user-data=/tmp/user-data.yml \
      --noreboot
 ```
+
+Please replace `@OS VARIANT@` depending on the OS version used:
+- CS9: `centos-stream9`
+- CS10: `centos-stream10`
 
 The VM should be created and it should be stopped once creation is finished.
 

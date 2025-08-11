@@ -239,7 +239,12 @@ save_to_tmt_test_data () {
 FAST_OPTIONS="--define sign_kernel_modules=false"
 
 trybuild() {
-     $AIB build --cache $OUTDIR/dnf-cache --build-dir $BUILDDIR $FAST_OPTIONS --define reproducible_image=true "$@" > build.log
+    $AIB build \
+        --distro=$AIB_DISTRO \
+        --cache $OUTDIR/dnf-cache \
+        --build-dir $BUILDDIR $FAST_OPTIONS \
+        --define reproducible_image=true \
+        "$@" > build.log
 }
 
 build() {
