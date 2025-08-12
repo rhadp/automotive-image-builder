@@ -11,6 +11,8 @@ mpp-vars:
   release_rpm: centos-release-autosd
   # Not yet available in CS10
   #selinux_policy: automotive
+  # Needs to be disabled until the logic to defer signing at image composition lands into kernel-automotive for AutoSD 10
+  sign_kernel_modules: false
   distro_repos:
     - id: autosd
       baseurl: $distro_baseurl_repo
