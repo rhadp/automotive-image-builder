@@ -15,6 +15,7 @@ mpp-vars:
   linux_firmware_rpm: linux-firmware
   # Needs to be disabled until the logic to defer signing at image composition lands into kernel-automotive for AutoSD 10
   sign_kernel_modules: false
+  rpmdb_in_usr: true
   distro_repos:
     - id: autosd
       baseurl: $distro_baseurl/AutoSD/$arch/os/

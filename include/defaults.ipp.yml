@@ -148,6 +148,7 @@ mpp-vars:
   release_rpm: centos-release-automotive
   linux_firmware_rpm:
   partition_label: gpt
+  rpmdb_in_usr: false
 
   extra_image_copy: []
 
