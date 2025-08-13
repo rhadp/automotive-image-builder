@@ -251,6 +251,7 @@ integration_tests_9:
 
 integration_tests_10:
   stage: test
+  timeout: 90m
   # TODO: Switch to CS10 once tmt is available in EPEL10
   image: quay.io/centos/centos:stream9
   needs:
