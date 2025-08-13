@@ -151,6 +151,15 @@ pipelines:
                   name:
                     mpp-format-string: /etc/selinux/{selinux_policy}/contexts/files/file_contexts.subs_dist
                   version: '"/usr/etc /etc"'
+          # Work around "rpm-ostree compose postprocess" not handling the rpm db being in /usr/lib/sysimage/rpm
+          # See https://github.com/coreos/rpm-ostree/issues/5462
+          - mpp-if: rpmdb_in_usr
+            then:
+              type: org.osbuild.lorax-script
+              options:
+                path: auto/move
+                product:
+                  name: "/usr/lib/sysimage/rpm /usr/share/rpm"
           - type: org.osbuild.ostree.preptree
             options:
               etc_group_members:

@@ -13,6 +13,7 @@ mpp-vars:
   #selinux_policy: automotive
   # Needs to be disabled until the logic to defer signing at image composition lands into kernel-automotive for AutoSD 10
   sign_kernel_modules: false
+  rpmdb_in_usr: true
   distro_repos:
     - id: autosd
       baseurl: $distro_baseurl_repo
