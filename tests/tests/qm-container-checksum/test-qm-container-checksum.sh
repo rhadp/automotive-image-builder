@@ -12,7 +12,7 @@ success=0
 
 # Build image
 echo_log "Building AIB image..."
-build --target qemu --mode image --export image test.aib.yml "$IMG_NAME"
+build --target qemu --mode image --fusa --export image test.aib.yml "$IMG_NAME"
 
 # Verify image exists
 assert_image_exists "$IMG_NAME"
@@ -36,12 +36,27 @@ if [[ "$CHECK_OUTPUT" == "active" ]]; then
     success=0
 else
     echo_fail "auto-boot-check is NOT active"
-    echo_log "journalctl -xeu auto-boot-check"
-    run_vm_command "journalctl -xeu auto-boot-check -n 500 --no-pager" "$SSH_PORT" "$PASSWORD"
+    echo_log "Fetching journal output..."
+
+    LOG_FILE="auto-boot-check.log"
+
+    run_vm_command "journalctl -u auto-boot-check -n 500 --no-pager" "$SSH_PORT" "$PASSWORD" > "$LOG_FILE" || true
+    save_to_tmt_test_data "$LOG_FILE"
+
+    CHK_LINE=$(grep -m1 -E "config checksum was .* expected" "$LOG_FILE" || true)
+    if [ -n "$CHK_LINE" ]; then
+        echo_log "Checksum mismatch:"
+        echo "$CHK_LINE"
+        ACTUAL=$(echo "$CHK_LINE"   | sed -n "s/.*checksum was '\([0-9a-f]\{40,64\}\)'.*/\1/p")
+        EXPECTED=$(echo "$CHK_LINE" | sed -n "s/.*expected '\([0-9a-f]\{40,64\}\)'.*/\1/p")
+        [ -n "$ACTUAL" ] && [ -n "$EXPECTED" ] && echo_log "actual=$ACTUAL expected=$EXPECTED"
+    else
+        echo_log "Checksum line not found, showing last 10 lines:"
+        tail -n 10 "$LOG_FILE" || true
+    fi
     success=1
 fi
 
 # Cleanup
 stop_vm "$VM_PID"
-
 exit $success
