@@ -1,0 +1,8 @@
+summary: Validate that the QM container checksum is correct after image build
+id: e74f0852-4f66-4116-9cf8-563db2873aef
+require:
+  - qemu-kvm
+  - sshpass
+duration: 60m
+test: |
+  ./test-qm-container-checksum.sh

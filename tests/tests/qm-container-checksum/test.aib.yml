@@ -1,0 +1,18 @@
+name: test-qm-container-checksum
+
+content:
+  rpms:
+    - openssh-server
+    - auto-boot-check
+    - systemd
+  systemd:
+    enabled_services:
+      - sshd.service
+      - auto-boot-check.service
+qm: {}
+
+auth:
+  root_password: $6$X86FPAJNb8bOAXw4$yeuJJfLVspiH/ubQbUWfmD7NO7UpRhRmGw.H8XM29xyKWTtmjnh0GUqM7ExNriZK4NWwm5nigoNdA4SwTDhXe1
+  sshd_config:
+    PasswordAuthentication: true
+    PermitRootLogin: true
