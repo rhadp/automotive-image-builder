@@ -9,6 +9,7 @@ mpp-vars:
   uefi_vendor: centos
   kernel_package: kernel-automotive
   release_rpm: centos-release-autosd
+  containers_configdir: /usr/share/containers
   # Not yet available in CS10
   #selinux_policy: automotive
   # Needs to be disabled until the logic to defer signing at image composition lands into kernel-automotive for AutoSD 10
