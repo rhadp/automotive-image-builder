@@ -23,5 +23,6 @@ mpp-vars:
     mpp-join:
       - mpp-eval: dracut_force_drivers
       - - simplefb
+  use_boot: grub2 # Currently no ukiboot support, since not using GPT partitioning
   partition_label: dos
 pipelines: []

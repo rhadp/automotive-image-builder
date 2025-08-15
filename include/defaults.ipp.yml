@@ -169,7 +169,11 @@ mpp-vars:
 
   # Possible values:
   # aboot, ukiboot, grub2, grub2-sbl, none
-  use_boot: grub2
+  use_boot:
+    # TODO-BOOTC: Currently bootc requires grub2
+    mpp-if: is_bootc_export
+    then: grub2
+    else: ukiboot
   use_abl: false
   qm_pipeline: qm_rootfs
   use_tuned_realtime: false
