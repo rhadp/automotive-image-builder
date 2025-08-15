@@ -304,6 +304,8 @@ def main():
                         help=f"Publish the specified directory over http in the vm")
     parser.add_argument("--memory", default="2G",
                         help=f"Memory size (default 2G)")
+    parser.add_argument("--vga", default=False, action="store_true",
+                        help=f"Use vga graphics instead of the default virtio-gpu")
     parser.add_argument("--nographics", default=False, action="store_true",
                         help=f"Run without graphics")
     parser.add_argument("--nosmp", default=False, action="store_true",
@@ -481,6 +483,19 @@ def main():
 
     if args.nographics:
         qemu_args += ["-nographic"]
+    elif args.vga:
+        if args.arch != "x86_64":
+            exit_error(f"-vga is not supported on {args.arch}")
+        # On x86, vga is already the default
+    else: # Default is virtio-gpu
+        # vga is on by default on x86, disable
+        if args.arch == "x86_64":
+            qemu_args += [ "-vga", "none" ]
+        qemu_args += [
+            "-device", "virtio-gpu-pci",
+            "-device", "virtio-keyboard-pci",
+            "-device", "virtio-mouse-pci",
+        ]
 
     runvm_id = random_id()
 
