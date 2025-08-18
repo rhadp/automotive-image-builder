@@ -10,8 +10,4 @@ content:
     - e2fsprogs # mkfs.ext4 neeed for bc-i-b
     - bootupd # needed for bootc
     - shim # needed for bootupd
-
-experimental:
-  internal_defines:
-    # Some added rpms are arch-optional, they are added from this
-    bootc_add_builder_rpms: true
+    - grub2
