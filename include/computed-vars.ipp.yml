@@ -604,7 +604,7 @@ mpp-vars:
             options:
               paths:
                 - from:
-                    mpp-format-string: input://tree/boot/efi/EFI/BOOT/ukiboot{efiarch}.efi
+                    mpp-format-string: input://tree/usr/libexec/ukiboot/efi/ukiboot{efiarch}.efi
                   to:
                     mpp-format-string: tree:///boot/efi/EFI/BOOT/{efibootfile}
 
