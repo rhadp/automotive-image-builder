@@ -14,7 +14,7 @@ removed.
 import os
 import shutil
 
-import osbuild.util.linux as linux
+import aibosbuild.util.linux as linux
 
 __all__ = [
     "rmtree",

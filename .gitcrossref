@@ -1,0 +1,21 @@
+remotes:
+  osbuild:
+    url: "https://github.com/osbuild/osbuild.git"
+    version: "a699d050943a54a6a1d0249eb7d18e72f1e4afcc"
+
+files:
+  osbuild:
+    - source: "osbuild/util/*.py"
+      destination: "mpp/aibosbuild/util"
+      exclude:
+        - "chroot.py"
+        - "host.py"
+        - "toml.py"
+      transform:
+        - "s/osbuild\\.util/aibosbuild.util/g"
+
+    - source: "tools/osbuild-mpp"
+      destination: "mpp/aib-osbuild-mpp"
+      hash: "154abafae80cc7e6e8e05764e140236b3bc35d28"
+      transform:
+        - "s/osbuild\\.util/aibosbuild.util/g"
