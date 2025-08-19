@@ -314,7 +314,7 @@ run_vm_command() {
 stop_vm() {
     local pid="$1"
     if ps -p "$pid" > /dev/null; then
-        kill --timeout 2000 TERM --timeout 1000 KILL "$pid"
+        /usr/bin/kill --timeout 2000 TERM --timeout 1000 KILL "$pid"
         wait "$pid" 2>/dev/null || true
     fi
 }
