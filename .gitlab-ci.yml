@@ -42,6 +42,16 @@ yamllint-job:
   script:
     - tox -e yamllint
 
+crossref-job:
+  image: python:latest
+  before_script:
+    - python3 --version; pip --version
+    - python3 -m pip install --upgrade pip
+    - python3 -m pip install git-crossref
+  stage: pre
+  script:
+    - git crossref -v check
+
 compose-test-job:
   stage: test
   script:

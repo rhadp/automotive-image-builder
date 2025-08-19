@@ -19,3 +19,32 @@ Follow these steps to create a new release:
 
 4. **Bump the version number**
     - Open a Merge Request, incrementing th **patch version** in [`version.py`](./aib/version.py) (e.g. `0.8.0`->`0.8.1`).
+
+## Updating and Syncing Files
+
+This project uses [git-crossref](https://github.com/aesteve-rh/git-crossref) to synchronize utility files from upstream repositories. The configuration is defined in [`.gitcrossref`](./.gitcrossref).
+
+### Syncing Files
+
+You need to `git-crossref` installed locally:
+
+```bash
+pip install git-crossref
+```
+
+To update the synchronized files from upstream repositories:
+
+```bash
+git-crossref sync
+```
+
+This command will fetch the latest versions of files specified in the configuration and apply any defined transformations.
+
+### Updating the Configuration
+
+To modify which files are synchronized or update upstream versions:
+
+1. Edit the [`.gitcrossref`](./.gitcrossref) file
+2. Update the `version` field to point to a specific commit hash or branch
+3. Add or remove files in the `files` section as needed
+4. Run `git-crossref sync` to apply the changes
