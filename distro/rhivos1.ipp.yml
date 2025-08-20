@@ -25,4 +25,4 @@ mpp-vars:
     - python-toml
   distro_gpg_keys:
     mpp-format-string: |
-      $redhat_gpg_key
+      $redhat9_gpg_key
