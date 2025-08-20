@@ -208,6 +208,6 @@ You can request support for additional AIB options by opening an issue in the au
 
 1. Create an issue to request a new option.
 1. Share a link to the issue in the #automotive-image-builder Slack channel.
-1. Solicit feedback from AIB team on the legitimacy and prioritization of the request. If your request is accepted, the AIB team 
+1. Solicit feedback from AIB team on the legitimacy and prioritization of the request. If your request is accepted, the AIB team
    will triage, prioritize, and complete the work.
 1. Track the issue to its resolution and close the ticket when a solution is implemented.

@@ -10,4 +10,4 @@ Before=rescue.service
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/systemctl --force reboot
-StandardOutput=journal 
+StandardOutput=journal
