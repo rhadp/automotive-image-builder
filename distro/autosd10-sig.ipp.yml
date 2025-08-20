@@ -30,5 +30,5 @@ mpp-vars:
   distro_module_id: platform:el10
   distro_gpg_keys:
     mpp-format-string: |
-      $centos9_gpg_key
+      $centos10_gpg_key
       $redhat_gpg_key
