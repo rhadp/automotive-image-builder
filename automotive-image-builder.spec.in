@@ -16,6 +16,7 @@ Requires:       osbuild-luks2
 Requires:       osbuild-lvm2
 Requires:       osbuild-ostree
 Requires:       ostree
+Requires:       python3-dnf
 Requires:       python3-jsonschema
 Requires:       python3-pyyaml
 
