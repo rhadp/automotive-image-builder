@@ -19,7 +19,7 @@ EXPECTED_SELINUX_BOOLEANS=(
 
 # Build the image
 echo_log "Building AIB image..."
-build --target qemu --mode image --export image test-selinux-booleans.aib.yml "$IMG_NAME"
+build --target qemu --mode image --export image test-selinux-config.aib.yml "$IMG_NAME"
 
 # Check if image was created
 assert_image_exists "$IMG_NAME"
