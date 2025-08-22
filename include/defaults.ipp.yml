@@ -72,8 +72,8 @@ mpp-vars:
   qm_simple_add_devel_repos: false
   qm_simple_add_debug_repos: false
   boot_check_qm_digest_default:
-    aarch64: "b3a57e0d974281498cae8ac00f0ce836d8fd71ac5f998880fda80ee69146296a"
-    x86_64: "db2216e40ad34cfcf1739dd84c4eeff2ed9cacc1d4621f57f168a71500e2ba6c"
+    aarch64: "d4a31f8a7e2a381e2cc5ed2dc8143bfc19436c703caa618d17394f3b18b67b8e"
+    x86_64: "81646aedc3cfaab04f341199e7c0889720b63c84d8208ef6ccefcdf7d74a1ac9"
   boot_check_qm_digest_bluechi:
     aarch64: "eb4276c55bce53f921bc80826a6704edd1b97479a82680d0d20bd58682e8d079"
     x86_64: "f9f04d7630621a5f0cb3991e91e39ea7ee6baeaaecc1a06b4eb1835a005dbf28"
