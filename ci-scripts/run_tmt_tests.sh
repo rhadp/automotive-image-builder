@@ -23,6 +23,11 @@ fi
 set -x
 
 ip=$(jq '.session.nodes[].data.provision.public_ipaddress' duffy.session)
+if [ "$ip" == "" ]; then
+  echo "Unable to obtain a host from AWS"
+  exit 1
+fi
+
 ip=$(echo $ip | sed -e 's|"||g')
 echo "IP address: $ip"
 session_id=$(jq '.session.id' duffy.session)
