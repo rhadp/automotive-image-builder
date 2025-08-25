@@ -5,6 +5,7 @@ related documentation can be found in `os-release(5)`.
 """
 
 import os
+import shlex
 
 # The default paths where os-release is located, as per os-release(5)
 DEFAULT_PATHS = [
@@ -33,7 +34,12 @@ def parse_files(*paths):
                 if line[0] == "#":
                     continue
                 key, value = line.split("=", 1)
-                osrelease[key] = value.strip('"')
+                split_value = shlex.split(value)
+                if not split_value:
+                    raise ValueError(f"Key '{key}' has an empty value")
+                if len(split_value) > 1:
+                    raise ValueError(f"Key '{key}' has more than one token: {value}")
+                osrelease[key] = split_value[0]
 
     return osrelease
 
