@@ -10,6 +10,8 @@ RETRY=1
 MAX_RETRIES=60
 WAIT_TIME=3
 
+SE_MODE_EXPECTED="enforcing"
+SE_POL_NAME_EXPECTED="targeted"
 EXPECTED_SELINUX_BOOLEANS=(
     "selinuxuser_tcp_server=on"
     "httpd_can_network_connect=on"
@@ -34,13 +36,22 @@ if ! wait_for_vm_up "$RETRY" "$MAX_RETRIES" "$WAIT_TIME" "$SSH_PORT" "$PASSWORD"
     exit 1
 fi
 
-# Retrieve the SELinux booleans to check active settings
+# Retrieve the SELinux configuration
+SE_MODE=$(run_vm_command "sestatus | awk -F ':' '/Current mode/ { gsub(\" \",\"\"); print \$2}'")
+echo_log "Detected SELinux mode: '$SE_MODE'"
+SE_POL_NAME=$(run_vm_command "sestatus | awk -F ':' '/Loaded policy name/ { gsub(\" \",\"\"); print \$2}'")
+echo_log "Detected SELinux policy name: '$SE_POL_NAME'"
 SEBOOLS=$(run_vm_command "getsebool -a" "$SSH_PORT" "$PASSWORD")
 echo_log "SELinux booleans inside VM: $SEBOOLS"
 
+# Verify the SELinux configuration
+assert_streq "$SE_MODE" "$SE_MODE_EXPECTED" "SELinux mode set to '$SE_MODE' but expected '$SE_MODE_EXPECTED'"
+assert_streq "$SE_POL_NAME" "$SE_POL_NAME_EXPECTED" "SELinux policy name is '$SE_POL_NAME' but expected '$SE_POL_NAME_EXPECTED'"
+
+
 # Verify that all expected SELinux booleans are present and set correctly
 missing_opts=()
-all_present=true
+all_present=1
 for opt in "${EXPECTED_SELINUX_BOOLEANS[@]}"; do
     boolean_name="${opt%%=*}"
     expected_value="${opt##*=}"
@@ -50,21 +61,17 @@ for opt in "${EXPECTED_SELINUX_BOOLEANS[@]}"; do
     else
         echo_fail "SELinux boolean $boolean_name is not set correctly. Expected: $expected_value, Found: $actual_value"
         missing_opts+=("$boolean_name")
-        all_present=false
+        all_present=0
     fi
 done
-
-# Report test result
-if $all_present; then
-    echo_pass "All SELinux booleans verified successfully"
-    success=0
-else
-    echo_fail "Missing SELinux booleans: ${missing_opts[*]}"
-    success=1
-fi
 
 # Clean up automotive-image-runner process
 stop_vm "$VM_PID"
 
-exit $success
+# Report test result
+if [ $all_present -ne 1 ]; then
+    echo_fail "Missing SELinux booleans: ${missing_opts[*]}"
+    exit 1
+fi
 
+echo_pass "SELinux configuration verified successfully"

@@ -37,7 +37,7 @@ _fatal_print_files() {
 }
 
 assert_streq () {
-    test "$1" = "$2" || fatal "$1 != $2"
+    test "$1" = "$2" || fatal ${3:-"$1 != $2"}
 }
 
 assert_str_match () {

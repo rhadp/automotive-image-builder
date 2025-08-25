@@ -2,6 +2,7 @@ name: selinux-booleans
 
 content:
   rpms:
+    - gawk
     - openssh-server
   systemd:
     enabled_services:
@@ -14,8 +15,9 @@ auth:
     PasswordAuthentication: true
     PermitRootLogin: true
 
-# SELinux booleans options to be set in the image
 image:
+  selinux_mode: enforcing
+  selinux_policy: targeted
   selinux_booleans:
     selinuxuser_tcp_server: true
     httpd_can_network_connect: true
