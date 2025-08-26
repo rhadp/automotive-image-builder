@@ -29,6 +29,7 @@ prepare:
 
 discover:
     how: fmf
+    filter: tag:-special
 
 execute:
     how: tmt
