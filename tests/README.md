@@ -312,3 +312,42 @@ Lint checks on all
 fail G001 duplicate id "96aa0e17-5e23-4cc3-bc34-88368b8cc07b" in "/tests/some-test"
 fail G001 duplicate id "96aa0e17-5e23-4cc3-bc34-88368b8cc07b" in "/tests/another-test"
 ```
+
+## Tagging integration tests
+
+We use `tmt` tags to separate test types and scope:
+
+```shell
+- `special` - intended for special tests that need to be executed separately from the normal integration test suite
+- `upstream-only` - intended for upstream tests, should not run in downstream
+- `virt-required` - intended for tests that run the built image as a VM and execute the test inside it
+```
+
+### Declare tags in a test
+
+#### Tagging example of test `main.fmf` file:
+
+```shell
+summary: Test example with 'special' and 'upstream-only' tagging
+id: <UUID>
+duration: 60m
+tag: [special, upstream-only]
+test: |
+  ./test-example.sh
+```
+
+### List tests by tag examples:
+
+```shell
+tmt tests ls --filter tag:virt-required
+tmt tests ls --filter tag:special
+tmt tests ls --filter tag:upstream-only
+```
+
+### How to use in tmt run command:
+In order to use `tmt` filtering, `--filter tag:<tag name>` is required. for example (filtering special and upstream-only): 
+
+```shell
+tmt run -vvv -eNODE="<IP or hostname>" plan --name connect tests \
+  --filter tag:special --filter tag:upstream-only
+```

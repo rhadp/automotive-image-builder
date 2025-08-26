@@ -4,5 +4,6 @@ require:
   - qemu-kvm
   - sshpass
 duration: 60m
+tag: [virt-required]
 test: |
     ./kernel-options.sh
