@@ -34,4 +34,4 @@ mpp-vars:
   distro_gpg_keys:
     mpp-format-string: |
       $centos9_gpg_key
-      $redhat_gpg_key
+      $redhat9_gpg_key
