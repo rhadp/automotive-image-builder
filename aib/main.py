@@ -21,6 +21,13 @@ from . import exceptions
 from . import AIBParameters
 from . import log
 from . import vmhelper
+from .podman import (
+    podman_image_exists,
+    podman_image_info,
+    podman_run_bootc_image_builder,
+)
+
+default_distro = "autosd9-sig"
 
 
 def list_ipp_items(args, item_type):
@@ -123,38 +130,92 @@ def parse_args(args, base_dir):
     parser.set_defaults(func=no_subcommand)
     subparsers = parser.add_subparsers(help="sub-command help")
 
+    # Arguments for "list-dist" command
     parser_list_dist = subparsers.add_parser(
         "list-dist", help="list available distributions"
     )
     parser_list_dist.set_defaults(func=list_dist)
     parser_list_dist.add_argument("--quiet", default=False, action="store_true")
 
+    # Arguments for "list-targets" command
     parser_list_target = subparsers.add_parser(
         "list-targets", help="list available targets"
     )
     parser_list_target.set_defaults(func=list_targets)
     parser_list_target.add_argument("--quiet", default=False, action="store_true")
 
+    # Arguments for "list-exports" command
     parser_list_export = subparsers.add_parser(
         "list-exports", help="list available exports"
     )
     parser_list_export.set_defaults(func=list_exports)
     parser_list_export.add_argument("--quiet", default=False, action="store_true")
 
-    format_parser = argparse.ArgumentParser(add_help=False)
-    format_parser.add_argument(
+    # Base arguments for formating mpp files, doesn't include options not used by build-bootc-builder
+    formatbase_parser = argparse.ArgumentParser(add_help=False)
+    formatbase_parser.add_argument(
         "--arch",
         default=platform.machine(),
         action="store",
         help=f"Arch to run for (default {platform.machine()})",
     )
-    format_parser.add_argument(
+    formatbase_parser.add_argument(
         "--osbuild-mpp",
         action="store",
         type=str,
         default=os.path.join(base_dir, "mpp/aib-osbuild-mpp"),
         help="Use this osbuild-mpp binary",
     )
+    formatbase_parser.add_argument(
+        "--distro",
+        action="store",
+        type=str,
+        default=default_distro,
+        help="Build for this distro specification",
+    )
+    formatbase_parser.add_argument(
+        "--mpp-arg",
+        action="append",
+        type=str,
+        default=[],
+        help="Add custom mpp arg",
+    )
+    formatbase_parser.add_argument(
+        "--cache",
+        action="store",
+        type=str,
+        help="Add mpp cache-directory to use",
+    )
+    formatbase_parser.add_argument(
+        "--define",
+        action="append",
+        type=str,
+        default=[],
+        help="Define key=yaml-value",
+    )
+    formatbase_parser.add_argument(
+        "--define-file",
+        action="append",
+        type=str,
+        default=[],
+        help="Add yaml file of defines",
+    )
+    formatbase_parser.add_argument(
+        "--extend-define",
+        action="append",
+        type=str,
+        default=[],
+        help="Extend array by item or list key=yaml-value",
+    )
+    formatbase_parser.add_argument(
+        "--dump-variables",
+        default=False,
+        action="store_true",
+        help="Dump variables that would be used when building and exit.",
+    )
+
+    # Full arguments for formating mpp files
+    format_parser = argparse.ArgumentParser(add_help=False, parents=[formatbase_parser])
     format_parser.add_argument(
         "--target",
         action="store",
@@ -170,62 +231,16 @@ def parse_args(args, base_dir):
         help="Build this image mode (package, image)",
     )
     format_parser.add_argument(
-        "--distro",
-        action="store",
-        type=str,
-        default="autosd9-sig",
-        help="Build for this distro specification",
-    )
-    format_parser.add_argument(
-        "--mpp-arg",
-        action="append",
-        type=str,
-        default=[],
-        help="Add custom mpp arg",
-    )
-    format_parser.add_argument(
-        "--cache",
-        action="store",
-        type=str,
-        help="Add mpp cache-directory to use",
-    )
-    format_parser.add_argument(
         "--fusa",
         action="store_true",
         default=False,
         help="Enable required options for functional safety",
     )
     format_parser.add_argument(
-        "--define",
-        action="append",
-        type=str,
-        default=[],
-        help="Define key=yaml-value",
-    )
-    format_parser.add_argument(
-        "--define-file",
-        action="append",
-        type=str,
-        default=[],
-        help="Add yaml file of defines",
-    )
-    format_parser.add_argument(
-        "--extend-define",
-        action="append",
-        type=str,
-        default=[],
-        help="Extend array by item or list key=yaml-value",
-    )
-    format_parser.add_argument(
         "--ostree-repo", action="store", type=str, help="Path to ostree repo"
     )
-    format_parser.add_argument(
-        "--dump-variables",
-        default=False,
-        action="store_true",
-        help="Dump variables that would be used when building and exit.",
-    )
 
+    # Arguments for "compose" command
     parser_compose = subparsers.add_parser(
         "compose", help="Compose osbuild manifest", parents=[format_parser]
     )
@@ -233,22 +248,22 @@ def parse_args(args, base_dir):
     parser_compose.add_argument("out", type=str, help="Output osbuild json")
     parser_compose.set_defaults(func=compose)
 
+    # Arguments for "list-rpms" command
     parser_listrpms = subparsers.add_parser(
         "list-rpms", help="List rpms", parents=[format_parser]
     )
     parser_listrpms.add_argument("manifest", type=str, help="Source manifest file")
     parser_listrpms.set_defaults(func=listrpms)
 
-    parser_build = subparsers.add_parser(
-        "build", help="Compose and build osbuild manifest", parents=[format_parser]
-    )
-    parser_build.add_argument(
+    # Base arguments for building, doesn't include options not used by build-bootc-builder
+    parser_buildbase = argparse.ArgumentParser(add_help=False)
+    parser_buildbase.add_argument(
         "--osbuild-manifest",
         action="store",
         type=str,
         help="Path to store osbuild manifest",
     )
-    parser_build.add_argument(
+    parser_buildbase.add_argument(
         # We set the default size to 2GB, which allows about two copies
         # of the build pipeline.
         "--cache-max-size",
@@ -257,6 +272,34 @@ def parse_args(args, base_dir):
         type=str,
         help="Max cache size",
     )
+    parser_buildbase.add_argument(
+        "--build-dir",
+        action="store",
+        type=str,
+        default=os.getenv("OSBUILD_BUILDDIR"),
+        help="Directory where intermediary files are stored)",
+    )
+    parser_buildbase.add_argument(
+        "--sudo",
+        default=not isRoot,
+        action="store_true",
+        help="Use sudo to start programs that need privileges "
+        "(default if not run as root)",
+    )
+    parser_buildbase.add_argument(
+        "--nosudo",
+        default=False,
+        action="store_true",
+        help="Don't use sudo to start programs",
+    )
+
+    # Arguments for "build" command
+    parser_build = subparsers.add_parser(
+        "build",
+        help="Compose and build osbuild manifest",
+        parents=[format_parser, parser_buildbase],
+    )
+
     parser_build.add_argument(
         "--export",
         action="append",
@@ -265,30 +308,44 @@ def parse_args(args, base_dir):
         help="Export this image type",
         required=True,
     )
-    parser_build.add_argument(
-        "--build-dir",
-        action="store",
-        type=str,
-        default=os.getenv("OSBUILD_BUILDDIR"),
-        help="Directory where intermediary files are stored)",
-    )
-    parser_build.add_argument(
-        "--sudo",
-        default=not isRoot,
-        action="store_true",
-        help="Use sudo to start programs that need privileges "
-        "(default if not run as root)",
-    )
-    parser_build.add_argument(
-        "--nosudo",
-        default=False,
-        action="store_true",
-        help="Don't use sudo to start programs",
-    )
 
     parser_build.add_argument("manifest", type=str, help="Source manifest file")
     parser_build.add_argument("out", type=str, help="Output path")
     parser_build.set_defaults(func=build)
+
+    # Arguments for "build-bootc-builder" command
+    parser_build_builder = subparsers.add_parser(
+        "build-bootc-builder",
+        help="Create container image to build physical bootc images",
+        parents=[formatbase_parser, parser_buildbase],
+    )
+
+    parser_build_builder.add_argument(
+        "out", type=str, help="Name of container image to build"
+    )
+    parser_build_builder.set_defaults(func=build_bootc_builder)
+
+    # Arguments for "bootc-to-disk-image" command
+    bib_container_default = "quay.io/centos-bootc/bootc-image-builder:latest"
+    parser_bootc_to_disk_image = subparsers.add_parser(
+        "bootc-to-disk-image", help="Create disk image from bootc container"
+    )
+    parser_bootc_to_disk_image.add_argument(
+        "container", type=str, help="Bootc container name"
+    )
+    parser_bootc_to_disk_image.add_argument("out", type=str, help="Output image name")
+    parser_bootc_to_disk_image.set_defaults(func=bootc_to_disk_image)
+    parser_bootc_to_disk_image.add_argument(
+        "--bib-container",
+        default=bib_container_default,
+        action="store",
+        help="bootc-image builder-container image to use",
+    )
+    parser_bootc_to_disk_image.add_argument(
+        "--build-container",
+        action="store",
+        help="bootc build container image to use",
+    )
 
     res = parser.parse_args(args)
     if "manifest" in res:
@@ -655,6 +712,58 @@ def build(args, tmpdir, runner):
             or os.path.isdir(os.path.join(tmpdir, "image_output"))
         ):
             runner.run(["rm", "-rf", tmpdir], use_sudo=True)
+
+
+def build_bootc_builder(args, tmpdir, runner):
+    # build-bootc-builder is a special form of the "build" command with fixed values for
+    # manifest/export/target/mode arguments.
+    args.simple_manifest = os.path.join(args.base_dir, "files/bootc-builder.aib.yml")
+    args.manifest = os.path.join(args.base_dir, "files/simple.mpp.yml")
+    args.export = ["bootc"]
+    args.target = "qemu"
+    args.mode = "image"
+    args.fusa = False
+    print(args.manifest)
+    build(args, tmpdir, runner)
+
+
+def bootc_to_disk_image(args, tmpdir, runner):
+    info = podman_image_info(args.container)
+    if not info:
+        log.error(
+            "Source bootc image '%s' isn't in local container store", args.container
+        )
+        sys.exit(1)
+
+    # Use same distro for build image as the source container image
+    distro = default_distro
+    if info.build_info:
+        distro = info.build_info.get("DISTRO", distro)
+
+    build_container = args.build_container
+    if not build_container:
+        build_container = f"localhost/auto-bootc-build-{distro}:latest"
+        if not podman_image_exists(build_container):
+            log.error(
+                "Build container %s isn't in local container stored", build_container
+            )
+            log.error(
+                "Either specify another with --build-container, or create it using: "
+            )
+            log.error(
+                f" automotive-image-builder build-bootc-builder --distro {distro}  {build_container}"
+            )
+            sys.exit(1)
+
+    build_type = "raw"
+    if args.out.endswith(".qcow2"):
+        build_type = "qcow2"
+
+    res = podman_run_bootc_image_builder(
+        args.bib_container, build_container, args.container, build_type, args.out
+    )
+    if res != 0:
+        sys.exit(1)  # bc-i-b will have printed the error
 
 
 def no_subcommand(_args, _tmpdir, _runner):
