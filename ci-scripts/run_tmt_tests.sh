@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source $(dirname $BASH_SOURCE)/aws-lib.sh
 
 AIB_DISTRO=${1:-autosd9-sig}
 # Base repository for AIB packages needs to be aligned with requested distro
@@ -11,28 +12,21 @@ else
     CS_VERSION=10
 fi
 
+export SESSION_FILE="$PWD/duffy.session"
 
-if [ ! -f duffy.session ]; then
-echo "Retrieving an AWS instance"
-set +x
-duffy client \
- request-session \
- pool=metal-ec2-c5n-centos-${CS_VERSION}s-x86_64,quantity=1 > duffy.session
+if [ ! -f "$SESSION_FILE" ]; then
+    echo "Retrieving an AWS host ..."
+    get_aws_session "metal-ec2-c5n-centos-${CS_VERSION}s-x86_64" "$SESSION_FILE"
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
 fi
 
-set -x
+# Release AWS session on exit
+trap "release_aws_session $SESSION_FILE" EXIT
 
-ip=$(jq '.session.nodes[].data.provision.public_ipaddress' duffy.session)
-if [ "$ip" == "" ]; then
-  echo "Unable to obtain a host from AWS"
-  exit 1
-fi
-
-ip=$(echo $ip | sed -e 's|"||g')
+ip=$(get_ip_from_session $SESSION_FILE)
 echo "IP address: $ip"
-session_id=$(jq '.session.id' duffy.session)
-session_id=$(echo $session_id | sed -e 's|"||g')
-echo "Session: $session_id"
 
 # Copy SRPM from previous job artifacts into remote host
 # Assuming the CI job passed it as an artifact
@@ -62,15 +56,8 @@ cd tests && tmt run -v \
   plan --name connect
 
 success=$?
-echo $success
 
 mkdir -p ../tmt-run
 cp -r /var/tmp/tmt/* ../tmt-run/
-
-echo "Closing session: $session_id"
-set +x
-duffy client \
- retire-session $session_id
-[ -f duffy.session ] && rm duffy.session
 
 exit $success

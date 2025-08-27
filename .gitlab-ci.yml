@@ -245,7 +245,8 @@ build_doc_demos:
 
 integration_tests_10:
   stage: test
-  timeout: 90m
+  # We need to add a time for wait/retry process to acquire a host from AWS to the overall time of test execution
+  timeout: 120m
   # TODO: Switch to CS10 once tmt is available in EPEL10
   image: quay.io/centos/centos:stream9
   needs:
