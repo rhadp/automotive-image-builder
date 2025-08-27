@@ -16,6 +16,23 @@ import subprocess
 import sys
 import tempfile
 import time
+import threading
+
+
+class ShutdownHandler:
+    def __init__(self, server: socketserver.TCPServer) -> None:
+        self.server = server
+
+    def handle_kill(self, signum, frame):
+        self.server.shutdown()
+
+    def __enter__(self):
+        signal.signal(signal.SIGINT, self.handle_kill)
+        signal.signal(signal.SIGTERM, self.handle_kill)
+
+    def __exit__(self, type, value, traceback):
+        pass
+
 
 is_verbose = False
 
@@ -135,7 +152,11 @@ def run_http_server(path):
         writer.send(str(httpd.server_address[1]).encode("utf8"))
         writer.close()
 
-        httpd.serve_forever()
+        with ShutdownHandler(httpd):
+            server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+            server_thread.start()
+            server_thread.join()
+
         sys.exit(0)
 
     # Parent
