@@ -1,4 +1,4 @@
-summary: Verify that custom root_ssh_keys are properly added to the image
+summary: Verify the sshd configuration and the location of authorized_keys file for the root user
 id: 8ebe1305-b3fe-4813-b340-e29a2cea9a00
 duration: 60m
 test: |

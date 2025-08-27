@@ -1,9 +1,0 @@
-name: sshd-config-test
-content:
-  rpms:
-    - openssh-server
-
-auth:
-  sshd_config:
-    PasswordAuthentication: false
-    PermitRootLogin: prohibit-password
