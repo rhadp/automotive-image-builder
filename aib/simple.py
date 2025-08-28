@@ -476,11 +476,11 @@ class ManifestLoader:
         self.set_from("boot_check_qm_digest", qm, "container_checksum")
 
     def handle_network(self, network):
-        static = network.get("static", {})
-        if static:
+        static = network.get("static", None)
+        if static is not None:
             self.set("use_static_ip", True)
             self.set_from("static_ip", static, "ip")
-            ip_prefixlen = static["ip_prefixlen"]
+            ip_prefixlen = static.get("ip_prefixlen", None)
             if ip_prefixlen:
                 self.set("static_ip_prefixlen", str(ip_prefixlen))
             self.set_from("static_gw", static, "gateway")
