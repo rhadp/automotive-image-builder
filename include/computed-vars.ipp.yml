@@ -606,7 +606,13 @@ mpp-vars:
                 - from:
                     mpp-format-string: input://tree/usr/libexec/ukiboot/efi/ukiboot{efiarch}.efi
                   to:
-                    mpp-format-string: tree:///boot/efi/EFI/BOOT/{efibootfile}
+                    # When using bootc, bootc filesystem install always copies in the shim binary
+                    # So, we rename ukiboot to the shim binary to have it be installed instead.
+                    mpp-if: is_bootc_export
+                    then:
+                      mpp-format-string: tree:///boot/efi/EFI/centos/shim{efiarch}.efi
+                    else:
+                      mpp-format-string: tree:///boot/efi/EFI/BOOT/{efibootfile}
 
   # Extra directories that will be created in the image, list amended by moode-*.ipp
   extra_tree_dirs:
@@ -763,8 +769,6 @@ mpp-vars:
           then: aboot-update
         - mpp-if: use_aboot_like
           then: aboot-deploy
-        - mpp-if: use_composefs_signed
-          then: openssl
         - mpp-if: sign_kernel_modules
           then: $kernel_devel_rpm
       - mpp-if: use_ukiboot
@@ -783,6 +787,7 @@ mpp-vars:
     - mpp-if: use_grub2
       then: greenboot-rpm-ostree-grub2
     - skopeo  # Needed for upgrading from an OCI remove image
+    - bootupd
 
   package_mode_rpms:
     - shim
@@ -801,18 +806,11 @@ mpp-vars:
         then:
           - util-linux-automotive
           - dracut-automotive
-      - mpp-if: locals().get('bootc_add_builder_rpms', False)
-        then:
-          - mpp-if: arch == 'x86_64'
-            then: grub2-pc # needed for bootupd on x86
       - - $release_rpm
         - $kernel_rpm
         - selinux-policy-$selinux_policy
         - mpp-if: linux_firmware_rpm
           then: $linux_firmware_rpm
-        # TODO-BOOTC: Should maybe not always be needed, for example with aboot/ukiboot
-        - mpp-if: is_bootc_export
-          then: bootupd
         - mpp-if: use_luks
           then: lvm2
         - mpp-if: use_aboot_like
@@ -837,6 +835,12 @@ mpp-vars:
           then: bluechi-selinux
         - mpp-if: use_qm
           then: qm
+        # TODO-BOOTC: bootupd needs this for generate-update-metadata
+        - mpp-if: is_bootc_export
+          then: shim
+        # TODO-BOOTC: bootupd needs this for generate-update-metadata
+        - mpp-if: is_bootc_export
+          then: grub2-tools
 
   _debug_output:
     mpp-eval: "locals().get('print_variables') and print( _json.dumps({k: v for k, v in locals().items() if not k.startswith('_')}, default=lambda o: '<not serializable>', sort_keys=True, indent=2))"

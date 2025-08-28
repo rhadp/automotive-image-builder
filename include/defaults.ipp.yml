@@ -362,6 +362,7 @@ mpp-vars:
     - efibootmgr
     - grub2-tools
     - grub2-tools-minimal
+    - openssl
     - policycoreutils
     - python3-iniparse
     - python3
