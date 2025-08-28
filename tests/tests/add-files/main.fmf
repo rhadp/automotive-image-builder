@@ -1,4 +1,4 @@
-summary: Verify that custom files and directories are properly added to the image
+summary: Verify that custom files and directories (exact paths or globs) are properly added to the image
 id: 37533dc0-8491-4ee0-bf26-8aebb674ed3e
 duration: 60m
 test: |
