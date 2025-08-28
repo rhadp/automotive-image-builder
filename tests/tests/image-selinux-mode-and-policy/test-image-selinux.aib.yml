@@ -1,5 +1,0 @@
-name: image-selinux
-
-image:
-  selinux_mode: enforcing
-  selinux_policy: targeted

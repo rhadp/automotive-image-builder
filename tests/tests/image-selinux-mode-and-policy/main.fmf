@@ -1,4 +1,0 @@
-summary: Verify SELinux mode and policy in image config
-id: 90b852c1-f2d0-45e2-bf36-4177994396fc
-duration: 60m
-test: ./selinux.sh
