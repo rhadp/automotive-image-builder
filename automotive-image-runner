@@ -589,7 +589,7 @@ def main():
         qemu_args += ["-device", "nvme,serial=deadbeef,drive=rootdisk"]
     elif args.aboot:
         # virtio-blk-pci doesn't work with aboot, so use virtio-blk-device
-        qemu_args += ["-device", "virtio-blk-device,scsi=off,drive=rootdisk"]
+        qemu_args += ["-device", "virtio-blk-device,drive=rootdisk"]
     else:
         # Default "if=virtio", typically a pci based virtio device
         disk_if = "virtio"
