@@ -48,19 +48,22 @@ mpp-vars:
     id: ukiboot_a
     name: ukiboot_a
     size: $ukibootpart_size
-    type: $partition_type_ukiboot
+    type:
+      mpp-eval: "partition_type_ukiboot if partition_label == 'gpt' else '46'"
     uuid: $ukibootpart_a_uuid
   ukiboot_b_partition:
     id: ukiboot_b
     name: ukiboot_b
     size: $ukibootpart_size
-    type: $partition_type_ukiboot
+    type:
+      mpp-eval: "partition_type_ukiboot if partition_label == 'gpt' else '47'"
     uuid: $ukibootpart_b_uuid
   ukibootctl_partition:
     id: ukibootctl
     name: ukibootctl
     size: $ukibootctlpart_size
-    type: $partition_type_ukibootctl
+    type:
+      mpp-eval: "partition_type_ukibootctl if partition_label == 'gpt' else '48'"
     uuid: $ukibootctl_uuid
   vbmeta_a_partition:
     id: vbmeta_a
