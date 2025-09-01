@@ -2,6 +2,20 @@
 
 source $(dirname $BASH_SOURCE)/aws-lib.sh
 
+function section_start () {
+  local section_title="${1}"
+  local section_description="${2:-$section_title}"
+
+  echo -e "section_start:`date +%s`:${section_title}[collapsed=true]\r\e[0K${section_description}"
+}
+
+# Function for ending the section
+function section_end () {
+  local section_title="${1}"
+
+  echo -e "section_end:`date +%s`:${section_title}\r\e[0K"
+}
+
 AIB_DISTRO=${1:-autosd9-sig}
 # Base repository for AIB packages needs to be aligned with requested distro
 if [[ "${AIB_DISTRO}" == *"autosd9"* ]]; then
@@ -11,6 +25,8 @@ else
     AIB_BASE_REPO="https://autosd.sig.centos.org/AutoSD-10/nightly/repos/AutoSD/compose/AutoSD/\$arch/os/"
     CS_VERSION=10
 fi
+
+section_start duffy_setup "Attaching to AWS"
 
 export SESSION_FILE="$PWD/duffy.session"
 
@@ -46,6 +62,8 @@ EOF
 
 # Copy the SRPM to the remote AWS instance (provisioned with Duffy)
 scp -o StrictHostKeyChecking=no -i $PWD/automotive_sig.ssh *.src.rpm root@$ip:/var/tmp/aib-srpm/
+
+section_end duffy_setup
 
 cd tests && tmt run -v \
   -eNODE=$ip \

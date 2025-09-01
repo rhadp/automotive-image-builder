@@ -213,6 +213,7 @@ trigger-pipeline:
     - !reference [.trigger-template, rules]
 
 .prepare-aws-setup: &prepare-aws-setup
+  - echo -e "\e[0Ksection_start:$(date +%s):aws_setup[collapsed=true]\r\e[0KPreparing AWS"
   - mkdir -p ~/.config
   - 'echo "client:" > ~/.config/duffy'
   - 'echo "  url: https://duffy.ci.centos.org/api/v1" >> ~/.config/duffy'
@@ -222,11 +223,14 @@ trigger-pipeline:
   - base64 -d $ssh_key > automotive_sig.ssh
   - chmod 600 automotive_sig.ssh
   - pip install "duffy[client]"
+  - echo -e "\e[0Ksection_end:$(date +%s):aws_setup\r\e[0K"
 
 .prepare-cs-tmt-setup: &prepare-cs-tmt-setup
+  - echo -e "\e[0Ksection_start:$(date +%s):tmt_setup[collapsed=true]\r\e[0KPreparing TMT"
   - dnf config-manager --set-enabled crb
   - dnf install -y python3-pip jq less rsync openssh-clients epel-release
   - dnf install -y tmt tmt+report-junit
+  - echo -e "\e[0Ksection_end:$(date +%s):tmt_setup\r\e[0K"
 
 build_doc_demos:
   stage: test
