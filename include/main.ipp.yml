@@ -7,6 +7,8 @@ mpp-vars:
     mpp-eval: "__import__('uuid')"
   _json:
     mpp-eval: "__import__('json')"
+  _yaml:
+    mpp-eval: "__import__('yaml')"
   _datetime:
     mpp-eval: "__import__('datetime')"
   _printerr:

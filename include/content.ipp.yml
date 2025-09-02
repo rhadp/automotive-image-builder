@@ -256,115 +256,157 @@ mpp-vars:
       [install]
       kargs = {_json.dumps(kernel_opts)}
 
-  bootc_disk_customization:
-    type: gpt
-    minsize: $image_size
-    partitions:
-      - mpp-if: use_sblpart
-        then:
-          part_label: sbl
-          part_type: '00000000-0000-0000-0000-000000000000'
-      - mpp-if: use_efipart
-        then:
-          part_label: efi
-          part_type: $partition_type_efi
-          part_uuid: $efipart_uuid
-          fs_type: vfat
-          label: ESP
-          mountpoint: /boot/efi
-          minsize:
-            mpp-format-string: '{efipart_size * 512}'
-      - mpp-if: use_bootpart
-        then:
-          part_label: boot
-          part_type: $partition_type_boot
-          part_uuid: $bootpart_uuid
-          fs_type: ext4
-          label: boot
-          mountpoint: /boot
-          minsize:
-            mpp-format-string: '{bootpart_size * 512}'
-      - mpp-if: use_abootpart
-        then:
-          part_label: boot_a
-          part_type: $partition_type_aboot
-          fs_type: none
-          minsize:
-            mpp-format-string: '{abootpart_size * 512}'
-      - mpp-if: use_abootpart
-        then:
-          part_label: boot_b
-          part_type: $partition_type_aboot
-          fs_type: none
-          minsize:
-            mpp-format-string: '{abootpart_size * 512}'
-      - mpp-if: use_vbmetapart
-        then:
-          part_label: vbmeta_a
-          part_type: $partition_type_aboot
-          fs_type: none
-          minsize:
-            mpp-format-string: '{vbmetapart_size * 512}'
-      - mpp-if: use_vbmetapart
-        then:
-          part_label: vbmeta_b
-          part_type: $partition_type_aboot
-          fs_type: none
-          minsize:
-            mpp-format-string: '{vbmetapart_size * 512}'
-      - mpp-if: use_ukibootpart
-        then:
-          part_label: ukiboot_a
-          part_type: $partition_type_ukiboot
-          fs_type: none
-          minsize:
-            mpp-format-string: '{ukibootpart_size * 512}'
-      - mpp-if: use_ukibootpart
-        then:
-          part_label: ukiboot_b
-          part_type: $partition_type_ukiboot
-          fs_type: none
-          minsize:
-            mpp-format-string: '{ukibootpart_size * 512}'
-      - mpp-if: use_ukibootpart
-        then:
-          part_label: ukibootctl
-          part_type: $partition_type_ukibootctl
-          fs_type: none
-          minsize:
-            mpp-format-string: '{ukibootctlpart_size * 512}'
-      - mpp-if: _use_separate_var and _varpart_size > 0
-        then:
-          part_label: var
-          part_type: $partition_type_var
-          part_uuid: $varpart_uuid
-          fs_type: ext4
-          label: var
-          mountpoint: /var
-          minsize:
-            mpp-format-string: '{_varpart_size * 512}'
-      - mpp-if: _qm_use_separate_var and _qm_varpart_size > 0
-        then:
-          part_label: qm_var
-          part_type: $partition_type_var_qm
-          part_uuid: $qm_varpart_uuid
-          fs_type: ext4
-          label: qm_var
-          mountpoint: /var/qm
-          minsize:
-            mpp-format-string: '{_qm_varpart_size * 512}'
-      - part_label: $rootpart_label
-        part_type: $partition_type_rootfs
-        part_uuid: $rootpart_uuid
-        fs_type: ext4
-        label: root
-        mountpoint: /
-        minsize: "1 GiB"
-
-  bib_config:
-    customizations:
-      disk:
-        mpp-eval: bootc_disk_customization
+  disk_yaml:
+    partition_table:
+      type: $partition_label
+      size: $image_size
+      partitions:
+        # Bios boot partition
+        # Second boot loader
+        - mpp-if: use_sblpart
+          then:
+            label: sbl
+            type:
+              mpp-eval: "'00000000-0000-0000-0000-000000000000' if partition_label == 'gpt' else '0'"
+        - mpp-if: use_biospart
+          then:
+            size: "1 MiB"
+            bootable: true
+            type: $partition_type_bios
+            uuid: $biospart_uuid
+        - mpp-if: use_efipart
+          then:
+            label: efi
+            type:
+              mpp-eval: "partition_type_efi if partition_label == 'gpt' else '$efipart_dos_type'"
+            uuid: $efipart_uuid
+            size:
+              mpp-format-string: '{efipart_size * 512}'
+            bootable:
+              mpp-eval: efipart_bootable
+            payload_type: filesystem
+            payload:
+              type: vfat
+              label: ESP
+              mountpoint: /boot/efi
+              mkfs_options:
+                mpp-if: "'efipart_geometry' in locals()"
+                then:
+                  geometry:
+                    heads:
+                      mpp-eval: efipart_geometry["heads"]
+                    sectors_per_track:
+                      mpp-eval: efipart_geometry["sectors-per-track"]
+        # /boot filesystem (if needed)
+        - mpp-if: use_bootpart
+          then:
+            label: boot
+            type:
+              mpp-eval: "partition_type_boot if partition_label == 'gpt' else '83'"
+            uuid: $bootpart_uuid
+            size:
+              mpp-format-string: '{bootpart_size * 512}'
+            payload_type: filesystem
+            payload:
+              type: ext4
+              label: boot
+              mountpoint: /boot
+        # aboot partitions
+        - mpp-if: use_abootpart
+          then:
+            label: boot_a
+            type: $partition_type_aboot
+            uuid: $abootpart_a_uuid
+            size:
+              mpp-format-string: '{abootpart_size * 512}'
+            attrs:
+              mpp-eval: active_gpt_attrs
+        - mpp-if: use_abootpart
+          then:
+            label: boot_b
+            type: $partition_type_aboot
+            uuid: $abootpart_b_uuid
+            size:
+              mpp-format-string: '{abootpart_size * 512}'
+            attrs:
+              mpp-eval: inactive_gpt_attrs
+        - mpp-if: use_vbmetapart
+          then:
+            label: vbmeta_a
+            type: $partition_type_aboot
+            uuid: $vbmetapart_a_uuid
+            size:
+              mpp-format-string: '{abootpart_size * 512}'
+        - mpp-if: use_vbmetapart
+          then:
+            label: vbmeta_b
+            type: $partition_type_aboot
+            uuid: $vbmetapart_b_uuid
+            size:
+              mpp-format-string: '{abootpart_size * 512}'
+        # ukiboot partitions
+        - mpp-if: use_ukibootpart
+          then:
+            label: ukiboot_a
+            type: $partition_type_ukiboot
+            uuid: $ukibootpart_a_uuid
+            size:
+              mpp-format-string: '{ukibootpart_size * 512}'
+            payload_type: raw
+            payload:
+              source_path:
+                mpp-eval: _kernel_dir + "/aboot.img"
+        - mpp-if: use_ukibootpart
+          then:
+            label: ukiboot_b
+            type: $partition_type_ukiboot
+            uuid: $ukibootpart_b_uuid
+            size:
+              mpp-format-string: '{ukibootpart_size * 512}'
+        - mpp-if: use_ukibootpart
+          then:
+            label: ukibootctl
+            type: $partition_type_ukibootctl
+            uuid: $ukibootctl_uuid
+            size:
+              mpp-format-string: '{ukibootctlpart_size * 512}'
+        # /var
+        - mpp-if: _use_separate_var and _varpart_size > 0
+          then:
+            label: var
+            type:
+              mpp-eval: "partition_type_var if partition_label == 'gpt' else '83'"
+            uuid: $varpart_uuid
+            size:
+              mpp-format-string: '{_varpart_size * 512}'
+            payload_type: filesystem
+            payload:
+              type: ext4
+              label: var
+              mountpoint: /var
+        # /var/qm
+        - mpp-if: _qm_use_separate_var and _qm_varpart_size > 0
+          then:
+            label: qm_var
+            type:
+              mpp-eval: "partition_type_var_qm if partition_label == 'gpt' else '83'"
+            uuid: $qm_varpart_uuid
+            size:
+              mpp-format-string: '{_qm_varpart_size * 512}'
+            payload_type: filesystem
+            payload:
+              type: ext4
+              label: qm_var
+              mountpoint: /var/qm
+        # rootfs
+        - label: $rootpart_label
+          type: $partition_type_rootfs
+          uuid: $rootpart_uuid
+          payload_type: filesystem
+          payload:
+            type: ext4
+            label: root
+            mountpoint: /
 
 pipelines:
   # Some variables need to be written to files, do that here
@@ -738,14 +780,14 @@ pipelines:
             type: org.osbuild.files
             origin: org.osbuild.source
             mpp-embed:
-              id: bib-config.json
+              id: disk.yaml
               text:
-                mpp-eval: "_json.dumps(bib_config)"
+                mpp-eval: "_yaml.dump(_materialize(disk_yaml))"
         options:
           paths:
             - from:
-                mpp-format-string: input://inlinefile/{embedded['bib-config.json']}
-              to: tree:///bib-config.json
+                mpp-format-string: input://inlinefile/{embedded['disk.yaml']}
+              to: tree:///disk.yaml
 
       - type: org.osbuild.copy
         inputs:
