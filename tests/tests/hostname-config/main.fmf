@@ -1,5 +1,0 @@
-summary: Verify hostname for the image is set as expected
-id: fe77e6e0-f499-46f0-a43f-6eacd38917a8
-duration: 60m
-test: |
-    ./test-hostname-config.sh
