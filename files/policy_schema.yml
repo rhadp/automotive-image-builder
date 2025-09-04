@@ -1,0 +1,241 @@
+# JSON Schema for validating .aibp.yml policy files
+$schema: "http://json-schema.org/draft-07/schema#"
+title: "Automotive Image Builder Policy Schema"
+description: "Schema for validating automotive-image-builder policy files (.aibp.yml)"
+type: object
+
+definitions:
+  # Central enum definitions
+  build_modes:
+    type: string
+    enum: ["image", "package"]
+
+  architectures:
+    type: string
+    enum: ["x86_64", "aarch64", "s390x"]
+
+  # Reusable pattern for allow/disallow string arrays with target-specific support
+  allow_disallow_strings:
+    type: object
+    properties:
+      allow:
+        type: array
+        items:
+          type: string
+      disallow:
+        type: array
+        items:
+          type: string
+    patternProperties:
+      "^allow@[a-zA-Z0-9_-]+$":
+        type: array
+        items:
+          type: string
+      "^disallow@[a-zA-Z0-9_-]+$":
+        type: array
+        items:
+          type: string
+    additionalProperties: false
+
+  # Pattern for allow/disallow with build modes enum
+  allow_disallow_build_modes:
+    type: object
+    properties:
+      allow:
+        type: array
+        items:
+          $ref: "#/definitions/build_modes"
+      disallow:
+        type: array
+        items:
+          $ref: "#/definitions/build_modes"
+    patternProperties:
+      "^allow@[a-zA-Z0-9_-]+$":
+        type: array
+        items:
+          $ref: "#/definitions/build_modes"
+      "^disallow@[a-zA-Z0-9_-]+$":
+        type: array
+        items:
+          $ref: "#/definitions/build_modes"
+    additionalProperties: false
+
+  # Pattern for allow/disallow with architectures enum
+  allow_disallow_architectures:
+    type: object
+    properties:
+      allow:
+        type: array
+        items:
+          $ref: "#/definitions/architectures"
+      disallow:
+        type: array
+        items:
+          $ref: "#/definitions/architectures"
+    patternProperties:
+      "^allow@[a-zA-Z0-9_-]+$":
+        type: array
+        items:
+          $ref: "#/definitions/architectures"
+      "^disallow@[a-zA-Z0-9_-]+$":
+        type: array
+        items:
+          $ref: "#/definitions/architectures"
+    additionalProperties: false
+
+  # Pattern for disallow-only arrays with target-specific support
+  disallow_only:
+    type: object
+    properties:
+      disallow:
+        type: array
+        items:
+          type: string
+    patternProperties:
+      "^disallow@[a-zA-Z0-9_-]+$":
+        type: array
+        items:
+          type: string
+    additionalProperties: false
+
+  # Pattern for force objects with target-specific support
+  force_objects:
+    type: object
+    properties:
+      force:
+        type: object
+        additionalProperties: true
+    patternProperties:
+      "^force@[a-zA-Z0-9_-]+$":
+        type: object
+        additionalProperties: true
+    additionalProperties: false
+
+required:
+  - name
+  - description
+
+properties:
+  name:
+    type: string
+    description: "Policy name identifier"
+    minLength: 1
+
+  description:
+    type: string
+    description: "Human-readable policy description"
+    minLength: 1
+
+  restrictions:
+    type: object
+    description: "Policy restrictions configuration"
+    properties:
+      modes:
+        allOf:
+          - $ref: "#/definitions/allow_disallow_build_modes"
+          - description: "Build mode restrictions"
+
+      targets:
+        allOf:
+          - $ref: "#/definitions/allow_disallow_strings"
+          - description: "Target platform restrictions"
+
+      distributions:
+        allOf:
+          - $ref: "#/definitions/allow_disallow_strings"
+          - description: "Distribution restrictions"
+
+      architectures:
+        allOf:
+          - $ref: "#/definitions/allow_disallow_architectures"
+          - description: "Architecture restrictions"
+
+      repositories:
+        allOf:
+          - $ref: "#/definitions/allow_disallow_strings"
+          - description: "Repository restrictions"
+
+      manifest_restrictions:
+        type: object
+        description: "Manifest content restrictions"
+        properties:
+          allow:
+            type: object
+            properties:
+              properties:
+                type: array
+                items:
+                  type: string
+                description: "Allowed manifest properties"
+              values:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                description: "Allowed values for specific properties"
+            additionalProperties: false
+          disallow:
+            type: object
+            properties:
+              properties:
+                type: array
+                items:
+                  type: string
+                description: "Disallowed manifest properties"
+              values:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                description: "Disallowed values for specific properties"
+            additionalProperties: false
+        patternProperties:
+          "^(allow|disallow)@[a-zA-Z0-9_-]+$":
+            type: object
+            properties:
+              properties:
+                type: array
+                items:
+                  type: string
+                description: "Target-specific manifest properties"
+              values:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                description: "Target-specific values for specific properties"
+            additionalProperties: false
+        additionalProperties: false
+
+      variables:
+        allOf:
+          - $ref: "#/definitions/force_objects"
+          - description: "Variable enforcement"
+
+      rpms:
+        allOf:
+          - $ref: "#/definitions/disallow_only"
+          - description: "RPM package restrictions"
+
+      kernel_modules:
+        allOf:
+          - $ref: "#/definitions/disallow_only"
+          - description: "Kernel module restrictions"
+
+      selinux_booleans:
+        allOf:
+          - $ref: "#/definitions/force_objects"
+          - description: "SELinux boolean enforcement"
+
+      sysctl:
+        allOf:
+          - $ref: "#/definitions/force_objects"
+          - description: "Sysctl parameter enforcement"
+
+
+    additionalProperties: false
+
+additionalProperties: false

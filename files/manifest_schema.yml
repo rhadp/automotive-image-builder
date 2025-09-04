@@ -63,12 +63,10 @@ $defs:
         description: The name to use for the container image when embedded (if not set, same as source)
         type: string
       containers-transport:
-        description: "The containers transport from which to copy the container. (fusa: containers-storage is not allowed with fusa)"
+        description: "The containers transport from which to copy the container."
         type: string
         enum:
           - docker
-          - containers-storage
-        noFusa:
           - containers-storage
       index:
         description: "If set to true, also install the related manifest-list for the image."
@@ -605,8 +603,6 @@ title: Manifest
 description: The automotive-image-builder format describes how to build an OS image, with options like what content (files, packages, containers) to install as well as detailed configuration options.
 required:
   - name
-noFusa:
-  - experimental
 properties:
   name:
     description: The name of the manifest

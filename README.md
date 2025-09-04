@@ -120,6 +120,71 @@ are:
 * `bootc`: A bootc image
 * `rpmlist`: A json file listing all the rpms used in the image
 
+## Policy System
+
+automotive-image-builder supports a policy system that allows external policy files to enforce build restrictions and configurations. This replaces hardcoded flags with flexible, external policy definitions.
+
+### Using Policies
+
+Use the `--policy` flag to apply a policy file. The policy argument can be:
+
+- **Policy name**: `--policy security` (searches installed locations only)
+- **Policy filename**: `--policy my-policy.aibp.yml` (searches local directory first, then installed)
+- **Full path**: `--policy /path/to/policy.aibp.yml`
+
+Installed policy locations (searched in order):
+1. `/etc/automotive-image-builder/policies/` (system-wide)
+2. `/usr/lib/automotive-image-builder/files/policies/` (package-provided)
+
+```shell
+$ automotive-image-builder build --policy security --export qcow2 my-image.aib.yml output.qcow2
+```
+
+Policy files use the `.aibp.yml` extension and define restrictions and forced configurations:
+
+```yaml
+name: security-policy
+description: Security hardening policy for production images
+
+restrictions:
+  modes:
+    allow:
+      - image
+  
+  variables:
+    force:
+      disable_ipv6: true
+      ld_so_cache_protected: true
+  
+  rpms:
+    disallow:
+      - dosfstools
+      - e2fsprogs
+  
+  sysctl:
+    force:
+      "net.core.busy_poll": "0"
+      "net.ipv4.conf.all.mc_forwarding": "0"
+```
+
+### Policy Features
+
+Policies can enforce:
+
+- **Mode restrictions**: Allow/disallow package vs image mode
+- **Target restrictions**: Control which hardware targets are allowed
+- **Distribution restrictions**: Limit which distributions can be used
+- **Variable enforcement**: Force specific manifest variables
+- **Package restrictions**: Block specific RPMs from being installed
+- **Kernel module restrictions**: Prevent loading of specific kernel modules
+- **Sysctl enforcement**: Set required kernel parameters
+- **SELinux boolean enforcement**: Configure SELinux policy settings
+- **Manifest validation**: Block specific manifest properties or values
+
+Policy validation happens early in the build process, providing clear error messages when restrictions are violated.
+
+The complete policy file schema is defined in [files/policy_schema.yml](files/policy_schema.yml).
+
 ## Manifest variables
 
 The low-level manifest format supports a variety of variables that you can set in the manifest file, or

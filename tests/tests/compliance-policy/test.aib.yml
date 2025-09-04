@@ -1,0 +1,5 @@
+name: compliance-policy-test
+content:
+  rpms:
+    - bash
+    - systemd

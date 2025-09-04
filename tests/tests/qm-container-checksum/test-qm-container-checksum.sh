@@ -9,7 +9,7 @@ success=0
 
 # Build image
 echo_log "Building AIB image..."
-build --target qemu --mode image --fusa --export image test.aib.yml "$IMG_NAME"
+build --target qemu --mode image --policy test-policy.aibp.yml --export image test.aib.yml "$IMG_NAME"
 
 # Verify image exists
 assert_image_exists "$IMG_NAME"

@@ -77,9 +77,6 @@ mpp-vars:
   partition_type_ukiboot: df331e4d-be00-463f-b4a7-8b43e18fb53a
   partition_type_ukibootctl: fefd9070-346f-4c9a-85e6-17f07f922773
 
-  disable_ipv6:
-    mpp-eval: use_fusa or disable_ipv6
-
   # Derive these from use_boot
   use_aboot:
     mpp-eval: use_boot == "aboot"
@@ -148,7 +145,7 @@ mpp-vars:
     mpp-eval: boot_check_qm_digest_default[arch]
 
   _boot_check_qm_digest:
-    mpp-eval: "'' if not (use_fusa and use_qm) else locals().get('boot_check_qm_digest', _boot_check_qm_digest_default)"
+    mpp-eval: "'' if not (policy_require_qm_digest and use_qm) else locals().get('boot_check_qm_digest', _boot_check_qm_digest_default)"
 
   use_boot_check:
     mpp-eval: "use_static_ip or _boot_check_qm_digest != ''"
@@ -206,18 +203,11 @@ mpp-vars:
   denylist_rpms:
     mpp-join:
       - mpp-eval: denylist_rpms
-      - mpp-if: use_fusa
-        then:
-          mpp-eval: fusa_denylist_rpms
+      - mpp-eval: policy_denylist_rpms
   denylist_modules:
     mpp-join:
       - mpp-eval: denylist_modules
-      - mpp-if: use_fusa
-        then:
-          mpp-eval: fusa_denylist_modules
-      - mpp-if: use_fusa
-        then:
-          mpp-eval: target_fusa_denylist_modules
+      - mpp-eval: policy_denylist_modules
   dracut_modules:
     mpp-join:
       - mpp-if: is_autoinit_supported and use_autoinit
@@ -256,8 +246,7 @@ mpp-vars:
       - mpp-eval: selinux_booleans
       - - mpp-if: selinux_secure_mode
           then: secure_mode_policyload=true
-      - - mpp-if: use_fusa
-          then: deny_ptrace=true
+      - mpp-eval: policy_selinux_booleans
   # This file only exists to satisfy the upstream tuned realtime profile,
   # which fails to apply if these values are undefined.
   # Changing this will not reflect in boot-time cmdline options for tuned,
@@ -428,16 +417,13 @@ mpp-vars:
     mpp-if: use_qm
     then: "qm"
     else: "empty"
-  ld_so_cache_protected:
-    mpp-if: use_fusa
-    then: true
   image_enabled_services:
     mpp-join:
       - mpp-eval: image_enabled_services
       - - mpp-if: tmp_is_tmpfs
           then: tmp.mount
         - rcu-normal.service
-        - mpp-if: use_efipart and not use_fusa
+        - mpp-if: use_efipart and not policy_disable_efi_features
           then: boot-efi.mount
         - mpp-if: use_bootpart
           then: boot.mount
@@ -499,9 +485,7 @@ mpp-vars:
             config:
               mpp-join:
                 - mpp-eval: systemctl_options
-                - mpp-if: use_fusa
-                  then:
-                    mpp-eval: fusa_systemctl_options
+                - mpp-eval: policy_systemctl_options
         - type: org.osbuild.systemd
           options:
             disabled_services:
@@ -727,7 +711,7 @@ mpp-vars:
       then:
         from: input://extra-tree/boot.mount
         to: tree:////usr/lib/systemd/system/boot.mount
-    - mpp-if: use_efipart and not use_fusa
+    - mpp-if: use_efipart and not policy_disable_efi_features
       then:
         from: input://extra-tree/boot-efi.mount
         to: tree:////usr/lib/systemd/system/boot-efi.mount

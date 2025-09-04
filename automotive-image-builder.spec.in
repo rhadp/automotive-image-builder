@@ -39,6 +39,7 @@ Tool to build (and run) automotive images
 %{_bindir}/automotive-image-runner
 %{_bindir}/automotive-image-vm
 %{_prefix}/lib/automotive-image-builder
+%{_sysconfdir}/automotive-image-builder
 
 %changelog
 * Fri Apr 26 2024 Alexander Larsson <alexl@redhat.com>

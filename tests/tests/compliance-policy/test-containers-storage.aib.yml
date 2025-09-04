@@ -1,0 +1,8 @@
+name: containers-storage-test
+content:
+  container_images:
+    - name: test-container
+      containers-transport: containers-storage
+      source: registry.redhat.io/ubi8/ubi:latest
+  rpms:
+    - bash

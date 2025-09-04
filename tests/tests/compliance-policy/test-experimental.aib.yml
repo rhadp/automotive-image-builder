@@ -1,0 +1,7 @@
+name: experimental-test
+experimental:
+  internal_defines:
+    test_var: test_value
+content:
+  rpms:
+    - bash

@@ -2,8 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from aib import AIBParameters
-from aib import exceptions
-from aib.main import parse_args, validate_fusa_args
+from aib.main import parse_args
 from aib.runner import Runner
 
 
@@ -194,31 +193,3 @@ def test_collect_podman_args(container_autoupdate, use_non_root, volumes):
     # Check use non root options
     if use_non_root:
         assert podman_args[index] == "--user"
-
-
-@pytest.mark.parametrize(
-    "forbidden_args",
-    [
-        (["--mode=package"]),
-    ],
-)
-def test_nofusa_args(forbidden_args):
-    all_args = (
-        ["build", "--export", "image"]
-        + forbidden_args
-        + ["manifest.aib.yml", "out.img"]
-    )
-
-    # Should work without --fusa
-    args = AIBParameters(parse_args(all_args, base_dir=BASE_DIR), base_dir=BASE_DIR)
-    validate_fusa_args(args)
-
-    # Should faile with --fusa
-    all_args = (
-        ["build", "--export", "image", "--fusa"]
-        + forbidden_args
-        + ["manifest.aib.yml", "out.img"]
-    )
-    args = AIBParameters(parse_args(all_args, base_dir=BASE_DIR), base_dir=BASE_DIR)
-    with pytest.raises(exceptions.NotAllowedFusa):
-        validate_fusa_args(args)
