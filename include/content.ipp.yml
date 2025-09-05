@@ -260,6 +260,10 @@ mpp-vars:
     type: gpt
     minsize: $image_size
     partitions:
+      - mpp-if: use_sblpart
+        then:
+          part_label: sbl
+          part_type: '00000000-0000-0000-0000-000000000000'
       - mpp-if: use_efipart
         then:
           part_label: efi
@@ -280,6 +284,34 @@ mpp-vars:
           mountpoint: /boot
           minsize:
             mpp-format-string: '{bootpart_size * 512}'
+      - mpp-if: use_abootpart
+        then:
+          part_label: boot_a
+          part_type: $partition_type_aboot
+          fs_type: none
+          minsize:
+            mpp-format-string: '{abootpart_size * 512}'
+      - mpp-if: use_abootpart
+        then:
+          part_label: boot_b
+          part_type: $partition_type_aboot
+          fs_type: none
+          minsize:
+            mpp-format-string: '{abootpart_size * 512}'
+      - mpp-if: use_vbmetapart
+        then:
+          part_label: vbmeta_a
+          part_type: $partition_type_aboot
+          fs_type: none
+          minsize:
+            mpp-format-string: '{vbmetapart_size * 512}'
+      - mpp-if: use_vbmetapart
+        then:
+          part_label: vbmeta_b
+          part_type: $partition_type_aboot
+          fs_type: none
+          minsize:
+            mpp-format-string: '{vbmetapart_size * 512}'
       - mpp-if: use_ukibootpart
         then:
           part_label: ukiboot_a
