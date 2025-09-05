@@ -228,11 +228,7 @@ pipelines:
               options:
                 preptree: true
                 kernel:
-                  mpp-if: use_kernel_debug_package
-                  then:
-                    mpp-eval: rpms['rootfs'][kernel_core_package].evra+'+debug'
-                  else:
-                    mpp-eval: rpms['rootfs'][kernel_core_package].evra
+                  mpp-eval: _kernel_subdir()
 
   - name: ostree-commit
     build: name:build
@@ -413,13 +409,8 @@ pipelines:
         then:
           type: org.osbuild-auto.aboot.update
           options:
-            mpp-if: use_kernel_debug_package
-            then:
-              kernel:
-                mpp-eval: rpms['rootfs'][kernel_core_package].evra+'+debug'
-            else:
-              kernel:
-                mpp-eval: rpms['rootfs'][kernel_core_package].evra
+            kernel:
+              mpp-eval: _kernel_subdir()
       - mpp-if: use_grub2
         then:
           type: org.osbuild.grub2

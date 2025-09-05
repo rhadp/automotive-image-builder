@@ -170,6 +170,12 @@ mpp-vars:
       mpp-eval: kernel_rpm
     else:
       mpp-eval: kernel_package if not kernel_version else kernel_package + "-" + kernel_version
+  _kernel_evra:
+    mpp-eval: |
+      _Lazy(lambda: rpms['rootfs'][kernel_core_package].evra)
+  _kernel_evr:
+    mpp-eval: |
+      _Lazy(lambda: rpms['rootfs'][kernel_core_package].evr)
   # Sign the modules by default only for kernel-automotive in image mode.
   # Honor sign_kernel_modules override in all other cases.
   sign_kernel_modules:
@@ -181,6 +187,13 @@ mpp-vars:
   use_kernel_debug_package:
     mpp-if: "'debug' in locals().get('kernel_package')"
     then: true
+  _kernel_subdir:
+    mpp-eval: _kernel_evra + ("+debug" if use_kernel_debug_package else "")
+  _kernel_dir:
+    mpp-eval: '"/usr/lib/modules/" + _kernel_subdir'
+  _aboot_img:
+    mpp-eval: |
+      "aboot-" + _kernel_subdir + ".img"
   systemd_timeout:
     mpp-eval: "'180s' if use_debug or use_kernel_debug_package else systemd_timeout"
   coredump_storage:
