@@ -13,6 +13,52 @@ mpp-vars:
     mpp-eval: "lambda errstr: print('Error: ' + errstr, file=_sys.stderr)"
   _error:
     mpp-eval: "lambda errstr:(_printerr(errstr), _sys.exit(1))"
+  # Helper to lazily compute a variable at a later time. This is used
+  # to use the rpms[] variables which is update after evaluating
+  # all the mpp-defines in the includes.
+  _Lazy:
+    mpp-eval: |
+      type(
+          "Lazy",
+          (),
+          {
+              "__slots__": ("_func", "_has", "_val"),
+              "__init__": lambda self, func: (
+                  setattr(self, "_func", func),
+                  setattr(self, "_has", False),
+                  setattr(self, "_val", None)
+              )[-1],
+              "get": lambda self: (
+                  self._val if getattr(self, "_has", False)
+                  else (
+                      setattr(self, "_val", self._func()),
+                      setattr(self, "_has", True),
+                      self._val
+                  )[-1]
+              ),
+              "__call__": lambda self: self.get(),
+              "_eval":  lambda self, x: x.get() if isinstance(x, self.__class__) else x,
+              "__add__": lambda self, other: self.__class__(
+                  lambda: self.get() + self._eval(other)
+              ),
+              "__radd__": lambda self, other: self.__class__(
+                  lambda: self._eval(other) + self.get()
+              ),
+          },
+      )
+  _m:
+    mpp-eval: |
+      lambda x, _m: (
+        x.get() if isinstance(x, _Lazy)
+        else {k: _m(v, _m) for k, v in x.items()} if isinstance(x, dict)
+        else type(x)(_m(v, _m) for v in x) if isinstance(x, (list, tuple, set))
+        else x
+      )
+  # Materialize can be used to ensure all Lazy objects in a structure are resolved
+  _materialize:
+    mpp-eval: |
+      lambda x: _m(x, _m)
+  rpms: {} # Forward declare so it is in scope for later Lazy resolve
 
 pipelines:
   - mpp-import-pipelines:
