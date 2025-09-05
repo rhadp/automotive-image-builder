@@ -56,8 +56,8 @@ mpp-vars:
 
   # Per https://uapi-group.org/specifications/specs/discoverable_partitions_specification/
   rootfs_partition_type:
-    aarch64: 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
-    x86_64: b921b045-1df0-41c3-af44-4c6f280d3fae
+    aarch64: b921b045-1df0-41c3-af44-4c6f280d3fae
+    x86_64: 4f68bce3-e8cd-4db1-96e7-fbcaf984b709
   partition_type_rootfs:
     mpp-eval: rootfs_partition_type[arch]
   partition_type_efi: c12a7328-f81f-11d2-ba4b-00a0c93ec93b
