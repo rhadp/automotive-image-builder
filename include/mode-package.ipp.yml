@@ -96,13 +96,8 @@ pipelines:
                     mpp-eval: dracut_install
           - type: org.osbuild.dracut
             options:
-              mpp-if: use_kernel_debug_package
-              then:
-                kernel:
-                  - mpp-eval: rpms['rootfs'][kernel_core_package].evra+"+debug"
-              else:
-                kernel:
-                  - mpp-eval: rpms['rootfs'][kernel_core_package].evra
+              kernel:
+                - mpp-eval: _kernel_subdir()
           - mpp-if: use_grub2
             then:
               type: org.osbuild.grub2
@@ -173,13 +168,8 @@ pipelines:
                     mpp-format-string: "{aboot_ramdisk_offset}"
             - type: org.osbuild-auto.aboot.update
               options:
-                mpp-if: use_kernel_debug_package
-                then:
-                  kernel:
-                    mpp-eval: rpms['rootfs'][kernel_core_package].evra+'+debug'
-                else:
-                  kernel:
-                    mpp-eval: rpms['rootfs'][kernel_core_package].evra
+                kernel:
+                  mpp-eval: _kernel_subdir()
             - type: org.osbuild.copy
               inputs:
                 inlinefile:

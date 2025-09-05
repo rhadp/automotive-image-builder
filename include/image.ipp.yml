@@ -58,11 +58,7 @@ pipelines:
                     - name:image-tree
               options:
                 from:
-                  mpp-if: use_kernel_debug_package
-                  then:
-                    mpp-format-string: "input://tree/boot/aboot-{rpms['rootfs'][kernel_core_package].evra}+debug.img"
-                  else:
-                    mpp-format-string: "input://tree/boot/aboot-{rpms['rootfs'][kernel_core_package].evra}.img"
+                  mpp-format-string: "input://tree/boot/{_aboot_img()}"
           - mpp-if: use_ukiboot
             then:
               type: org.osbuild-auto.write-device
@@ -77,11 +73,7 @@ pipelines:
                     - name:image-tree
               options:
                 from:
-                  mpp-if: use_kernel_debug_package
-                  then:
-                    mpp-format-string: "input://tree/boot/aboot-{rpms['rootfs'][kernel_core_package].evra}+debug.img"
-                  else:
-                    mpp-format-string: "input://tree/boot/aboot-{rpms['rootfs'][kernel_core_package].evra}.img"
+                  mpp-format-string: "input://tree/boot/{_aboot_img()}"
           - mpp-if: use_efipart
             then:
               type: org.osbuild.mkfs.fat
@@ -461,11 +453,7 @@ pipelines:
                     - from: input://ext4-qm-var/qm_var.ext4
                       to: tree:///images/qm_var.ext4
                 - - from:
-                      mpp-if: use_kernel_debug_package
-                      then:
-                        mpp-format-string: "input://tree/boot/aboot-{rpms['rootfs'][kernel_core_package].evra}+debug.img"
-                      else:
-                        mpp-format-string: "input://tree/boot/aboot-{rpms['rootfs'][kernel_core_package].evra}.img"
+                      mpp-format-string: "input://tree/boot/{_aboot_img()}"
                     to: tree:///images/aboot.img
 
   # This is essentially rootfs with no image-specific stuff like boot, etc, but with
