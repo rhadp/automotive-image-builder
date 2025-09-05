@@ -8,7 +8,6 @@ mpp-vars:
   distro_baseurl_repo: $distro_baseurl/RHIVOS/$arch/os/
   distro_chroot: centos-stream-9-$arch
   uefi_vendor: redhat
-  kernel_package: kernel-automotive
   release_rpm: redhat-release
   selinux_policy: automotive
   distro_repos:
