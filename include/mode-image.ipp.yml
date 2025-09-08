@@ -165,6 +165,14 @@ pipelines:
               etc_group_members:
                 - wheel
                 - docker
+          # Temporary Work around the lack of https://github.com/coreos/rpm-ostree/pull/5485
+          - type: org.osbuild.lorax-script
+            options:
+              path: auto/append
+              product:
+                name:
+                  mpp-format-string: /usr/etc/selinux/{selinux_policy}/contexts/files/file_contexts.subs_dist
+                version: '"/usr/etc/systemd/system /usr/lib/systemd/system"'
             # TODO-BOOTC: For now we only do this for bootc targets, but its is not ideal
             # to depend on export targets like this. This should be fixed.
           - mpp-if: is_bootc_export
