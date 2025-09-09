@@ -115,34 +115,6 @@ mpp-vars:
       IMAGE_MODE="{image_mode}"
       IMAGE_TARGET="{target}"
       IMAGE_VERSION="{version}"
-  bluechi_agent_conf:
-    mpp-format-string: |
-      [bluechi-agent]
-      NodeName={ bluechi_nodename }
-      { f"ControllerHost={ bluechi_controller_host_ip }"
-          if bluechi_controller_host_ip != "" and bluechi_controller_socket == "" else "" }
-      { f"ControllerAddress=unix:path={bluechi_controller_socket}"
-          if bluechi_controller_socket != "" else "" }
-  qm_bluechi_agent_conf:
-    mpp-format-string: |
-      [bluechi-agent]
-      NodeName=qm.{ bluechi_nodename }
-      { f"ControllerHost={ bluechi_controller_host_ip }"
-          if bluechi_controller_host_ip != "" and bluechi_controller_socket == "" else "" }
-      { f"ControllerAddress=unix:path={bluechi_controller_socket}"
-          if bluechi_controller_socket != "" else "" }
-  bluechi_conf:
-    mpp-format-string: |
-      [bluechi-controller]
-      AllowedNodeNames={ ','.join(bluechi_controller_allowed_node_names) }
-      UseTCP={ bluechi_controller_use_tcp }
-
-      [node { bluechi_nodename }]
-      Allowed=true
-      RequiredSelinuxContext=bluechi_agent_t
-      [node qm.{ bluechi_nodename }]
-      Allowed=true
-      RequiredSelinuxContext=qm_bluechi_agent_t
   qm_subuid_content:
     mpp-format-string: |
       containers:{ qm_container_subuid }
@@ -155,10 +127,6 @@ mpp-vars:
       MemoryMax={ qm_memory_max }
       MemoryHigh={ qm_memory_high }
       CPUWeight={ qm_cpu_weight }
-
-      [Container]
-      { f"Volume={bluechi_controller_socket}:{bluechi_controller_socket}"
-          if use_qm and use_bluechi_agent and use_bluechi_controller else "" }
   subuid_content_qm:
     mpp-if: use_qm
     then:
@@ -667,29 +635,6 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile2/{embedded['subgid']}
               to: tree:///subgid
-
-      - type: org.osbuild.copy
-        inputs:
-          inlinefile:
-            type: org.osbuild.files
-            origin: org.osbuild.source
-            mpp-embed:
-              id: bluechi_agent_conf
-              text: $bluechi_agent_conf
-          inlinefile2:
-            type: org.osbuild.files
-            origin: org.osbuild.source
-            mpp-embed:
-              id: bluechi_conf
-              text: $bluechi_conf
-        options:
-          paths:
-            - from:
-                mpp-format-string: input://inlinefile/{embedded['bluechi_agent_conf']}
-              to: tree:///bluechi_agent.conf
-            - from:
-                mpp-format-string: input://inlinefile2/{embedded['bluechi_conf']}
-              to: tree:///bluechi.conf
 
       - type: org.osbuild.copy
         inputs:

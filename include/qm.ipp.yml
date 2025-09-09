@@ -58,8 +58,6 @@ pipelines:
                     - podman
                     - selinux-policy-$selinux_policy
                     - procps-ng
-                    - mpp-if: use_bluechi_agent
-                      then: bluechi-agent
 
       - type: org.osbuild.copy
         inputs:
@@ -75,12 +73,6 @@ pipelines:
             mpp-embed:
               id: qm_subgid
               text: $qm_subgid_content
-          inlinefile3:
-            type: org.osbuild.files
-            origin: org.osbuild.source
-            mpp-embed:
-              id: qm_agent_bluechi_conf
-              text: $qm_bluechi_agent_conf
         options:
           paths:
             - from:
@@ -89,11 +81,6 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile2/{embedded['qm_subgid']}
               to: tree:///etc/subgid
-            - mpp-if: use_bluechi_agent
-              then:
-                from:
-                  mpp-format-string: input://inlinefile3/{embedded['qm_agent_bluechi_conf']}
-                to: tree:///etc/bluechi/agent.conf
 
       - type: org.osbuild.containers.storage.conf
         options:
@@ -161,9 +148,3 @@ pipelines:
         options:
           zone:
             mpp-eval: timezone
-
-      - type: org.osbuild.systemd
-        options:
-          enabled_services:
-            - mpp-if: use_bluechi_agent
-              then: bluechi-agent.service
