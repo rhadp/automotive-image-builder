@@ -1,5 +1,18 @@
 summary: Verify that specified kernel modules are not available in image
-id: 7b448665-cd10-48c4-a668-ffebafb0e7e3
-duration: 60m
+description: |
+  Builds an AIB image with denylisted kernel modules and verifies that the
+  specified modules are not present in the image.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines kernel modules, which should be available in the image created in the test.
+
+  Expected results:
+    - PASS: 'All module checks passed'
+
+  Results location:
+    output.txt
+
 test: |
     ./test-denylist-modules.sh
+duration: 60m
+id: 7b448665-cd10-48c4-a668-ffebafb0e7e3

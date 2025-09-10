@@ -1,5 +1,18 @@
 summary: Verify that root_password is properly added to the image
-id: 468f4f07-8504-4dad-9944-8e0c25d1e363
-duration: 60m
+description: |
+  Builds an AIB image with a predefined root password and verifies that the `/etc/shadow` file
+  contains the expected password hash for the `root` user.
+
+  Test inputs:
+    Custom a-i-b manifest, which specifies password to be used for user root in the image created in the test.
+
+  Expected results:
+    - PASS: 'root password hash validated successfully.'
+
+  Results location:
+    output.txt
+
 test: |
     ./root-password.sh
+duration: 60m
+id: 468f4f07-8504-4dad-9944-8e0c25d1e363

@@ -1,4 +1,17 @@
 summary: Verify that dynamic network configuration is properly added to the image
-id: a4dcbfdd-5474-45a1-9678-0eddaf88a1c8
-duration: 60m
+description: |
+  Builds an AIB image with dynamic networking configuration and verifies
+  that no static profiles are present and NetworkManager is enabled at boot.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines dynamic network configuration for the image created in the test.
+
+  Expected results:
+    - PASS: 'dynamic networking configured correctly (no static profiles, NetworkManager enabled)'
+
+  Results location:
+    output.txt
+
 test: ./dynamic-network.sh
+duration: 60m
+id: a4dcbfdd-5474-45a1-9678-0eddaf88a1c8

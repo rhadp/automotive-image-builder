@@ -1,5 +1,22 @@
 summary: Verify that requested RPM packages are properly installed inside image
-id: fd5e4968-ed6e-4a74-9df6-7ba1356aea62
-duration: 60m
+description: |
+  Builds an AIB image with additional RPMs and verifies that the expected
+  packages are installed in the image.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines:
+      - RPM packages to be install in the image or the qm partition
+      - Predefined RPM repositories, which are disabled by default, but should be enabled during RPM installations
+        to the image or the qm partition.
+      - Custom RPM repositores, which should be enabled  during RPM installations to the image or the qm partition.
+
+  Expected results:
+    - PASS: 'All package installation checks completed successfully.'
+
+  Results location:
+    output.txt
+
 test: |
     ./test-install-rpms.sh
+duration: 60m
+id: fd5e4968-ed6e-4a74-9df6-7ba1356aea62

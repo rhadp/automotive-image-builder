@@ -1,4 +1,18 @@
 summary: Verify The size of the total image, allows suffixes like "GB" (powers of 1000) or "GiB" (powers of 1024)
-id: 0275d829-4e1b-415a-8bd7-6c68d4273377
-duration: 60m
+description: |
+  Builds an AIB images with different configured sizes and verifies that the
+  resulting image files match the expected size limits.
+
+  Test inputs:
+    - Custom a-i-b manifests, which define size of the image created in the test using various units.
+
+  Expected results:
+    - PASS: 'test-image-size-2gib.aib.yml matched (2 GiB)'
+    - PASS: 'test-image-size-2500mb.aib.yml matched (2500 MB)'
+
+  Results location:
+    output.txt
+
 test: ./image-size.sh
+duration: 60m
+id: 0275d829-4e1b-415a-8bd7-6c68d4273377

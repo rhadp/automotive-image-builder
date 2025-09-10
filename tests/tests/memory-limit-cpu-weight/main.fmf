@@ -1,5 +1,19 @@
 summary: Verify that memory_limit and cpu_weight options are correctly included in the QM image
-id: 3a0874e8-5194-44e5-a02e-ab57827cbd98
-duration: 60m
+description: |
+  Builds an AIB image with configured memory limits and CPU weight
+  and verifies that the expected settings are present in the QM container systemd configuration file.
+
+  Test inputs:
+    Custom a-i-b manifest, which define memory and CPU options applied to the qm partition in the image created
+    in the test.
+
+  Expected results:
+    - PASS: 'memory_limit and cpu_weight successfully verified in the QM image.'
+
+  Results location:
+    output.txt
+
 test: |
     ./test-memory-limit-cpu-weight.sh
+duration: 60m
+id: 3a0874e8-5194-44e5-a02e-ab57827cbd98

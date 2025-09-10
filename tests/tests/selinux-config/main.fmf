@@ -1,9 +1,23 @@
 summary: Verify SELinux configuration inside the image
-id: aa926eb8-a22e-4a07-b595-9802e3fd2eed
+description: |
+  Builds an AIB image with predefined SELinux mode, policy, and booleans
+  and runs a VM using this image. Verifies that SELinux is enforcing,
+  the targeted policy is loaded, and the expected booleans are set correctly.
+
+  Test inputs:
+    Custom a-i-b manifest, which define selinux configuration for the image created in the test.
+
+  Expected results:
+    - PASS: 'SELinux configuration verified successfully'
+
+  Results location:
+    output.txt
+
+test: |
+    ./selinux-config.sh
 require:
   - qemu-kvm
   - sshpass
 duration: 60m
 tag: [virt-required]
-test: |
-    ./selinux-config.sh
+id: aa926eb8-a22e-4a07-b595-9802e3fd2eed
