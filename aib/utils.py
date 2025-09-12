@@ -32,9 +32,8 @@ def extract_comment_header(file):
 
 
 def get_osbuild_major_version(runner, use_container):
-    osbuild_version = runner.run(
+    osbuild_version = runner.run_as_user(
         ["/usr/bin/osbuild", "--version"],
-        use_container=use_container,
         capture_output=True,
     )
     osbuild_major_version = osbuild_version.split()[-1].split(".")[0]
