@@ -49,6 +49,8 @@ mpp-vars:
     mpp-eval: _compute_uuid('ukibootpart_b')
   ukibootctl_uuid:
     mpp-eval: _compute_uuid('ukibootpart_ctl')
+  biospart_uuid:
+    mpp-eval: _compute_uuid('biospart')
   rootpart_uuid:
     mpp-eval: _compute_uuid('rootpart')
   luks_uuid:
@@ -61,6 +63,7 @@ mpp-vars:
   partition_type_rootfs:
     mpp-eval: rootfs_partition_type[arch]
   partition_type_efi: c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+  partition_type_bios: 21686148-6449-6E6F-744E-656564454649
   partition_type_boot: bc13c2ff-59e6-4262-a352-b275fd6f7172
   partition_type_var: 4d21b016-b534-45c2-a9fb-5c16e091fd2d
   partition_type_generic: 0fc63daf-8483-4772-8e79-3d69d8477de4
@@ -113,6 +116,11 @@ mpp-vars:
     mpp-if: not "use_sblpart" in locals()
     then:
       mpp-eval: use_sbl
+  use_biospart:
+    # TODO-BOOTC: bootupd fails if there is no bios boot partition
+    mpp-if: not "use_biospart" in locals()
+    then:
+      mpp-eval: is_bootc_export
 
   image_repos:
     mpp-join:
@@ -756,8 +764,8 @@ mpp-vars:
         to: tree:////usr/share/containers/systemd/qm.container.d/10-automotive.conf
     - from: input://extra-tree/bootc.install
       to: tree://///usr/lib/bootc/install/05-aib.toml
-    - from: input://extra-tree/bib-config.json
-      to: tree://///usr/lib/bootc-image-builder/config.json
+    - from: input://extra-tree/disk.yaml
+      to: tree://///usr/lib/bootc-image-builder/disk.yaml
     - mpp-if: root_ssh_keys
       then:
         from: input://extra-tree/root_sshd_authorized_keys.conf
