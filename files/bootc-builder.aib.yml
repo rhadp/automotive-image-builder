@@ -11,3 +11,4 @@ content:
     - bootupd # needed for bootc
     - shim # needed for bootupd
     - grub2
+    - aboot-deploy # Needed if aboot is enabled
