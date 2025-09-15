@@ -624,16 +624,19 @@ mpp-vars:
                   - name:build
             options:
               paths:
+                # When using bootc, bootc filesystem install always copies in the shim binary
+                # So, we rename ukiboot to the shim binary to have it be installed instead.
+                #
+                # Copy to both EFI/centos and EFI/BOOT paths, to ensure that the default boot
+                # behavior will also work in the case that no boot entries are present.
                 - from:
                     mpp-format-string: input://tree/usr/libexec/ukiboot/efi/ukiboot{efiarch}.efi
                   to:
-                    # When using bootc, bootc filesystem install always copies in the shim binary
-                    # So, we rename ukiboot to the shim binary to have it be installed instead.
-                    mpp-if: is_bootc_export
-                    then:
-                      mpp-format-string: tree:///boot/efi/EFI/centos/shim{efiarch}.efi
-                    else:
-                      mpp-format-string: tree:///boot/efi/EFI/BOOT/{efibootfile}
+                    mpp-format-string: tree:///boot/efi/EFI/centos/shim{efiarch}.efi
+                - from:
+                    mpp-format-string: input://tree/usr/libexec/ukiboot/efi/ukiboot{efiarch}.efi
+                  to:
+                    mpp-format-string: tree:///boot/efi/EFI/BOOT/{efibootfile}
 
   # Extra directories that will be created in the image, list amended by moode-*.ipp
   extra_tree_dirs:
