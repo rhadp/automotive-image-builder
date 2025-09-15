@@ -23,6 +23,12 @@ EXPORT_DATAS = {
         "filename": "image.oci-archive",
         "convert": "podman-import",
     },
+    "bootc-user": {
+        "desc": "Bootc image in per-user container store",
+        "export_arg": "bootc-archive",
+        "filename": "image.oci-archive",
+        "convert": "podman-import-user",
+    },
     "rootfs": {
         "desc": "Directory with image rootfs files",
         "filename": None,
@@ -106,6 +112,17 @@ def export(outputdir, dest, dest_is_directory, export, runner):
         # No actual file is created from the conversion
         handle_file = False
         runner.run_as_root(
+            [
+                "skopeo",
+                "copy",
+                "oci-archive:" + export_file,
+                "containers-storage:" + dest,
+            ]
+        )
+    if convert == "podman-import-user":
+        # No actual file is created from the conversion
+        handle_file = False
+        subprocess.run(
             [
                 "skopeo",
                 "copy",
