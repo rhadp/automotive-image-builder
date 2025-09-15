@@ -18,16 +18,14 @@ class MockRunner:
 
     def __init__(self, with_output=True):
         self.cmdline = None
-        self.use_container = None
         self.capture_output = None
         self.with_output = with_output
 
-    def run(self, cmdline, *, use_container=False, capture_output=False):
+    def run_as_user(self, cmdline, capture_output=False):
         """
         captures parameters passed and save them for inspection
         """
         self.cmdline = cmdline
-        self.use_container = use_container
         self.capture_output = capture_output
         if capture_output and self.with_output:
             return "first line\nsecond line\n"
@@ -44,7 +42,6 @@ def test_init_without_repo(caplog: LogCaptureFixture):
         with caplog.at_level(logging.DEBUG, logger=ostree.log.name):
             instance = ostree.OSTree(path, runner)
             assert f"Initializing repo {path}" in caplog.text
-        assert instance.runner.use_container is True
         assert "init" in instance.runner.cmdline
 
 
@@ -59,7 +56,6 @@ def test_init_with_existing_repo(caplog: LogCaptureFixture):
             # Nothing got logged
             assert caplog.text == ""
         # runner didn't execute any command
-        assert instance.runner.use_container is None
         assert instance.runner.cmdline is None
 
 
@@ -72,7 +68,6 @@ def test_refs():
         instance = ostree.OSTree(tmpdirname, runner)
         out = instance.refs()
         assert out == ["first line", "second line", ""]
-        assert instance.runner.use_container is True
         assert "refs" in instance.runner.cmdline
         assert instance.runner.capture_output is True
     # if no output is returned by the runner, returns an empty list
@@ -92,6 +87,5 @@ def test_rev_parse():
         instance = ostree.OSTree(tmpdirname, runner)
         out = instance.rev_parse("ref")
     assert out == "first line\nsecond line\n"
-    assert instance.runner.use_container is True
     assert "rev-parse" in instance.runner.cmdline
     assert instance.runner.capture_output is True

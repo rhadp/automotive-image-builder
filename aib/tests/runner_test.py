@@ -15,105 +15,135 @@ class AnyListContaining(str):
         return self in other
 
 
+class ListNotContaining(str):
+    def __eq__(self, other):
+        for o in other:
+            if o == str(self):
+                return False
+        return True
+
+
+def args_for(use_container, use_user_container):
+    args = []
+    if use_container:
+        args.append("--container")
+    if use_user_container:
+        args.append("--user-container")
+    return args
+
+
+@pytest.mark.parametrize("use_sudo_for_root", [True, False])
 @pytest.mark.parametrize(
-    "args",
-    [
-        ([]),
-        (["--container"]),
-        # Test with sudo (build option)
-        (["build", "--sudo", "--export", "qcow2", "a", "b"]),
-        (["--container", "build", "--sudo", "--export", "qcow2", "a", "b"]),
-    ],
+    "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @patch("aib.runner.subprocess")
-def test_run_args(subprocess_mock, args):
+def test_run_args_root(
+    subprocess_mock, use_sudo_for_root, use_container, use_user_container
+):
     subprocess_run = MagicMock()
     subprocess_mock.run = subprocess_run
+    args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
     )
+    runner.use_sudo_for_root = use_sudo_for_root
 
     cmd = ["touch", "example"]
-    runner.run(cmd)
-    subprocess_run.assert_called_once_with(cmd, check=True)
+    runner.run_as_root(cmd)
+
+    subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+    if use_sudo_for_root:
+        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
 
 
+@pytest.mark.parametrize("use_sudo_for_root", [True, False])
 @pytest.mark.parametrize(
-    "args",
-    [
-        ([]),
-        (["--container"]),
-        # Test with sudo (build option)
-        (["build", "--sudo", "--export", "qcow2", "a", "b"]),
-        (["--container", "build", "--sudo", "--export", "qcow2", "a", "b"]),
-    ],
+    "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @patch("aib.runner.subprocess")
-@patch("aib.runner.shutil")
-def test_run_args_container(shutil_mock, subprocess_mock, args):
+def test_run_args_container(
+    subprocess_mock, use_sudo_for_root, use_container, use_user_container
+):
     subprocess_run = MagicMock()
-    shutil_which = MagicMock(retrun_value="podman")
     subprocess_mock.run = subprocess_run
-    shutil_mock.which = shutil_which
-    args = AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
-    runner = Runner(args)
+    args = args_for(use_container, use_user_container)
+    runner = Runner(
+        AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
+    )
+    runner.use_sudo_for_root = use_sudo_for_root
 
-    cmd = ["touch", "example_container"]
-    runner.run(cmd, use_container=True)
-    expected = AnyListContaining("podman") if args.container else cmd
-    subprocess_run.assert_called_once_with(expected, check=True)
+    cmd = ["touch", "example"]
+    runner.run_in_container(cmd)
+
+    if use_container or use_user_container:
+        subprocess_run.assert_called_once_with(AnyListContaining("podman"), check=True)
+    else:
+        subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+
+    if use_sudo_for_root and not use_user_container:
+        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
+    else:
+        subprocess_run.assert_called_once_with(ListNotContaining("sudo"), check=True)
 
 
+@pytest.mark.parametrize("use_sudo_for_root", [True, False])
 @pytest.mark.parametrize(
-    "args",
-    [
-        ([]),
-        (["--container"]),
-        # Test with sudo (build option)
-        (["build", "--sudo", "--export", "qcow2", "a", "b"]),
-        (["--container", "build", "--sudo", "--export", "qcow2", "a", "b"]),
-    ],
+    "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @patch("aib.runner.subprocess")
-@patch("aib.runner.shutil")
-def test_run_args_container_non_root(shutil_mock, subprocess_mock, args):
+def test_run_args_osbuild(
+    subprocess_mock, use_sudo_for_root, use_container, use_user_container
+):
     subprocess_run = MagicMock()
-    shutil_which = MagicMock(retrun_value="podman")
     subprocess_mock.run = subprocess_run
-    shutil_mock.which = shutil_which
-    args = AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
-    runner = Runner(args)
+    args = args_for(use_container, use_user_container)
+    runner = Runner(
+        AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
+    )
+    runner.use_sudo_for_root = use_sudo_for_root
 
-    cmd = ["touch", "example_user"]
-    runner.run(cmd, use_container=True, use_non_root_user_in_container=True)
-    expected = AnyListContaining("--user") if args.container else cmd
-    subprocess_run.assert_called_once_with(expected, check=True)
+    cmd = ["touch", "example"]
+    runner.run_in_container(cmd, need_osbuild_privs=True)
+
+    if use_container or use_user_container:
+        subprocess_run.assert_called_once_with(AnyListContaining("podman"), check=True)
+    else:
+        subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+
+    if use_sudo_for_root and not use_user_container:
+        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
+    else:
+        subprocess_run.assert_called_once_with(ListNotContaining("sudo"), check=True)
 
 
+@pytest.mark.parametrize("use_sudo_for_root", [True, False])
 @pytest.mark.parametrize(
-    "args",
-    [
-        ([]),
-        (["--container"]),
-        # Test with sudo (build option)
-        (["build", "--sudo", "--export", "qcow2", "a", "b"]),
-        (["--container", "build", "--sudo", "--export", "qcow2", "a", "b"]),
-    ],
+    "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @patch("aib.runner.subprocess")
-@patch("aib.runner.shutil")
-def test_run_args_sudo(shutil_mock, subprocess_mock, args):
+def test_run_args_user(
+    subprocess_mock, use_sudo_for_root, use_container, use_user_container
+):
     subprocess_run = MagicMock()
-    shutil_which = MagicMock(retrun_value="podman")
     subprocess_mock.run = subprocess_run
-    shutil_mock.which = shutil_which
-    args = AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
-    runner = Runner(args)
+    args = args_for(use_container, use_user_container)
+    runner = Runner(
+        AIBParameters(parse_args(args, base_dir=BASE_DIR), base_dir=BASE_DIR)
+    )
+    runner.use_sudo_for_root = use_sudo_for_root
 
-    cmd = ["touch", "example_sudo"]
-    runner.run(cmd, use_sudo=True)
-    expected = AnyListContaining("sudo") if vars(args.args).get("sudo", False) else cmd
-    subprocess_run.assert_called_once_with(expected, check=True)
+    cmd = ["touch", "example"]
+    runner.run_as_user(cmd)
+
+    if use_container or use_user_container:
+        subprocess_run.assert_called_once_with(AnyListContaining("podman"), check=True)
+    else:
+        subprocess_run.assert_called_once_with(ListNotContaining("podman"), check=True)
+
+    if use_sudo_for_root and use_container:
+        subprocess_run.assert_called_once_with(AnyListContaining("sudo"), check=True)
+    else:
+        subprocess_run.assert_called_once_with(ListNotContaining("sudo"), check=True)
 
 
 @pytest.mark.parametrize(
@@ -142,14 +172,12 @@ def test_collect_podman_args(container_autoupdate, use_non_root, volumes):
     )
     for v in volumes:
         runner.add_volume(v)
-    podman_args = runner._collect_podman_args(
-        use_non_root_user_in_container=use_non_root
-    )
+    podman_args = runner._collect_podman_args(False, use_non_root, False)
 
-    index = 4
-    assert podman_args[:3] == ["--rm", "--privileged", "--workdir"]
+    index = 3
+    assert podman_args[:2] == ["--rm", "--workdir"]
     assert podman_args[index] == "--read-only=false"
-    index += 1
+    index = index + 1
     # Check volumes are added
     if podman_args[index : index + 2] == ["-v", f"{BASE_DIR}:{BASE_DIR}"]:  # noqa: E203
         index += 2  # Due to volume sorted by path this can appear before or after the other volumes
@@ -166,11 +194,6 @@ def test_collect_podman_args(container_autoupdate, use_non_root, volumes):
     # Check use non root options
     if use_non_root:
         assert podman_args[index] == "--user"
-    else:
-        assert podman_args[index : index + 2] == [  # noqa: E203
-            "--security-opt",
-            "label=type:unconfined_t",
-        ]
 
 
 @pytest.mark.parametrize(

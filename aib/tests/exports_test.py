@@ -74,10 +74,10 @@ class TestExport(unittest.TestCase):
         export(self.outputdir, dest, False, "qcow2", self.mock_runner)
 
         # Should call chown and mv
-        self.mock_runner.run.assert_any_call(
-            ["chown", f"{os.getuid()}:{os.getgid()}", test_file], use_sudo=True
+        self.mock_runner.run_as_root.assert_any_call(
+            ["chown", f"{os.getuid()}:{os.getgid()}", test_file]
         )
-        self.mock_runner.run.assert_any_call(["mv", test_file, dest], use_sudo=True)
+        self.mock_runner.run_as_root.assert_any_call(["mv", test_file, dest])
 
     def test_export_directory_destination(self):
         """Test export to directory destination"""
@@ -94,9 +94,7 @@ class TestExport(unittest.TestCase):
         export(self.outputdir, dest_dir, True, "image", self.mock_runner)
 
         expected_dest = os.path.join(dest_dir, "disk.img")
-        self.mock_runner.run.assert_any_call(
-            ["mv", test_file, expected_dest], use_sudo=True
-        )
+        self.mock_runner.run_as_root.assert_any_call(["mv", test_file, expected_dest])
 
     def test_export_directory_type(self):
         """Test export of directory type (like ostree-commit)"""
@@ -111,9 +109,9 @@ class TestExport(unittest.TestCase):
             export(self.outputdir, dest, False, "ostree-commit", self.mock_runner)
 
         # Should remove existing destination for directory exports
-        self.mock_runner.run.assert_any_call(["rm", "-rf", dest], use_sudo=True)
+        self.mock_runner.run_as_root.assert_any_call(["rm", "-rf", dest])
         # Should move the directory
-        self.mock_runner.run.assert_any_call(["mv", repo_dir, dest], use_sudo=True)
+        self.mock_runner.run_as_root.assert_any_call(["mv", repo_dir, dest])
 
     def test_export_with_export_arg(self):
         """Test export with export_arg (like bootc -> bootc-archive)"""
@@ -129,14 +127,13 @@ class TestExport(unittest.TestCase):
         export(self.outputdir, dest, False, "bootc", self.mock_runner)
 
         # Should call skopeo for podman-import conversion
-        self.mock_runner.run.assert_any_call(
+        self.mock_runner.run_as_root.assert_any_call(
             [
                 "skopeo",
                 "copy",
                 "oci-archive:" + test_file,
                 "containers-storage:" + dest,
-            ],
-            use_sudo=True,
+            ]
         )
 
     def test_export_simg_conversion(self):
@@ -154,11 +151,11 @@ class TestExport(unittest.TestCase):
 
         # Should call img2simg for conversion
         converted_file = os.path.splitext(test_file)[0] + ".simg"
-        self.mock_runner.run.assert_any_call(
-            ["img2simg", test_file, converted_file], use_sudo=True, use_container=True
+        self.mock_runner.run_in_container.assert_any_call(
+            ["img2simg", test_file, converted_file]
         )
         # Should remove original file
-        self.mock_runner.run.assert_any_call(["rm", "-rf", test_file], use_sudo=True)
+        self.mock_runner.run_as_root.assert_any_call(["rm", "-rf", test_file])
 
     def test_export_simg_conversion_with_convert_filename(self):
         """Test export with simg conversion using convert_filename pattern"""
@@ -183,11 +180,11 @@ class TestExport(unittest.TestCase):
         converted_file1 = os.path.splitext(test_file1)[0] + ".simg"
         converted_file2 = os.path.splitext(test_file2)[0] + ".simg"
 
-        self.mock_runner.run.assert_any_call(
-            ["img2simg", test_file1, converted_file1], use_sudo=True, use_container=True
+        self.mock_runner.run_in_container.assert_any_call(
+            ["img2simg", test_file1, converted_file1]
         )
-        self.mock_runner.run.assert_any_call(
-            ["img2simg", test_file2, converted_file2], use_sudo=True, use_container=True
+        self.mock_runner.run_in_container.assert_any_call(
+            ["img2simg", test_file2, converted_file2]
         )
 
     def test_export_no_chown_flag(self):
@@ -219,7 +216,7 @@ class TestExport(unittest.TestCase):
         export(self.outputdir, dest, False, "rootfs", self.mock_runner)
 
         # Should move the export directory itself
-        self.mock_runner.run.assert_any_call(["mv", export_dir, dest], use_sudo=True)
+        self.mock_runner.run_as_root.assert_any_call(["mv", export_dir, dest])
 
     @patch("os.path.isfile")
     def test_export_removes_existing_directory_destination(self, mock_isfile):
@@ -236,7 +233,7 @@ class TestExport(unittest.TestCase):
         export(self.outputdir, dest, False, "ostree-commit", self.mock_runner)
 
         # Should remove existing destination
-        self.mock_runner.run.assert_any_call(["rm", "-rf", dest], use_sudo=True)
+        self.mock_runner.run_as_root.assert_any_call(["rm", "-rf", dest])
 
     def test_export_unsupported_type(self):
         """Test export with unsupported export type"""

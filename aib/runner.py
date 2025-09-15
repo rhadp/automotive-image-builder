@@ -6,6 +6,23 @@ import sys
 
 from . import log
 
+# Runner is a mechanism to run commands in a different context.
+# There are two primary types of contexts:
+#  - Run on the host, or in a container
+#  - Run as root, or as the current user
+#
+# These also combine, for example as the current user, but inside a
+# rootful container. On top of this, sometimes you need special
+# privileges when running a container, to e.g. allow osbuild to run in
+# the container.
+#
+# There are many different reasons for running in a context. Here are some:
+# - Running osbuild on the host needs to run as root
+# - Run in a container because osbuild is not installed on the host
+# - Run as root, because we want to use rootfull podman/skopeo
+# - Run as root, because earlier runs produced root-owned files we need to access
+# - Run as root, to get rootful podman, but run as user inside the container to produce correctly owned files
+
 
 class Volumes(set):
     def __init__(self):
@@ -20,21 +37,23 @@ class Volumes(set):
 
 class Runner:
     def __init__(self, args):
-        self.container = args.container_image_name if args.container else ""
+        self.use_container = args.container or args.user_container
+        self.container_needs_root = not args.user_container
+        self.container_image = args.container_image_name
         self.container_autoupdate = args.container_autoupdate
-        self.sudo = vars(args.args).get("sudo", False)
+        self.use_sudo_for_root = os.getuid() != 0
         self.volumes = Volumes()
         for d in args.include_dirs:
             self.add_volume(d)
 
-    def _collect_podman_args(self, use_non_root_user_in_container):
+    def _collect_podman_args(self, rootless, as_user_in_container, need_osbuild_privs):
         podman_args = [
             "--rm",
-            "--privileged",
             "--workdir",
             os.path.realpath(os.getcwd()),
             "--read-only=false",
         ]
+
         for v in sorted(self.volumes):
             podman_args.append("-v")
             podman_args.append(f"{v}:{v}")
@@ -42,11 +61,28 @@ class Runner:
         if self.container_autoupdate:
             podman_args.append("--pull=newer")
 
-        if use_non_root_user_in_container:
-            podman_args.append("--user")
-            podman_args.append(f"{os.getuid()}:{os.getgid()}")
-        else:
-            podman_args.extend(["--security-opt", "label=type:unconfined_t"])
+        if rootless:
+            # For rootless --privileges is quite different. Its not a
+            # global security problem, and allows things to work.
+            podman_args = podman_args + [
+                "--privileged",
+            ]
+
+        if need_osbuild_privs and not rootless:
+            podman_args = podman_args + [
+                "--cap-add=MAC_ADMIN",
+                "--security-opt",
+                "label=type:unconfined_t",
+                "--privileged",
+            ]
+
+        if as_user_in_container:
+            podman_args = podman_args + [
+                "--user",
+                f"{os.getuid()}:{os.getgid()}",
+                "--security-opt",
+                "label=disable",
+            ]
 
         return podman_args
 
@@ -62,28 +98,36 @@ class Runner:
     def add_volume_for(self, file):
         self.volumes.add_volume_for(file)
 
-    def _add_container_cmd(self, use_non_root_user_in_container):
+    def _add_container_cmd(self, rootless, as_user_in_container, need_osbuild_privs):
         return (
             [
                 self.conman,
                 "run",
             ]
-            + self._collect_podman_args(use_non_root_user_in_container)
-            + [self.container]
+            + self._collect_podman_args(
+                rootless, as_user_in_container, need_osbuild_privs
+            )
+            + [self.container_image]
         )
 
-    def run(
+    def _run(
         self,
         cmdline,
-        use_sudo=False,
         use_container=False,
-        use_non_root_user_in_container=False,
+        as_root=False,
+        as_user_in_container=False,
+        need_osbuild_privs=False,
         capture_output=False,
     ):
-        if use_container and self.container:
-            cmdline = self._add_container_cmd(use_non_root_user_in_container) + cmdline
+        if use_container:
+            cmdline = (
+                self._add_container_cmd(
+                    not as_root, as_user_in_container, need_osbuild_privs
+                )
+                + cmdline
+            )
 
-        if use_sudo and self.sudo:
+        if as_root and self.use_sudo_for_root:
             allowed_env_vars = [
                 "REGISTRY_AUTH_FILE",
                 "CONTAINERS_CONF",
@@ -106,3 +150,63 @@ class Runner:
                 subprocess.run(cmdline, check=True)
         except subprocess.CalledProcessError:
             sys.exit(1)  # cmd will have printed the error
+
+    # Run the commandline as root, i.e. with sudo if not already root
+    def run_as_root(
+        self,
+        cmdline,
+        capture_output=False,
+    ):
+        return self._run(
+            cmdline, capture_output=capture_output, use_container=False, as_root=True
+        )
+
+    # Run the commandline in a container, if container use is enabled, otherwise
+    # just runs as root.
+    #
+    # For rootful containers, the container runs as root,
+    # For rootless it runs as the user, but in the container it looks as root.
+    #
+    # By default the container is unprivileged (although for rootless containers
+    # --privileged is passed, it just means something else there).
+    # However if need_osbuild_privs is true, then the container has enough privileges
+    # to run osbuilt inside it.
+    def run_in_container(
+        self,
+        cmdline,
+        need_osbuild_privs=False,
+        capture_output=False,
+    ):
+        use_container = self.use_container
+        if use_container:
+            as_root = self.container_needs_root
+        else:
+            as_root = True
+        return self._run(
+            cmdline,
+            capture_output=capture_output,
+            use_container=use_container,
+            as_root=as_root,
+            need_osbuild_privs=need_osbuild_privs,
+        )
+
+    # Run commandline as user, either directly, or in a container, it
+    # container use is enabled.
+    # If a rootful container is used, then --user is passed to ensure
+    # the the process inside the container runs as the current user.
+    def run_as_user(
+        self,
+        cmdline,
+        capture_output=False,
+    ):
+        use_container = self.use_container
+        as_root = use_container and self.container_needs_root
+        as_user_in_container = as_root
+
+        return self._run(
+            cmdline,
+            use_container=use_container,
+            as_root=as_root,
+            as_user_in_container=as_user_in_container,
+            capture_output=capture_output,
+        )

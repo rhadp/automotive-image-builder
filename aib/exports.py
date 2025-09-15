@@ -1,4 +1,5 @@
 import os
+import subprocess
 import glob
 
 from .exceptions import UnsupportedExport
@@ -17,10 +18,16 @@ EXPORT_DATAS = {
         "filename": "image.oci-archive",
     },
     "bootc": {
-        "desc": "Bootc image in local store",
+        "desc": "Bootc image in local container store",
         "export_arg": "bootc-archive",
         "filename": "image.oci-archive",
         "convert": "podman-import",
+    },
+    "bootc-user": {
+        "desc": "Bootc image in per-user container store",
+        "export_arg": "bootc-archive",
+        "filename": "image.oci-archive",
+        "convert": "podman-import-user",
     },
     "rootfs": {
         "desc": "Directory with image rootfs files",
@@ -95,12 +102,8 @@ def export(outputdir, dest, dest_is_directory, export, runner):
             convert_files = [export_file]
         for convert_file in convert_files:
             converted_file = os.path.splitext(convert_file)[0] + ".simg"
-            runner.run(
-                ["img2simg", convert_file, converted_file],
-                use_sudo=True,
-                use_container=True,
-            )
-            runner.run(["rm", "-rf", convert_file], use_sudo=True)
+            runner.run_in_container(["img2simg", convert_file, converted_file])
+            runner.run_as_root(["rm", "-rf", convert_file])
 
         if not export_is_dir:
             export_file = converted_file
@@ -108,14 +111,24 @@ def export(outputdir, dest, dest_is_directory, export, runner):
     if convert == "podman-import":
         # No actual file is created from the conversion
         handle_file = False
-        runner.run(
+        runner.run_as_root(
             [
                 "skopeo",
                 "copy",
                 "oci-archive:" + export_file,
                 "containers-storage:" + dest,
-            ],
-            use_sudo=True,
+            ]
+        )
+    if convert == "podman-import-user":
+        # No actual file is created from the conversion
+        handle_file = False
+        subprocess.run(
+            [
+                "skopeo",
+                "copy",
+                "oci-archive:" + export_file,
+                "containers-storage:" + dest,
+            ]
         )
 
     if dest_is_directory:
@@ -124,13 +137,10 @@ def export(outputdir, dest, dest_is_directory, export, runner):
     if export_is_dir:
         # The mv won't replace existing destination, so first remove it
         if os.path.isdir(dest) or os.path.isfile(dest):
-            runner.run(["rm", "-rf", dest], use_sudo=True)
+            runner.run_as_root(["rm", "-rf", dest])
 
     if handle_file:
         if not data.get("no_chown", False):
-            runner.run(
-                ["chown", f"{os.getuid()}:{os.getgid()}", export_file],
-                use_sudo=True,
-            )
+            runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", export_file])
 
-        runner.run(["mv", export_file, dest], use_sudo=True)
+        runner.run_as_root(["mv", export_file, dest])

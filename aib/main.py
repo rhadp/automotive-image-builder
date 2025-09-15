@@ -88,7 +88,6 @@ def parse_define(d, option):
 
 
 def parse_args(args, base_dir):
-    isRoot = os.getuid() == 0
     parser = argparse.ArgumentParser(
         prog="automotive-image-builder", description="Build automotive images"
     )
@@ -101,6 +100,12 @@ def parse_args(args, base_dir):
         default=False,
         action="store_true",
         help="Use containerized build",
+    )
+    parser.add_argument(
+        "--user-container",
+        default=False,
+        action="store_true",
+        help="Use rootless containerized build",
     )
     container_image_name_default = (
         "quay.io/centos-sig-automotive/automotive-image-builder"
@@ -278,19 +283,6 @@ def parse_args(args, base_dir):
         type=str,
         default=os.getenv("OSBUILD_BUILDDIR"),
         help="Directory where intermediary files are stored)",
-    )
-    parser_buildbase.add_argument(
-        "--sudo",
-        default=not isRoot,
-        action="store_true",
-        help="Use sudo to start programs that need privileges "
-        "(default if not run as root)",
-    )
-    parser_buildbase.add_argument(
-        "--nosudo",
-        default=False,
-        action="store_true",
-        help="Don't use sudo to start programs",
     )
 
     # Arguments for "build" command
@@ -517,12 +509,7 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
 
     cmdline += [os.path.join(args.base_dir, "include/main.ipp.yml"), out]
 
-    runner.run(
-        cmdline,
-        use_sudo=True,
-        use_container=True,
-        use_non_root_user_in_container=True,
-    )
+    runner.run_as_user(cmdline)
 
 
 def compose(args, tmpdir, runner):
@@ -557,9 +544,6 @@ def listrpms(args, tmpdir, runner):
 
 
 def _build(args, tmpdir, runner):
-    if args.nosudo:
-        args.sudo = False
-
     runner.add_volume_for(args.out)
 
     osbuild_manifest = os.path.join(tmpdir, "osbuild.json")
@@ -620,7 +604,7 @@ def _build(args, tmpdir, runner):
         # Download sources on host, using no exports
 
         cmdline += [osbuild_manifest]
-        runner.run(cmdline, use_sudo=True, use_container=True)
+        runner.run_in_container(cmdline)
 
         # Now do the build in the vm
 
@@ -671,20 +655,19 @@ def _build(args, tmpdir, runner):
         if res != 0:
             sys.exit(1)  # vm will have printed the error
 
-        runner.run(["tar", "xvf", output_tar, "-C", outputdir], use_sudo=True)
+        runner.run_as_root(["tar", "xvf", output_tar, "-C", outputdir])
     else:
         for exp in exports:
             cmdline += ["--export", exp]
 
         cmdline += [osbuild_manifest]
 
-        runner.run(cmdline, use_sudo=True, use_container=True)
+        runner.run_in_container(cmdline, need_osbuild_privs=True)
 
     if args.ostree_repo:
         repodir = os.path.join(outputdir, "ostree-commit/repo")
-        runner.run(
-            ["ostree", "pull-local", "--repo=" + args.ostree_repo, repodir],
-            use_container=True,
+        runner.run_as_user(
+            ["ostree", "pull-local", "--repo=" + args.ostree_repo, repodir]
         )
 
     if len(args.export) == 1:
@@ -692,12 +675,12 @@ def _build(args, tmpdir, runner):
         export(outputdir, args.out, False, args.export[0], runner)
     else:
         if os.path.isdir(args.out) or os.path.isfile(args.out):
-            runner.run(["rm", "-rf", args.out], use_sudo=True)
+            runner.run_as_root(["rm", "-rf", args.out])
         os.mkdir(args.out)
         for exp in args.export:
             export(outputdir, args.out, True, exp, runner)
 
-    runner.run(["rm", "-rf", outputdir], use_sudo=True)
+    runner.run_as_root(["rm", "-rf", outputdir])
 
 
 def build(args, tmpdir, runner):
@@ -707,11 +690,10 @@ def build(args, tmpdir, runner):
 
         # Ensure we can clean up these directories, that can have
         # weird permissions
-        if args.sudo and (
-            os.path.isdir(os.path.join(tmpdir, "osbuild_store"))
-            or os.path.isdir(os.path.join(tmpdir, "image_output"))
+        if os.path.isdir(os.path.join(tmpdir, "osbuild_store")) or os.path.isdir(
+            os.path.join(tmpdir, "image_output")
         ):
-            runner.run(["rm", "-rf", tmpdir], use_sudo=True)
+            runner.run_as_root(["rm", "-rf", tmpdir])
 
 
 def build_bootc_builder(args, tmpdir, runner):
