@@ -348,7 +348,8 @@ mpp-vars:
         - mpp-if: use_ukibootpart
           then:
             label: ukiboot_a
-            type: $partition_type_ukiboot
+            type:
+              mpp-eval: "partition_type_ukiboot if partition_label == 'gpt' else '46'"
             uuid: $ukibootpart_a_uuid
             size:
               mpp-format-string: '{ukibootpart_size * 512}'
@@ -359,14 +360,16 @@ mpp-vars:
         - mpp-if: use_ukibootpart
           then:
             label: ukiboot_b
-            type: $partition_type_ukiboot
+            type:
+              mpp-eval: "partition_type_ukiboot if partition_label == 'gpt' else '47'"
             uuid: $ukibootpart_b_uuid
             size:
               mpp-format-string: '{ukibootpart_size * 512}'
         - mpp-if: use_ukibootpart
           then:
             label: ukibootctl
-            type: $partition_type_ukibootctl
+            type:
+              mpp-eval: "partition_type_ukibootctl if partition_label == 'gpt' else '48'"
             uuid: $ukibootctl_uuid
             size:
               mpp-format-string: '{ukibootctlpart_size * 512}'
