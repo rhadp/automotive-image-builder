@@ -8,7 +8,7 @@ mpp-vars:
       After=blockdev@dev-disk-by\\x2dpartuuid-{bootpart_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
-      What=/dev/disk/by-partuuid/$bootpart_uuid
+      What=/dev/disk/by-uuid/$bootfs_uuid
       Where=/boot
       Type=ext4
 
@@ -34,7 +34,7 @@ mpp-vars:
       After=blockdev@dev-disk-by\\x2dpartuuid-{varpart_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
-      What=/dev/disk/by-partuuid/$varpart_uuid
+      What=/dev/disk/by-uuid/$varfs_uuid
       Where=/var
       Type=ext4
 
@@ -47,7 +47,7 @@ mpp-vars:
       After=blockdev@dev-disk-by\\x2dpartuuid-{qm_varpart_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
-      What=/dev/disk/by-partuuid/$qm_varpart_uuid
+      What=/dev/disk/by-uuid/$qm_varfs_uuid
       Where=/var/qm
       Type=ext4
 
