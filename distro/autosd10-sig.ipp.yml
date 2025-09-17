@@ -9,8 +9,7 @@ mpp-vars:
   uefi_vendor: centos
   release_rpm: centos-release-autosd
   containers_configdir: /usr/share/containers
-  # Not yet available in CS 10
-  #selinux_policy: automotive
+  selinux_policy: automotive
   # linux-firmware-automotive is not yet available
   linux_firmware_rpm: linux-firmware
   rpmdb_in_usr: true
