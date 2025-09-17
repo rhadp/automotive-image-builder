@@ -155,10 +155,7 @@ pipelines:
             options:
               uuid:
                 mpp-eval: rootfs_uuid
-              label:
-                mpp-if: not use_aboot
-                then:
-                  mpp-format-string: root
+              label: root
               lazy_init: false
               verity: true
           - type: org.osbuild.copy
