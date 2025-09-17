@@ -288,7 +288,8 @@ mpp-vars:
         - mpp-if: not use_efi_runtime
           then: efi=noruntime
         - mpp-if: not skip_root_on_cmdline
-          then: "root=LABEL=root"
+          then:
+            mpp-format-string: "root=UUID={rootfs_uuid}"
       - mpp-eval: kernel_opts
       - mpp-eval: simple_kernel_opts
       - mpp-eval: extra_kernel_opts
