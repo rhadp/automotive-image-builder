@@ -278,6 +278,7 @@ mpp-vars:
             payload:
               type: ext4
               label: boot
+              uuid: $bootfs_uuid
               mountpoint: /boot
         # aboot partitions
         - mpp-if: use_abootpart
@@ -376,6 +377,7 @@ mpp-vars:
           payload_type: filesystem
           payload:
             type: ext4
+            uuid: $rootfs_uuid
             label: root
             mountpoint: /
 
