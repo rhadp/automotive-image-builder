@@ -6,7 +6,6 @@ mpp-vars:
   use_efi_runtime: false
   use_autoinit: true
   use_autoinit_root: true
-  autoinit_root: /dev/sde38
   consoles: "ttyMSM0,115200,n8"
   aboot_pagesize: 4096
   aboot_kernel_offset: "0x80208000"
