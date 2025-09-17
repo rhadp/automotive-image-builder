@@ -140,18 +140,8 @@ mpp-vars:
   image_repo_ids:
     mpp-eval: "[repo['id'] for repo in image_repos]"
 
-  # use_bluechi is a backwards compat option that enables both use_bluechi_agent and use_bluechi_controller
-  use_bluechi_agent:
-    mpp-eval: use_bluechi_agent or locals().get('use_bluechi')
-  use_bluechi_controller:
-    mpp-eval: use_bluechi_controller or locals().get('use_bluechi')
-
   _boot_check_qm_digest_default:
-    mpp-if: use_bluechi_agent and use_bluechi_controller
-    then:
-      mpp-eval: boot_check_qm_digest_bluechi[arch]
-    else:
-      mpp-eval: boot_check_qm_digest_default[arch]
+    mpp-eval: boot_check_qm_digest_default[arch]
 
   _boot_check_qm_digest:
     mpp-eval: "'' if not (use_fusa and use_qm) else locals().get('boot_check_qm_digest', _boot_check_qm_digest_default)"
@@ -418,12 +408,6 @@ mpp-vars:
         - from: input://data-tree/etc/selinux/config
           to: tree:///etc/selinux/config
 
-  bluechi_controller_allowed_node_names:
-    mpp-if: not bluechi_controller_allowed_node_names
-    then:
-      - $bluechi_nodename
-      - mpp-if: use_qm
-        then: qm.$bluechi_nodename
   rootpart_label:
     mpp-eval: aboot_partlabel if use_aboot else "root"
   autoinit_root:
@@ -440,12 +424,6 @@ mpp-vars:
       - mpp-eval: image_enabled_services
       - - mpp-if: tmp_is_tmpfs
           then: tmp.mount
-        - mpp-if: use_bluechi_agent
-          then: bluechi-agent.service
-        - mpp-if: use_bluechi_controller
-          then: bluechi-controller.socket
-        - mpp-if: use_bluechi_controller
-          then: bluechi-controller.service
         - rcu-normal.service
         - mpp-if: use_efipart and not use_fusa
           then: boot-efi.mount
@@ -709,14 +687,6 @@ mpp-vars:
       to: tree:///etc/subuid
     - from: input://extra-tree/subgid
       to: tree:///etc/subgid
-    - mpp-if: use_bluechi_controller
-      then:
-        from: input://extra-tree/bluechi.conf
-        to: tree:///etc/bluechi/controller.conf
-    - mpp-if: use_bluechi_agent
-      then:
-        from: input://extra-tree/bluechi_agent.conf
-        to: tree:///etc/bluechi/agent.conf
     - mpp-if: use_static_ip
       then:
         from: input://extra-tree/main.nmstate
@@ -851,12 +821,6 @@ mpp-vars:
           then: auto-boot-check
         - mpp-if: not use_static_ip
           then: NetworkManager
-        - mpp-if: use_bluechi_agent
-          then: bluechi-agent
-        - mpp-if: use_bluechi_controller
-          then: bluechi-controller
-        - mpp-if: use_bluechi_agent or use_bluechi_controller
-          then: bluechi-selinux
         - mpp-if: use_qm
           then: qm
         # TODO-BOOTC: bootupd needs this for generate-update-metadata

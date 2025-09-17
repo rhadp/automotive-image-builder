@@ -141,8 +141,6 @@ Here are some commonly used variable supported and what they mean:
 
 * `use_qm`: If this is true, then the support for the qm partion is included in the image
 * `qm_memory_max`: Set the maximum memory that can be used by the QM partition (see MemoryMax systemd option for format)
-* `use_bluechi_agent`: If this is true, then the support for bluechi-agent is included and configured in the host and (if enabled) in the qm partition
-* `use_bluechi_controller`: If this is true, then the support for bluechi-controller is included and configured in the host
 * `extra_rpms`: Many manifests (e.g. in sample-images) support this variable to add extra rpms to the image
 * `image_size`: Specifies the size in bytes (as a string) of the generated image
 * `use_composefs_signed`: If this is set to false, then use of ostree will not require signed commits. This can be needed in some cases if you want to modify the ostree image on the target system (e.g. layering packages).
@@ -153,9 +151,6 @@ Here are some commonly used variable supported and what they mean:
 * `static_dns`: The dns server ip
 * `static_ip_iface`: The network interface name
 * `static_ip_modules`: The network driver kernel modules to load (if any)
-* `bluechi_controller_host_ip`: The IP address of the bluechi controller (used by bluechi-agents)
-* `bluechi_nodename`: The node name of the bluechi-agent on the image (qm agent gets "qm." prepended to name)
-* `bluechi_controller_allowed_node_names`: A list of node names accepted by the bluechi controller
 * `use_debug`: If set to true, a lot more debugging info will be shown during boot
 
 ## Using qm
