@@ -96,7 +96,7 @@ pipelines:
                   mpp-eval: image_loopdev['var']
               options:
                 uuid:
-                  mpp-eval: varpart_uuid
+                  mpp-eval: varfs_uuid
                 label: var
                 lazy_init: false
           - mpp-if: _qm_use_separate_var and _qm_varpart_size > 0
@@ -107,7 +107,7 @@ pipelines:
                   mpp-eval: image_loopdev['qm_var']
               options:
                 uuid:
-                  mpp-eval: qm_varpart_uuid
+                  mpp-eval: qm_varfs_uuid
                 label: qm_var
                 lazy_init: false
         - mpp-if: use_luks
@@ -394,7 +394,7 @@ pipelines:
                   mpp-format-int: "{int(_qm_varpart_size)}"
           options:
             uuid:
-              mpp-eval: qm_varpart_uuid
+              mpp-eval: qm_varfs_uuid
             label: qm_var
             verity: true
             lazy_init: true

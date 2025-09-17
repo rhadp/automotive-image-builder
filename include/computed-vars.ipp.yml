@@ -25,6 +25,10 @@ mpp-vars:
     mpp-eval: _compute_uuid('rootfs')
   bootfs_uuid:
     mpp-eval: _compute_uuid('bootfs')
+  varfs_uuid:
+    mpp-eval: _compute_uuid('varfs')
+  qm_varfs_uuid:
+    mpp-eval: _compute_uuid('qm_varfs')
   parttab_uuid:
     mpp-eval: _compute_uuid('parttab')
   efipart_uuid:

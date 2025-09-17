@@ -354,6 +354,7 @@ mpp-vars:
             payload_type: filesystem
             payload:
               type: ext4
+              uuid: $varfs_uuid
               label: var
               mountpoint: /var
         # /var/qm
@@ -368,6 +369,7 @@ mpp-vars:
             payload_type: filesystem
             payload:
               type: ext4
+              uuid: $qm_varfs_uuid
               label: qm_var
               mountpoint: /var/qm
         # rootfs
