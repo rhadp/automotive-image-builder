@@ -287,7 +287,7 @@ mpp-vars:
         - loglevel=$kernel_loglevel
         - mpp-if: not use_efi_runtime
           then: efi=noruntime
-        - mpp-if: not use_abl
+        - mpp-if: not skip_root_on_cmdline
           then: "root=LABEL=root"
       - mpp-eval: kernel_opts
       - mpp-eval: simple_kernel_opts
