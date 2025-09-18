@@ -1,0 +1,11 @@
+summary: This test builds a minimal QM image, injects and runs three boot tests
+    (systemd, dmesg, selinux) at boot via a systemd service, and verifies 
+    success through serial console output
+id: 91f50931-f916-4445-9c2e-aedb4b6766d4
+require:
+  - qemu-kvm
+  - sshpass
+duration: 60m
+tag: [special]
+test: |
+    ./run-boot-tests.sh
