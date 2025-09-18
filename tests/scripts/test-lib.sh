@@ -272,7 +272,8 @@ assert_image_exists() {
 run_vm() {
     local image=$1
     local ssh_port=${2:-2222}
-    automotive-image-runner --ssh-port "$ssh_port" --nographics "$image" > /dev/null 2>&1 &
+    local log_file=${3:-"serial-console.log"}
+    automotive-image-runner --ssh-port "$ssh_port" --nographics "$image" > "$log_file" 2>&1 &
     local pid=$!
     >&2 echo "INFO: VM running at pid: $pid"
     echo "$pid"
@@ -313,9 +314,14 @@ run_vm_command() {
 # Kill the given VM by PID
 stop_vm() {
     local pid="$1"
+    local log_file=${2:-"serial-console.log"}
     if ps -p "$pid" > /dev/null; then
         /usr/bin/kill --timeout 2000 TERM --timeout 1000 KILL "$pid"
         wait "$pid" 2>/dev/null || true
+    fi
+    if [ -f "$log_file" ]; then
+        # Save serial-console.log into tmt data
+        save_to_tmt_test_data "$log_file"
     fi
 }
 
