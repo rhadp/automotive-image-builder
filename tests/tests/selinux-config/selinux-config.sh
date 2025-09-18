@@ -3,12 +3,9 @@
 source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
 # Define connection and VM parameters
-SSH_PORT=2222
 IMG_NAME="test.img"
 PASSWORD="password"
-RETRY=1
-MAX_RETRIES=60
-WAIT_TIME=3
+LOGIN_TIMEOUT=40
 
 SE_MODE_EXPECTED="enforcing"
 SE_POL_NAME_EXPECTED="targeted"
@@ -27,10 +24,10 @@ build --target qemu --mode image --export image test-selinux-config.aib.yml "$IM
 assert_image_exists "$IMG_NAME"
 
 # Start the VM using the built AIB image
-VM_PID=$(run_vm "$IMG_NAME" "$SSH_PORT")
+VM_PID=$(run_vm "$IMG_NAME")
 
-# Wait until SSH becomes available or fail fast
-if ! wait_for_vm_up "$RETRY" "$MAX_RETRIES" "$WAIT_TIME" "$SSH_PORT" "$PASSWORD"; then
+# Wait until VM becomes available or fail fast
+if ! wait_for_vm_up "$LOGIN_TIMEOUT" "$PASSWORD"; then
     stop_vm "$VM_PID"
     exit 1
 fi
@@ -40,7 +37,7 @@ SE_MODE=$(run_vm_command "sestatus | awk -F ':' '/Current mode/ { gsub(\" \",\"\
 echo_log "Detected SELinux mode: '$SE_MODE'"
 SE_POL_NAME=$(run_vm_command "sestatus | awk -F ':' '/Loaded policy name/ { gsub(\" \",\"\"); print \$2}'")
 echo_log "Detected SELinux policy name: '$SE_POL_NAME'"
-SEBOOLS=$(run_vm_command "getsebool -a" "$SSH_PORT" "$PASSWORD")
+SEBOOLS=$(run_vm_command "getsebool -a")
 echo_log "SELinux booleans inside VM: $SEBOOLS"
 
 # Verify the SELinux configuration
@@ -54,7 +51,7 @@ all_present=1
 for opt in "${EXPECTED_SELINUX_BOOLEANS[@]}"; do
     boolean_name="${opt%%=*}"
     expected_value="${opt##*=}"
-    actual_value=$(run_vm_command "getsebool $boolean_name" "$SSH_PORT" "$PASSWORD" | awk '{print $3}')
+    actual_value=$(run_vm_command "getsebool $boolean_name" | awk '{print $3}')
     if [ "$actual_value" == "$expected_value" ]; then
         echo_log "SELinux boolean $boolean_name is set correctly to $actual_value"
     else

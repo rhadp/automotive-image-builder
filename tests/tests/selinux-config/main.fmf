@@ -17,7 +17,8 @@ test: |
     ./selinux-config.sh
 require:
   - qemu-kvm
-  - sshpass
+  - expect
+  - socat
 duration: 60m
 tag: [virt-required]
 id: aa926eb8-a22e-4a07-b595-9802e3fd2eed

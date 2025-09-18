@@ -4,7 +4,8 @@ summary: This test builds a minimal QM image, injects and runs three boot tests
 id: 91f50931-f916-4445-9c2e-aedb4b6766d4
 require:
   - qemu-kvm
-  - sshpass
+  - expect
+  - socat
 duration: 60m
 tag: [special]
 test: |

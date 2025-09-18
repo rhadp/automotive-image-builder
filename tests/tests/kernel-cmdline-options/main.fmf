@@ -17,7 +17,8 @@ test: |
     ./kernel-options.sh
 require:
   - qemu-kvm
-  - sshpass
+  - expect
+  - socat
 duration: 60m
 tag: [virt-required]
 id: d7b854fe-dbcc-4ecb-9218-563c6960ddb6

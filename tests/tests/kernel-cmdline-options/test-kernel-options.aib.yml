@@ -1,18 +1,11 @@
 name: kernel-options
 
 content:
-  rpms:
-    - openssh-server
-  systemd:
-    enabled_services:
-      - sshd.service
+  rpms: []
 
 auth:
   # "password"
   root_password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.
-  sshd_config:
-    PasswordAuthentication: true
-    PermitRootLogin: true
 
 # Kernel command line options to set
 kernel:

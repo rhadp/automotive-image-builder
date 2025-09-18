@@ -1,0 +1,42 @@
+#!/usr/bin/expect -f
+# Connect to a QEMU virtio-console exposed as a Unix socket
+
+set sock [lindex $argv 0]
+set password [lindex $argv 1]
+set login_timeout [lindex $argv 2]
+
+log_user 0
+
+# Open the Unix socket and hand it to Expect
+spawn socat -,raw,echo=0 UNIX-CONNECT:$sock
+
+log_user 1
+
+# Poke the console in case it's sleeping at a blank line
+send -- "\r"
+set timeout $login_timeout
+expect  {
+    -re "login: *$" { }
+    timeout { puts stderr "Timed out waiting for login"; exit 1 }
+    eof     { puts stderr "Connection closed."; exit 1 }
+}
+set timeout 8
+send -- "root\r"
+expect {
+    -re "Password: *$" {}
+    timeout {  puts stderr "Timed out waiting for password"; exit 1 }
+}
+send -- "$password\r"
+expect {
+    -re "# $" {}
+    timeout {  puts stderr "Timed out waiting for shell prompt"; exit 1  }
+}
+
+send -- "stty -onlcr -echo -echonl; export PS1= PS2=; unset PROMPT_COMMAND HISTFILE; bind 'set enable-bracketed-paste off'; printf __READY__\n"
+expect {
+    -re  {__READY__} {}
+    timeout {  puts stderr "Timed out waiting for shell prompt"; exit 1  }
+}
+
+after 200
+exit 0

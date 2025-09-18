@@ -181,7 +181,8 @@ packages:
   - qemu-kvm
   - python3-jsonschema
   - python3-pyyaml
-  - sshpass
+  - expect
+  - socat
 
 power_state:
   delay: now

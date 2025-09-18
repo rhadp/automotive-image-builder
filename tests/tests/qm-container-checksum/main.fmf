@@ -16,7 +16,8 @@ description: |
 
 require:
   - qemu-kvm
-  - sshpass
+  - expect
+  - socat
 tag: [special]
 test: |
   ./test-qm-container-checksum.sh

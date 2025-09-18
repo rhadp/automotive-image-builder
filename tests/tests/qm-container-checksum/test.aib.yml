@@ -1,11 +1,7 @@
 name: test-qm-container-checksum-qm
 
 content:
-  rpms:
-    - openssh-server
-  systemd:
-    enabled_services:
-      - sshd.service
+  rpms: []
 
 qm:
   content:
@@ -17,6 +13,3 @@ image:
       size: 64 MiB
 auth:
   root_password: $6$X86FPAJNb8bOAXw4$yeuJJfLVspiH/ubQbUWfmD7NO7UpRhRmGw.H8XM29xyKWTtmjnh0GUqM7ExNriZK4NWwm5nigoNdA4SwTDhXe1
-  sshd_config:
-    PasswordAuthentication: true
-    PermitRootLogin: true

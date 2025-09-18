@@ -271,44 +271,33 @@ assert_image_exists() {
 # Start the VM and return its PID
 run_vm() {
     local image=$1
-    local ssh_port=${2:-2222}
-    local log_file=${3:-"serial-console.log"}
-    $AIR --ssh-port "$ssh_port" --nographics "$image" > "$log_file" 2>&1 &
+    local log_file=${2:-"serial-console.log"}
+    $AIR --virtio-console console.sock --nographics "$image" > "$log_file" 2>&1 &
     local pid=$!
     >&2 echo "INFO: VM running at pid: $pid"
     echo "$pid"
 }
 
-# Wait until VM SSH is available
+# Wait until VM console is available
 wait_for_vm_up() {
-    local retry=${1:-0}
-    local max_retries=${2:-60}
-    local wait_time=${3:-3}
-    local ssh_port=${4:-2222}
+    local login_timeout=${1:-0}
     local password=${5:-password}
     local result=1
-    local ssh_cmd="sshpass -p$password ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=3 -p $ssh_port root@localhost"
 
-    while [ $result -ne 0 ]; do
-        sleep $wait_time
-        $ssh_cmd true
-        result=$?
-        retry=$(( retry + 1 ))
-        if [ $retry -ge $max_retries ]; then
-            echo_fail "SSH connection failed $retry times"
-            return 1
-        fi
-    done
-    return 0
+    sleep 2 # Ensure console.sock is created by qemu start
+    if $(dirname $BASH_SOURCE)/login.exp console.sock $password $login_timeout 60; then
+        return 0;
+    else
+        echo_fail "Failed to connect to virtual console"
+        return 1
+    fi
 }
 
 # Run a command inside the VM
 run_vm_command() {
-    local cmd=$1
-    local ssh_port=${2:-2222}
-    local password=${3:-password}
-    local ssh_cmd="sshpass -p$password ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=3 -p $ssh_port root@localhost"
-    echo $($ssh_cmd "$cmd")
+    local cmd="$1"
+    >&2 echo "INFO: Running VM command: $cmd"
+    $(dirname $BASH_SOURCE)/runcmd.exp console.sock "$cmd"
 }
 
 # Kill the given VM by PID
