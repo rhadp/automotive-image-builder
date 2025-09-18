@@ -1,5 +1,20 @@
 summary: Verify that var and var_qm partitions occupy the expected absolute size
-id: af48c2ba-9022-4ef3-8ddd-0a1ba9197c28
-duration: 60m
+description: |
+  Builds an AIB image with explicitly defined absolute partition sizes
+  and verifies that the created partitions match the expected sizes.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines image size and partition sizes using absolute values for the image created
+    in the test.
+
+  Expected results:
+    - PASS: "Partition 'var' size 524288000 bytes matches expected 524288000 ± 10240"
+    - PASS: "Partition 'qm_var' size 314572800 bytes matches expected 314572800 ± 10240"
+
+  Results location:
+    output.txt
+
 test: |
     ./test-partition-absolute-size.sh
+duration: 60m
+id: af48c2ba-9022-4ef3-8ddd-0a1ba9197c28

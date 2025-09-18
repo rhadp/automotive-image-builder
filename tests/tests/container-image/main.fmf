@@ -1,5 +1,20 @@
 summary: Verify that custom container is properly installed into image
-id: a6cf978a-97df-40eb-a8b7-77716531281c
-duration: 60m
+description: |
+  Builds an AIB image with container_images and qm.content.container_images
+  and verifies that the expected files are present and contain the correct content.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines:
+      - A container which should be installed in the image created in the test.
+      - A container which should be installed inside the qm partition in the image created in the test.
+
+  Expected results:
+    - PASS: 'Custom container is properly installed in the image'
+
+  Results location:
+    output.txt
+
 test: |
     ./test-container-image.sh
+duration: 60m
+id: a6cf978a-97df-40eb-a8b7-77716531281c

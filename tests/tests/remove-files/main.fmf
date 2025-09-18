@@ -1,5 +1,19 @@
 summary: Verify that remove_files correctly removes files from the image
-id: ef4d9682-7522-4cdb-a091-68d812ebcd0c
-duration: 60m
+description: |
+  Builds an AIB image with files marked for removal and verifies that they
+  are not present in the built image while the remaining files are kept.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines files and directories, which should be removed from the image created
+    in the test.
+
+  Expected results:
+    - PASS: 'remove_files directive correctly removed specified files.'
+
+  Results location:
+    output.txt
+
 test: |
     ./test-remove-files.sh
+duration: 60m
+id: ef4d9682-7522-4cdb-a091-68d812ebcd0c

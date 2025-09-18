@@ -1,5 +1,20 @@
 summary: Verify the sshd configuration and the location of authorized_keys file for the root user
-id: 8ebe1305-b3fe-4813-b340-e29a2cea9a00
-duration: 60m
+description: |
+  Builds an AIB image with root SSH keys and verifies the `/root/.ssh/authorized_keys` file
+  contains the expected public key. Also checks that `/etc/ssh/sshd_config` has the expected settings.
+
+  Test inputs:
+    Custom a-i-b manifest, which specifies:
+      - Public SSH key for user root, that can be used to SSH login to the image created in the test.
+      - sshd configuration options, which will be set for sshd in the image created in the test.
+
+  Expected results:
+    - PASS: 'sshd_config, root_ssh_keys and sshd_config override validated successfully.'
+
+  Results location:
+    output.txt
+
 test: |
     ./authorized-keys.sh
+duration: 60m
+id: 8ebe1305-b3fe-4813-b340-e29a2cea9a00

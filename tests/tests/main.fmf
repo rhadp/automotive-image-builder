@@ -1,2 +1,6 @@
-component: automotive-image-builder
+contact:
+  - dorr@redhat.com
+  - nsimsolo@redhat.com
+component: aib
+framework: shell
 

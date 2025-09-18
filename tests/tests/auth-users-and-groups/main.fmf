@@ -1,5 +1,18 @@
 summary: Verify that users and groups are correctly added to the image
-id: ec4ea821-ac5f-4b46-a3c2-e4d1bef1cb54
-duration: 60m
+description: |
+  Builds an AIB image with predefined users and groups and verifies that the `/etc/passwd`,
+  `/etc/group`, and `/etc/shadow` files contain the expected entries.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines details of users and groups to be available in the image created in the test.
+
+  Expected results:
+    - PASS: 'users and groups validated successfully.'
+
+  Results location:
+    output.txt
+
 test: |
     ./users-and-groups.sh
+duration: 60m
+id: ec4ea821-ac5f-4b46-a3c2-e4d1bef1cb54

@@ -1,9 +1,23 @@
 summary: Verify kernel options - cmdline, loglevel, and debug_logging
-id: d7b854fe-dbcc-4ecb-9218-563c6960ddb6
+description: |
+  Builds an AIB image with predefined kernel command line options and runs a VM using this image.
+  Verifies that `/proc/cmdline` inside the VM contains the expected kernel options.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines kernel comand line parameters, which should be used to boot the image created
+    in the test.
+
+  Expected results:
+    - PASS: 'All kernel options verified successfully (cmdline, loglevel, debug_logging, quiet)'
+
+  Results location:
+    output.txt
+
+test: |
+    ./kernel-options.sh
 require:
   - qemu-kvm
   - sshpass
 duration: 60m
 tag: [virt-required]
-test: |
-    ./kernel-options.sh
+id: d7b854fe-dbcc-4ecb-9218-563c6960ddb6

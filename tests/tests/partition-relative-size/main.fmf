@@ -1,5 +1,21 @@
 summary: Verify that var and var_qm partitions occupy the expected relative size
-id: 44df142f-ba7b-4965-9ad9-4cdbdf7e11c1
-duration: 60m
+description: |
+  Builds an AIB image with var and qm_var partitions defined by relative sizes
+  and verifies that they occupy the expected fractions of the total image size.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines image size using absolute value and partition sizes using relative values
+    for the image created in the test.
+
+
+  Expected results:
+    - PASS: "Partition 'var' relative size 0.2 matches expected 0.2 ± 0.01"
+    - PASS: "Partition 'qm_var' relative size 0.0999999 matches expected 0.1 ± 0.01"
+
+  Results location:
+    output.txt
+
 test: |
     ./test-partition-relative-size.sh
+duration: 60m
+id: 44df142f-ba7b-4965-9ad9-4cdbdf7e11c1

@@ -7,7 +7,7 @@ if trybuild --export rpmlist --extend-define denylist_rpms=strace test.aib.yml o
     echo_log "ERROR: Build should not have succeeded with denied RPM."
     fatal should not have succeeded build with denied rpm
 else
-    echo_log "Build failed as expected due to denied RPM."
+    echo_pass "Build failed as expected due to denied RPM."
 fi
 
 echo_log "Checking error message content..."

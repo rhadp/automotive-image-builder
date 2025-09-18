@@ -1,5 +1,18 @@
 summary: Verify that systemd enabled and disabled services are properly configured in the image
-id: 496f93d9-d74c-4d9e-adf6-b07e570e7e89
-duration: 60m
+description: |
+  Builds an AIB image with predefined enabled and disabled systemd services
+  and verifies that their symlinks are correctly set in both content and QM sections.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines configuration of systemd services in the image created in the test.
+
+  Expected results:
+    - PASS: 'systemd services symlink verification completed!'
+
+  Results location:
+    output.txt
+
 test: |
     ./test-systemd-services.sh
+duration: 60m
+id: 496f93d9-d74c-4d9e-adf6-b07e570e7e89

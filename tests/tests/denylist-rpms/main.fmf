@@ -1,5 +1,18 @@
 summary: Verify that specified RPM packages are not available in image
-id: bc1d8fee-5d01-498b-982f-6dd3c29f0a57
-duration: 60m
+description: |
+  Builds an AIB image with denylisted RPMs and verifies that the specified
+  packages are not present in the image.
+
+  Test inputs:
+    Custom a-i-b manifest, which defines RPM packages, which shouldn't be installed in the image created in the test.
+
+  Expected results:
+    - INFO: 'Build failed as expected due to denied RPM.'
+
+  Results location:
+    output.txt
+
 test: |
     ./test-denylist-rpms.sh
+duration: 60m
+id: bc1d8fee-5d01-498b-982f-6dd3c29f0a57
