@@ -9,6 +9,7 @@ environment:
     AIB_DISTRO: autosd9-sig
 
     AIB: $PROJECT_DIR/automotive-image-builder
+    AIR: $PROJECT_DIR/automotive-image-runner
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
     RUNDIR: $OUTDIR/run

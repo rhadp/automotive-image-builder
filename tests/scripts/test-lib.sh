@@ -273,7 +273,7 @@ run_vm() {
     local image=$1
     local ssh_port=${2:-2222}
     local log_file=${3:-"serial-console.log"}
-    automotive-image-runner --ssh-port "$ssh_port" --nographics "$image" > "$log_file" 2>&1 &
+    $AIR --ssh-port "$ssh_port" --nographics "$image" > "$log_file" 2>&1 &
     local pid=$!
     >&2 echo "INFO: VM running at pid: $pid"
     echo "$pid"
