@@ -65,7 +65,7 @@ scp -o StrictHostKeyChecking=no -i $PWD/automotive_sig.ssh *.src.rpm root@$ip:/v
 
 section_end duffy_setup
 
-cd tests && tmt run -v \
+cd tests && tmt run -vvv \
   -eNODE=$ip \
   -eNODE_SSH_KEY=$PWD/../automotive_sig.ssh \
   -eBUILD_AIB_RPM=yes \

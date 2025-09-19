@@ -3,12 +3,9 @@
 source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
 # Define connection and VM parameters
-SSH_PORT=2222
 IMG_NAME="test.img"
 PASSWORD="password"
-RETRY=1
-MAX_RETRIES=60
-WAIT_TIME=3
+LOGIN_TIMEOUT=40
 
 EXPECTED_KERNEL_OPTIONS=("panic=1" "quiet" "loglevel=5" "debug")
 
@@ -20,17 +17,16 @@ build --target qemu --mode image --export image test-kernel-options.aib.yml "$IM
 assert_image_exists "$IMG_NAME"
 
 # Start the VM using the built AIB image
-VM_PID=$(run_vm "$IMG_NAME" "$SSH_PORT")
+VM_PID=$(run_vm "$IMG_NAME")
 
-# Wait until SSH becomes available or fail fast
-if ! wait_for_vm_up "$RETRY" "$MAX_RETRIES" "$WAIT_TIME" "$SSH_PORT" "$PASSWORD"; then
+# Wait until VM becomes available or fail fast
+if ! wait_for_vm_up "$LOGIN_TIMEOUT" "$PASSWORD"; then
     stop_vm "$VM_PID"
-    stop_all_qemus
     exit 1
 fi
 
 # Retrieve the VM's /proc/cmdline to check active kernel boot parameters
-CMDLINE=$(run_vm_command "cat /proc/cmdline" "$SSH_PORT" "$PASSWORD")
+CMDLINE=$(run_vm_command "cat /proc/cmdline")
 echo_log "Kernel cmdline inside VM: $CMDLINE"
 
 # Verify that all expected kernel options are present in the VM's boot parameters

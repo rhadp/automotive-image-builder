@@ -2,12 +2,9 @@
 
 source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
-SSH_PORT=2222
 IMG_NAME="test.img"
 PASSWORD="password"
-RETRY=1
-MAX_RETRIES=60
-WAIT_TIME=3
+LOGIN_TIMEOUT=40
 success=0
 
 # Build image
@@ -18,17 +15,16 @@ build --target qemu --mode image --fusa --export image test.aib.yml "$IMG_NAME"
 assert_image_exists "$IMG_NAME"
 
 # Run VM
-VM_PID=$(run_vm "$IMG_NAME" "$SSH_PORT")
+VM_PID=$(run_vm "$IMG_NAME")
 
-# Wait for SSH to be up
-if ! wait_for_vm_up "$RETRY" "$MAX_RETRIES" "$WAIT_TIME" "$SSH_PORT" "$PASSWORD"; then
+# Wait for VM to be up
+if ! wait_for_vm_up "$LOGIN_TIMEOUT" "$PASSWORD"; then
     stop_vm "$VM_PID"
-    stop_all_qemus
     exit 1
 fi
 
 # Check the status of auto-boot-check
-CHECK_OUTPUT=$(run_vm_command "systemctl is-active auto-boot-check || true" "$SSH_PORT" "$PASSWORD")
+CHECK_OUTPUT=$(run_vm_command "systemctl is-active auto-boot-check || true")
 echo_log "auto-boot-check status: $CHECK_OUTPUT"
 
 if [[ "$CHECK_OUTPUT" == "active" ]]; then
@@ -40,7 +36,7 @@ else
 
     LOG_FILE="auto-boot-check.log"
 
-    run_vm_command "journalctl -u auto-boot-check -n 500 --no-pager" "$SSH_PORT" "$PASSWORD" > "$LOG_FILE" || true
+    run_vm_command "journalctl -u auto-boot-check -n 500 --no-pager" > "$LOG_FILE" || true
     save_to_tmt_test_data "$LOG_FILE"
 
     CHK_LINE=$(grep -m1 -E "config checksum was .* expected" "$LOG_FILE" || true)

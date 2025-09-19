@@ -18,6 +18,24 @@ import tempfile
 import time
 import threading
 
+killed_qemu = False
+qemu_pidfile = None
+
+
+def got_sigterm(a1, a2):
+    global killed_qemu
+    if not killed_qemu and qemu_pidfile:
+        try:
+            with open(qemu_pidfile, "r") as file:
+                pid = int(file.read())
+                os.kill(pid, signal.SIGTERM)
+                killed_qemu = True
+                # At this point, return and handle qemu exiting
+                return
+        except Exception:
+            pass
+    exit_error("Terminated")
+
 
 class ShutdownHandler:
     def __init__(self, server: socketserver.TCPServer) -> None:
@@ -384,6 +402,8 @@ def main():
                         help="Network IP range to use, defaults to: 10.0.2.0/24")
     parser.add_argument("--serial-socket",
                         help="Unix socket to redirect serial output to")
+    parser.add_argument("--virtio-console",
+                        help="Unix socket to create virtual console at")
     parser.add_argument("image", type=str, help="The image to boot")
     parser.add_argument('extra_args', nargs=argparse.REMAINDER, metavar="...", help="extra qemu arguments")
 
@@ -628,10 +648,24 @@ def main():
     if args.serial_socket:
         qemu_args += ["-serial", f"unix:{args.serial_socket},server=on"]
 
+    if args.virtio_console:
+        qemu_args += [
+            "-device", "virtio-serial-pci",
+            "-chardev", f"socket,id=con0,path={args.virtio_console},server=on,wait=off",
+            "-device", "virtconsole,chardev=con0,id=vc0",
+        ]
+
     qemu_args += args.extra_args
 
-    print_verbose(f"Running: {' '.join(qemu_args)}")
+    # Handle SIGTERM and try to kill qemu
+    global qemu_pidfile
+    qemu_pidfile = os.path.join(tmpdir.name, "qemu.pid")
+    qemu_args += [
+        "-pidfile", qemu_pidfile
+    ]
+    signal.signal(signal.SIGTERM, got_sigterm)
 
+    print_verbose(f"Running: {' '.join(qemu_args)}")
     try:
         res = subprocess.run(qemu_args, check=False)
     except KeyboardInterrupt:

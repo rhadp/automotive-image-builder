@@ -1,0 +1,50 @@
+#!/usr/bin/expect -f
+
+exp_internal 0
+log_user 0
+
+set sock [lindex $argv 0]
+set cmd [lindex $argv 1]
+set timeout -1
+
+set chan [open [list | socat - "UNIX-CONNECT:$sock"] r+]
+fconfigure $chan -translation binary -buffering none -encoding binary
+spawn -open $chan
+
+
+proc run_one {line} {
+    # unique token
+    set tok [format "__END__%08X" [expr {int(rand()*4294967295)}]]
+    set patTok [format {^%s ([0-9]+)\r?\n$} $tok]
+    send -- "$line\n"
+    send -- "st=\$?; echo $tok \$st\n"
+
+    set status ""
+    while {1} {
+        # Parse response line by line to avoid printing token
+        expect {
+            -re {([^\n]*\n)} {
+                set l $expect_out(1,string)
+                if {[regexp -line $patTok $l -> status]} {
+                    break
+                } else {
+                    # show the command's output line (unchanged)
+                    puts -nonewline "$l"
+                }
+                exp_continue
+            }
+            timeout {
+                error "Timed out waiting for command to finish: $line"
+            }
+            eof {
+                error "Connection closed while running: $line"
+            }
+        }
+    }
+
+    if {$status eq ""} { set status 0 }
+    return $status
+}
+
+set status [run_one $cmd]
+exit $status

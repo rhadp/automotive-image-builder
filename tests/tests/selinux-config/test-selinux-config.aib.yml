@@ -3,17 +3,10 @@ name: selinux-booleans
 content:
   rpms:
     - gawk
-    - openssh-server
-  systemd:
-    enabled_services:
-      - sshd.service
 
 auth:
   # "password"
   root_password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.
-  sshd_config:
-    PasswordAuthentication: true
-    PermitRootLogin: true
 
 image:
   selinux_mode: enforcing

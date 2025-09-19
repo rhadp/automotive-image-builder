@@ -96,13 +96,13 @@ build-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --mode=image --export qcow2 examples/lowlevel.mpp.yml lowlevel.qcow2
+    - ./automotive-image-builder build --build-dir _build --mode=image --export qcow2 examples/lowlevel.mpp.yml lowlevel.qcow2
 
 build-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --mode=package --export image examples/lowlevel.mpp.yml lowlevel.img
+    - ./automotive-image-builder build --build-dir _build --mode=package --export image examples/lowlevel.mpp.yml lowlevel.img
 
 packit-srpm-build:
   image: quay.io/packit/packit
@@ -118,25 +118,25 @@ build-simple-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --distro autosd9-latest-sig --mode=image --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir _build --distro autosd9-latest-sig --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build  --distro autosd9-latest-sig --mode=package --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir  _build --distro autosd9-latest-sig --mode=package --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --distro autosd9 --mode=image --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir _build --distro autosd9 --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --distro autosd9 --mode=package --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir _build --distro autosd9 --mode=package --export image examples/complex.aib.yml example.img
 
 pages:
   stage: deploy
@@ -228,7 +228,7 @@ trigger-pipeline:
 .prepare-cs-tmt-setup: &prepare-cs-tmt-setup
   - echo -e "\e[0Ksection_start:$(date +%s):tmt_setup[collapsed=true]\r\e[0KPreparing TMT"
   - dnf config-manager --set-enabled crb
-  - dnf install -y python3-pip jq less rsync openssh-clients epel-release
+  - dnf install -y python3-pip jq less rsync expect openssh-clients epel-release
   - dnf install -y tmt tmt+report-junit
   - echo -e "\e[0Ksection_end:$(date +%s):tmt_setup\r\e[0K"
 
