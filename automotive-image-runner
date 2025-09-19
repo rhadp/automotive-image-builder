@@ -402,6 +402,8 @@ def main():
                         help="Network IP range to use, defaults to: 10.0.2.0/24")
     parser.add_argument("--serial-socket",
                         help="Unix socket to redirect serial output to")
+    parser.add_argument("--virtio-console",
+                        help="Unix socket to create virtual console at")
     parser.add_argument("image", type=str, help="The image to boot")
     parser.add_argument('extra_args', nargs=argparse.REMAINDER, metavar="...", help="extra qemu arguments")
 
@@ -645,6 +647,13 @@ def main():
 
     if args.serial_socket:
         qemu_args += ["-serial", f"unix:{args.serial_socket},server=on"]
+
+    if args.virtio_console:
+        qemu_args += [
+            "-device", "virtio-serial-pci",
+            "-chardev", f"socket,id=con0,path={args.virtio_console},server=on,wait=off",
+            "-device", "virtconsole,chardev=con0,id=vc0",
+        ]
 
     qemu_args += args.extra_args
 
