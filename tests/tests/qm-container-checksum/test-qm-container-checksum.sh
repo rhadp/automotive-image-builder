@@ -23,7 +23,6 @@ VM_PID=$(run_vm "$IMG_NAME" "$SSH_PORT")
 # Wait for SSH to be up
 if ! wait_for_vm_up "$RETRY" "$MAX_RETRIES" "$WAIT_TIME" "$SSH_PORT" "$PASSWORD"; then
     stop_vm "$VM_PID"
-    stop_all_qemus
     exit 1
 fi
 

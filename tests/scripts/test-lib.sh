@@ -325,8 +325,3 @@ stop_vm() {
     fi
 }
 
-# Kill any leftover of QEMU processes
-stop_all_qemus() {
-    ps aux | grep 'qemu-kvm' | grep 'hostfwd=tcp::[0-9]\+-:22' | awk '{print $2}' | xargs -r kill -9
-}
-
