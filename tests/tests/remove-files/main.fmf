@@ -1,10 +1,10 @@
 summary: Verify that remove_files correctly removes files from the image
 description: |
   Builds an AIB image with files marked for removal and verifies that they
-  are not present in the built image while the remaining files are kept.
+  are not present in the built image.
 
   Test inputs:
-    Custom a-i-b manifest, which defines files and directories, which should be removed from the image created
+    Custom a-i-b manifest, which defines files, which should be removed from the image created
     in the test.
 
   Expected results:
