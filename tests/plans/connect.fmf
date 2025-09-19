@@ -6,7 +6,7 @@ environment:
 
     # Distribution used inside tests.
     # Available distributions can be listed using `automotive-image-builder list-dist` on the relevant platform.
-    AIB_DISTRO: autosd9-sig
+    AIB_DISTRO: autosd10-sig
 
     # IP or hostname of a node, where tests will be executed
     NODE: ""
