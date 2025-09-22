@@ -319,12 +319,16 @@ mpp-vars:
           # This can catch some issues, however there is a performance penalty associated with
           # this option, so only enable this for debug builds.
           - iommu.strict=1
-      - mpp-if: is_autoinit_supported and use_autoinit_root
+      - mpp-if: is_autoinit_supported and use_autoinit
         then:
-          - mount-sysroot.root=$autoinit_root
-          - mount-sysroot.rw
-          - mpp-if: use_debug or use_kernel_debug_package
-            then: mount-sysroot.debug
+          mpp-join:
+            - mpp-if: use_autoinit_root
+              then:
+                - mount-sysroot.root=$autoinit_root
+                - mount-sysroot.rw
+            - mpp-if: use_debug or use_kernel_debug_package
+              then:
+                - mount-sysroot.debug
       - mpp-if: use_module_sig_enforce
         then:
           # Only allow modules with a valid signature to be loaded by the kernel.
