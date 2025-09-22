@@ -283,6 +283,9 @@ mpp-vars:
       - mpp-if: use_static_ip and static_ip_modules
         then:
           - /usr/lib/modules-load.d/auto-modules.conf
+      - mpp-if: use_debug
+        then:
+          - /usr/bin/bash
   kernel_opts:
     mpp-join:
       - - rw
