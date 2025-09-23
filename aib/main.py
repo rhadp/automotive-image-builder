@@ -491,6 +491,9 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
 
     if args.cache:
         cmdline += ["--cache", args.cache]
+    else:
+        # By default we use an isolated dnf cache to avoid stale caches
+        cmdline += ["--cache", os.path.join(tmpdir, "dnf-cache")]
 
     variables_manifest = {
         "version": manifest["version"],
