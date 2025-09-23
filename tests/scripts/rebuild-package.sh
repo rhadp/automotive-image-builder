@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-source $(dirname $BASH_SOURCE)/setup-lib.sh
+source "$(dirname $BASH_SOURCE)"/setup-lib.sh
 
 # Path where local a-i-b repository will be create
 AIB_LOCAL_REPO=/var/tmp/aib-local-repo

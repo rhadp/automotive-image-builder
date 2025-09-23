@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
+source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
 
 echo_log "Starting build for static network configuration..."
 build --export tar \

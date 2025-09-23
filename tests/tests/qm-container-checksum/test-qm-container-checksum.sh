@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
+source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
 
 IMG_NAME="test.img"
 PASSWORD="password"

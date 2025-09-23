@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-source $(dirname $BASH_SOURCE)/setup-lib.sh
+source "$(dirname $BASH_SOURCE)"/setup-lib.sh
 
 # TODO: Remove after aib 1.1.0 is released and AutoSD 10 pipeline running fine
 dnf update -y

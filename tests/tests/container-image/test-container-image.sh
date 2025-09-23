@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
+source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
 
 echo_log "Starting build for container_images and qm.content.container_images test..."
 build --export tar --extend-define tar_paths="['usr/share/containers/storage/overlay-images', 'usr/lib/qm/rootfs/usr/share/containers/storage/overlay-images']" test.aib.yml out.tar
