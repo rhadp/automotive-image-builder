@@ -21,7 +21,8 @@ _acquire_session() {
     local pool_name=$1
     local session_file=$2
 
-    local tracing_status=$(turn_tracing_off)
+    local tracing_status
+    tracing_status=$(turn_tracing_off)
     duffy client \
         request-session \
         pool=${pool_name},quantity=1 > $session_file
@@ -80,10 +81,12 @@ get_session_id_from_session() {
 
 release_aws_session() {
     local session_file=$1
-    local session_id=$(get_session_id_from_session $session_file)
+    local session_id
+    session_id=$(get_session_id_from_session $session_file)
 
     echo "Closing AWS session ..."
-    local tracing_status=$(turn_tracing_off)
+    local tracing_status
+    tracing_status=$(turn_tracing_off)
     duffy client \
         retire-session $session_id > /dev/null
     [ -f $session_file ] && rm -f $session_file

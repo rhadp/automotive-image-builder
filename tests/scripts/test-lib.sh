@@ -85,7 +85,8 @@ assert_file_doesnt_have_content () {
 assert_file_has_owner() {
     local file=$1
     local expected_uid_gid=$2
-    local actual_uid_gid=$(stat -c "%u:%g" "$file")
+    local actual_uid_gid
+    actual_uid_gid=$(stat -c "%u:%g" "$file")
     if [[ "$actual_uid_gid" == "$expected_uid_gid" ]]; then
         echo_pass $file has correct UID:GID $expected_uid_gid"
     else
@@ -96,7 +97,8 @@ assert_file_has_owner() {
 assert_file_has_permission() {
     local file=$1
     local expected_perm=$2
-    local actual_perm=$(stat -c "%a" "$file")
+    local actual_perm
+    actual_perm=$(stat -c "%a" "$file")
     if [[ "$actual_perm" == "$expected_perm" ]]; then
         echo_pass $file has correct permissions $expected_perm
     else
