@@ -1,6 +1,6 @@
 {
     "default-manifest": "test.mpp.yml",
-    "distro": ["autosd9-latest-sig", "autosd9"],
+    "distro": ["autosd10-latest-sig", "autosd10"],
     "skip-distro": ["rhivos", "rhivos1"],
     "arch": [ "x86_64", "aarch64" ],
     "mode": [ "image", "package" ],
@@ -10,12 +10,7 @@
                     "distro-is-not": "eln"
                 },
                 "rcar_s4",
-                "rpi4",
-                {
-                    "value": "abootqemu",
-                    "arch-is": "aarch64",
-                    "distro-is": ["autosd9-latest-sig"]
-                }
+                "rpi4"
               ],
     "target-arches": {
         "abootqemu": ["aarch64"],
