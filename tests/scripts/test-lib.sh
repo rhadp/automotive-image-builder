@@ -285,7 +285,7 @@ wait_for_vm_up() {
     local result=1
 
     sleep 2 # Ensure console.sock is created by qemu start
-    if "$(dirname $BASH_SOURCE)"/login.exp console.sock $password $login_timeout 60; then
+    if "$(dirname ${BASH_SOURCE[0]})"/login.exp console.sock $password $login_timeout 60; then
         return 0;
     else
         echo_fail "Failed to connect to virtual console"
@@ -297,7 +297,7 @@ wait_for_vm_up() {
 run_vm_command() {
     local cmd="$1"
     >&2 echo "INFO: Running VM command: $cmd"
-    "$(dirname $BASH_SOURCE)"/runcmd.exp console.sock "$cmd"
+    "$(dirname ${BASH_SOURCE[0]})"/runcmd.exp console.sock "$cmd"
 }
 
 # Kill the given VM by PID

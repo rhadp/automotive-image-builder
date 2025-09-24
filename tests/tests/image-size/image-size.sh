@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 for YML_NAME in test-image-size-*.aib.yml; do
     IMAGE_NAME="test-image.qcow2"

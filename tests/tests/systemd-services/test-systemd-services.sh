@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
 build --export tar custom-services.aib.yml out.tar

@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build for root password test..."
 build --export tar --extend-define tar_paths=['etc/shadow'] test-root-password.aib.yml out.tar

@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
 build --export tar --extend-define tar_paths=['usr/sbin','usr/lib/qm/rootfs/usr/sbin'] test-remove-files.aib.yml out.tar

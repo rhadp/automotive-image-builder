@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 build --export tar --extend-define "tar_paths=['etc','usr/lib']" test-network-dynamic.aib.yml out.tar
 tar xf out.tar

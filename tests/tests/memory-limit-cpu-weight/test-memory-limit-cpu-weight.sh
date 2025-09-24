@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 # Define expected config path and values
 RESOURCE_CONF_PATH="usr/share/containers/systemd/qm.container.d/10-automotive.conf"

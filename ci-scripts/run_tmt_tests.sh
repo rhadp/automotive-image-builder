@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "$(dirname $BASH_SOURCE)"/aws-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/aws-lib.sh
 
 function section_start () {
   local section_title="${1}"

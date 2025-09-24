@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-source "$(dirname $BASH_SOURCE)"/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 # Define connection and VM parameters
 IMG_NAME="test.img"
