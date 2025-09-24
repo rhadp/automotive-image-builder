@@ -16,7 +16,7 @@ function section_end () {
   echo -e "section_end:`date +%s`:${section_title}\r\e[0K"
 }
 
-AIB_DISTRO=${1:-autosd9-sig}
+AIB_DISTRO=${1:-autosd10-sig}
 # Base repository for AIB packages needs to be aligned with requested distro
 if [[ "${AIB_DISTRO}" == *"autosd9"* ]]; then
     AIB_BASE_REPO="https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose/AutoSD/\$arch/os/"
