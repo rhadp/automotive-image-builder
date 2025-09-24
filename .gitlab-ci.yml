@@ -196,9 +196,7 @@ trigger-pipeline:
   parallel:
     matrix:
       - BUILD_BRANCH:
-          - AutoSD-9
-          #TODO: Uncomment when we can build AutoSD-10 to enable the second pipeline
-          #- AutoSD-10
+          - AutoSD-10
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
