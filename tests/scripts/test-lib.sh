@@ -155,7 +155,7 @@ assert_partition_relative_size() {
 
     local loop
     loop=$(sudo losetup --find --partscan --show "$img") || fatal "FAIL: Failed to setup loop device"
-    trap "sudo losetup -d $loop" RETURN
+    trap 'sudo losetup -d $loop' RETURN
 
     local img_size
     img_size=$(stat -c %s "$img") || fatal "FAIL: Failed to stat image file"
@@ -197,7 +197,7 @@ assert_partition_absolute_size() {
 
     local loop
     loop=$(sudo losetup --find --partscan --show "$img") || fatal "FAIL: Failed to setup loop device"
-    trap "sudo losetup -d $loop" RETURN
+    trap 'sudo losetup -d $loop' RETURN
 
     local part=""
     for p in /dev/$(basename "$loop")p*; do

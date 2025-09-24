@@ -39,7 +39,7 @@ if [ ! -f "$SESSION_FILE" ]; then
 fi
 
 # Release AWS session on exit
-trap "release_aws_session $SESSION_FILE" EXIT
+trap 'release_aws_session $SESSION_FILE' EXIT
 
 ip=$(get_ip_from_session $SESSION_FILE)
 echo "IP address: $ip"
