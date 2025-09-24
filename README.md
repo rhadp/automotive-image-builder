@@ -14,14 +14,14 @@ and container images is chosen during the compose.
 To build a qcow2 image you can run:
 
 ```shell
- $ automotive-image-builder compose --distro autosd9 --mode package --target qemu my-image.aib.yml osbuild.json
+ $ automotive-image-builder compose --distro autosd10 --mode package --target qemu my-image.aib.yml osbuild.json
  $ sudo osbuild --store osbuild_store --output-directory output --export qcow2 osbuild.json
 ```
 
 You can also combine these two in one command:
 
 ```shell
- $ automotive-image-builder build --distro autosd9 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
+ $ automotive-image-builder build --distro autosd10 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
 ```
 
 These will first compose the osbuild.json file, and then build it and export the "qcow2" output,
@@ -100,7 +100,7 @@ When composing (or building) a manifest there are some core options that control
   production, but package mode is more useful when doing development and testing.
 
 * `--distro`: There are a set of distribution definitions that can be used. These define what package
-  repositories to use. The default used in "autosd9-sig", but the full list can be gotten with
+  repositories to use. The default used in "autosd10-sig", but the full list can be gotten with
   `automotive-image-builder list-dist`.  It is also possible to extend the list of distributions
   with your custom ones by putting them in a directory called "/some/dir/distro" and passing
   `--include /some/dir` on the argument list.
