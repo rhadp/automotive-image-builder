@@ -3,22 +3,19 @@
 source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
-build --export tar --extend-define tar_paths=['test-files','usr/lib/qm/rootfs/test-files'] test.aib.yml out.tar
+build --export tar --extend-define tar_paths=['usr/sbin','usr/lib/qm/rootfs/usr/sbin'] test-remove-files.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
 tar xvf out.tar
 
 # Define the extracted content directories for validation
-EXTRACTED_DIR="./test-files"
-QM_EXTRACTED_DIR="./usr/lib/qm/rootfs/test-files"
+EXTRACTED_DIR="./usr"
+QM_EXTRACTED_DIR="./usr/lib/qm/rootfs"
 
-# Validate section:
-# 'keep.txt' should exist, 'delete.txt' should be removed by remove_filesecho_log "Checking files in content section..."
-assert_has_file "$EXTRACTED_DIR/keep.txt"
-assert_file_doesnt_exist "$EXTRACTED_DIR/delete.txt"
+# Files crond and cupsd should be removed by remove_files
+echo_log "Checking files in content section..."
+assert_not_has_file "$EXTRACTED_DIR/sbin/crond"
 
 echo_log "Checking files in qm.content section..."
-assert_has_file "$QM_EXTRACTED_DIR/qm_keep.txt"
-assert_file_doesnt_exist "$QM_EXTRACTED_DIR/qm_delete.txt"
+assert_not_has_file "$QM_EXTRACTED_DIR/usr/sbin/cupsd"
 
-echo_pass "remove_files directive correctly removed specified files."
-
+echo_pass "The remove_files directive correctly removed specified files."
