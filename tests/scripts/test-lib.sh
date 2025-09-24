@@ -284,7 +284,6 @@ run_vm() {
 wait_for_vm_up() {
     local login_timeout=${1:-0}
     local password=${5:-password}
-    local result=1
 
     sleep 2 # Ensure console.sock is created by qemu start
     if "$(dirname ${BASH_SOURCE[0]})"/login.exp console.sock $password $login_timeout 60; then
