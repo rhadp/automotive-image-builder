@@ -15,7 +15,7 @@ if [ ! -d "${AIB_SRPM_DIR}" ]; then
     exit 1
 fi
 
-if [[ $(ls -1q ${AIB_SRPM_DIR}/*.src.rpm 2> /dev/null | wc -l) < 1 ]]; then
+if [[ $(ls -1q ${AIB_SRPM_DIR}/*.src.rpm 2> /dev/null | wc -l) -lt 1 ]]; then
     echo "Directory '${AIB_SRPM_DIR}' does not contain any source RPM packages"
     exit 2
 fi
