@@ -6,7 +6,6 @@ mpp-vars:
   distro_baseurl: http://mirror.stream.centos.org/$distro_version-stream
   distro_baseurl_repo: $distro_baseurl/BaseOS/$arch/os/
   distro_chroot: centos-stream-$distro_version-$arch
-  is_autoinit_supported: false
   # linux-firmware-automotive is not yet available
   linux_firmware_rpm: linux-firmware
   # No centos-release-autosd/automotive yet

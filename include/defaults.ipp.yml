@@ -159,7 +159,7 @@ mpp-vars:
   # Possible values:
   # aboot, ukiboot, grub2, grub2-sbl, none
   use_boot: ukiboot
-  use_abl: false
+  skip_root_on_cmdline: false
   qm_pipeline: qm_rootfs
   use_tuned_realtime: false
   tuned_realtime_isolcpus: "2-N"
@@ -175,6 +175,8 @@ mpp-vars:
   default_uuids:
     rootfs: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
     bootfs: 156f0420-627b-4151-ae6f-fda298097515
+    varfs: 9c3a6556-e103-49ee-88df-552bd77e9cd5
+    qm_varfs: e241b638-7301-406c-b11f-d538be5211a6
     parttab: d209c89e-ea5e-4fbd-b161-b461cce297e0
     efipart: 68b2905b-df3e-4fb3-80fa-49d1e773aa33
     bootpart: 61b2905b-df3e-4fb3-80fa-49d1e773aa32

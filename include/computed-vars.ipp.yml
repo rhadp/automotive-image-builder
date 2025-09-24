@@ -25,6 +25,10 @@ mpp-vars:
     mpp-eval: _compute_uuid('rootfs')
   bootfs_uuid:
     mpp-eval: _compute_uuid('bootfs')
+  varfs_uuid:
+    mpp-eval: _compute_uuid('varfs')
+  qm_varfs_uuid:
+    mpp-eval: _compute_uuid('qm_varfs')
   parttab_uuid:
     mpp-eval: _compute_uuid('parttab')
   efipart_uuid:
@@ -279,6 +283,9 @@ mpp-vars:
       - mpp-if: use_static_ip and static_ip_modules
         then:
           - /usr/lib/modules-load.d/auto-modules.conf
+      - mpp-if: use_debug
+        then:
+          - /usr/bin/bash
   kernel_opts:
     mpp-join:
       - - rw
@@ -287,8 +294,9 @@ mpp-vars:
         - loglevel=$kernel_loglevel
         - mpp-if: not use_efi_runtime
           then: efi=noruntime
-        - mpp-if: not use_abl
-          then: "root=LABEL=root"
+        - mpp-if: not skip_root_on_cmdline
+          then:
+            mpp-format-string: "root=UUID={rootfs_uuid}"
       - mpp-eval: kernel_opts
       - mpp-eval: simple_kernel_opts
       - mpp-eval: extra_kernel_opts
@@ -314,12 +322,16 @@ mpp-vars:
           # This can catch some issues, however there is a performance penalty associated with
           # this option, so only enable this for debug builds.
           - iommu.strict=1
-      - mpp-if: is_autoinit_supported and use_autoinit_root
+      - mpp-if: is_autoinit_supported and use_autoinit
         then:
-          - mount-sysroot.root=$autoinit_root
-          - mount-sysroot.rw
-          - mpp-if: use_debug or use_kernel_debug_package
-            then: mount-sysroot.debug
+          mpp-join:
+            - mpp-if: use_autoinit_root
+              then:
+                - mount-sysroot.root=$autoinit_root
+                - mount-sysroot.rw
+            - mpp-if: use_debug or use_kernel_debug_package
+              then:
+                - mount-sysroot.debug
       - mpp-if: use_module_sig_enforce
         then:
           # Only allow modules with a valid signature to be loaded by the kernel.
