@@ -13,7 +13,7 @@ echo_fail() {
 }
 
 fatal() {
-    echo "FAIL: $@" 1>&2; exit 1
+    echo "FAIL: $*" 1>&2; exit 1
 }
 
 _fatal_print_file() {
