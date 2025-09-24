@@ -17,6 +17,7 @@ session_id=$(jq '.session.id' duffy.session)
 session_id=$(echo $session_id | sed -e 's|"||g')
 echo "Session: $session_id"
 
+# shellcheck disable=SC2087 # CI_REPOSITORY_URL and CI_MERGE_REQUEST_REF_PATH need to be expanded before execution on AWS host
 ssh \
     -o " UserKnownHostsFile=/dev/null" \
     -o "StrictHostKeyChecking no" \
