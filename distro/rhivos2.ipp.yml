@@ -1,0 +1,26 @@
+# RHIVOS 2
+version: '2'
+mpp-vars:
+  distro_name: RHIVOS
+  distro_version: 2
+  # distro_baseurl needs to be provided via parameters to the a-i-b
+  distro_baseurl: ""
+  distro_baseurl_repo: $distro_baseurl/RHIVOS/$arch/os/
+  distro_chroot: centos-stream-$distro_version-$arch
+  uefi_vendor: redhat
+  release_rpm: redhat-release
+  selinux_policy: automotive
+  rpmdb_in_usr: true
+  distro_repos:
+    - id: rhivos
+      baseurl: $distro_baseurl_repo
+      priority: 10
+  distro_devel_repos: []
+  distro_debug_repos:
+    - id: rhivos-debug
+      baseurl: $distro_baseurl/RHIVOS/$arch/debug/
+      priority: 10
+  distro_module_id: platform:el10
+  distro_gpg_keys:
+    mpp-format-string: |
+      $redhat10_gpg_key
