@@ -153,18 +153,16 @@ mpp-vars:
   use_boot_check:
     mpp-eval: "use_static_ip or _boot_check_qm_digest != ''"
 
-  kernel_core_package:
-    mpp-eval: kernel_package + "-core"
   kernel_devel_rpm:
     mpp-eval: kernel_package + "-devel" if not kernel_version else kernel_package + "-devel-" + kernel_version
   kernel_rpm:
     mpp-eval: kernel_package if not kernel_version else kernel_package + "-" + kernel_version
   _kernel_evra:
     mpp-eval: |
-      _Lazy(lambda: installed_rpm(kernel_core_package).evra)
+      _Lazy(lambda: installed_rpm(kernel_package).evra)
   _kernel_evr:
     mpp-eval: |
-      _Lazy(lambda: installed_rpm(kernel_core_package).evr)
+      _Lazy(lambda: installed_rpm(kernel_package).evr)
   # Sign the modules by default only for kernel-automotive in image mode.
   # Honor sign_kernel_modules override in all other cases.
   sign_kernel_modules:
