@@ -174,10 +174,10 @@ mpp-vars:
       mpp-eval: kernel_package if not kernel_version else kernel_package + "-" + kernel_version
   _kernel_evra:
     mpp-eval: |
-      _Lazy(lambda: rpms['rootfs'][kernel_core_package].evra)
+      _Lazy(lambda: installed_rpm(kernel_core_package).evra)
   _kernel_evr:
     mpp-eval: |
-      _Lazy(lambda: rpms['rootfs'][kernel_core_package].evr)
+      _Lazy(lambda: installed_rpm(kernel_core_package).evr)
   # Sign the modules by default only for kernel-automotive in image mode.
   # Honor sign_kernel_modules override in all other cases.
   sign_kernel_modules:

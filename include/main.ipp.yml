@@ -61,6 +61,9 @@ mpp-vars:
     mpp-eval: |
       lambda x: _m(x, _m)
   rpms: {} # Forward declare so it is in scope for later Lazy resolve
+  installed_rpm:
+    mpp-eval: |
+      lambda rpm: rpms['rootfs'][rpm] if rpm in rpms['rootfs'] else _error(f"rpm '{rpm}' was unexpectedly not installed in the rootfs")
 
 pipelines:
   - mpp-import-pipelines:
