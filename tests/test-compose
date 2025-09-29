@@ -44,7 +44,7 @@ if len(sys.argv) > 3:
         targets = [convert_elem("qemu")]
     elif sys.argv[2] == "target":
         targets = convert_list(sys.argv[3].split())
-        distros = [convert_elem("autosd9-sig")]
+        distros = [convert_elem("autosd10-sig")]
     else:
         print(
             f"Unrecognized mode: {sys.argv[2]}. Please use one of ['distro', 'target']"

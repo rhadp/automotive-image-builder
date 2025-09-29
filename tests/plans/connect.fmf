@@ -2,7 +2,7 @@ summary: a-i-b tests running on pre-provisioned machine or VM
 
 environment:
     # Base repository where a-i-b and its dependencies should be installed from
-    AIB_BASE_REPO: https://autosd.sig.centos.org/AutoSD-9/nightly/repos/AutoSD/compose/AutoSD/$arch/os/
+    AIB_BASE_REPO: https://autosd.sig.centos.org/AutoSD-10/nightly/repos/AutoSD/compose/AutoSD/$arch/os/
 
     # Distribution used inside tests.
     # Available distributions can be listed using `automotive-image-builder list-dist` on the relevant platform.

@@ -27,7 +27,7 @@ from .podman import (
     podman_run_bootc_image_builder,
 )
 
-default_distro = "autosd9-sig"
+default_distro = "autosd10-sig"
 
 
 def list_ipp_items(args, item_type):

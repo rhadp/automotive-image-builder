@@ -118,25 +118,25 @@ build-simple-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd9-latest-sig --mode=image --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir _build --distro autosd10-latest-sig --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir  _build --distro autosd9-latest-sig --mode=package --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir _build --distro autosd10-latest-sig --mode=package --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd9 --mode=image --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir _build --distro autosd10 --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd9 --mode=package --export image examples/complex.aib.yml example.img
+    - ./automotive-image-builder build --build-dir _build --distro autosd10 --mode=package --export image examples/complex.aib.yml example.img
 
 pages:
   stage: deploy
@@ -196,9 +196,7 @@ trigger-pipeline:
   parallel:
     matrix:
       - BUILD_BRANCH:
-          - AutoSD-9
-          #TODO: Uncomment when we can build AutoSD-10 to enable the second pipeline
-          #- AutoSD-10
+          - AutoSD-10
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
