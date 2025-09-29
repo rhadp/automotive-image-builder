@@ -2,8 +2,9 @@
 version: '2'
 mpp-vars:
   target_repos:
+    # for firmware on ESP partition. Currently CS10 builds are broken but it doesn' matter for firmware blobs
     - id: ti-board-support
-      baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/ti-board-support/$distro_chroot/
+      baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/ti-board-support/centos-stream-9-aarch64/
       priority: 1
   consoles: 'ttyS2,115200n8'
   use_boot: grub2 # Currently no ukiboot support, since not using GPT partitioning
@@ -14,7 +15,7 @@ mpp-vars:
     heads: 64
     sectors-per-track: 32
   target_rpms:
-    - ti-uboot-images-armv8
+    - k3-upstream-boot
   target_extra_image_stages:
     - type: org.osbuild.copy
       inputs:
@@ -24,15 +25,22 @@ mpp-vars:
           references:
             - name:rootfs
       options:
+        # Install u-boot and other bootloaders to the boot partition
+        # so users get a convenient experience booting directly from the
+        # uSD card they dd to. If the bootloaders are stored on the eMMC
+        # boot partition or SPI and the DIP switches are set to to initially
+        # boot from those this can be avoided (and essentially all the TI
+        # images unified)
+        # FIXME these don't work in image mode. Use eMMC or SPI flash for firmware
         paths:
           - from:
-              mpp-format-string: input://rootfs/usr/share/uboot/am69_sk_r5/tiboot3-j784s4-hs-fs-evm.bin
+              mpp-format-string: input://rootfs/usr/share/k3-upstream-boot/j784s4_am69_sk_hs-fs/tiboot3.bin
             to: tree:///boot/efi/tiboot3.bin
           - from:
-              mpp-format-string: input://rootfs/usr/share/uboot/am69_sk_a72/tispl.bin
+              mpp-format-string: input://rootfs/usr/share/k3-upstream-boot/j784s4_am69_sk_hs-fs/tispl.bin
             to: tree:///boot/efi/tispl.bin
           - from:
-              mpp-format-string: input://rootfs/usr/share/uboot/am69_sk_a72/u-boot.img
+              mpp-format-string: input://rootfs/usr/share/k3-upstream-boot/j784s4_am69_sk_hs-fs/u-boot.img
             to: tree:///boot/efi/u-boot.img
 
 pipelines: []
