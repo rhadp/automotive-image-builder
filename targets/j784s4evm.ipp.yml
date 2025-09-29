@@ -2,9 +2,9 @@
 version: '2'
 mpp-vars:
   target_repos:
-    # for firmware on ESP partition. Currently CS10 builds are broken but it doesn' matter for firmware blobs
+    # for firmware on ESP partition
     - id: ti-board-support
-      baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/ti-board-support/centos-stream-9-aarch64/
+      baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/ti-board-support/$distro_chroot/
       priority: 1
   consoles: 'ttyS2,115200n8'
   use_boot: grub2 # Currently no ukiboot support, since not using GPT partitioning
