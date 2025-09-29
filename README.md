@@ -1,12 +1,12 @@
-# Automotive image builder
+# Automotive Image Builder
 
-Automotive image builder is a tool to create various kinds of OS images based on CentOS derived
+Automotive Image Builder (AIB) is a tool to create various kinds of OS images based on CentOS derived
 distributions. The images can support package-based mode (called "package") as well as image-based mode
 (called "image").
 
-The main tool is called `automotive-image-builder`, and the basic operation it does is called
-"composing" manifests. The compose operation takes a yaml-based automotive image manifest, as well
-as a set of options affecting the compose and resolves the manifest into an osbuild json file. This
+The main tool is called `automotive-image-builder`, and its primary function is to compose manifests. 
+The compose operation takes a yaml-based automotive image manifest, as well
+as a set of options that affect the compose, and resolves the manifest into an osbuild json file. This
 json file is a precise build instruction for how to build an image with osbuild with the very
 specific software that was chosen during the compose. For example, the version of selected packages
 and container images is chosen during the compose.
@@ -24,23 +24,23 @@ You can also combine these two in one command:
  $ automotive-image-builder build --distro autosd10 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
 ```
 
-These will first compose the osbuild.json file, and then build it and export the "qcow2" output,
-which will end up in the "output" directory (in particular as `output/qcow2/disk.qcow2`). Qcow images
+These will first compose the `osbuild.json` file, and then build it and export the `qcow2` output,
+which will end up in the `output` directory (in particular as `output/qcow2/disk.qcow2`). QCOW images
 are typically run in a virtual machine, which you can easily do using:
 
 ```shell
  $ automotive-image-runner  output/qcow2/disk.qcow2
 ```
 
-Note: when running `automotive-image-builder build` it is very helpful
+Note: When running `automotive-image-builder build` it is very helpful
 to pass also the option `--build-dir some/dir`, as that will then store intermediate data, such as downloaded
 rpms between runs, which saves a lot of time.
 
 ## Installation and dependencies
 
-automotive-image-builder depends on osbuild extensions for automotive use.
+Automotive Image Builder depends on osbuild extensions for automotive use.
 
-To install automotive-image-builder, refer to the
+To install Automotive Image Builder, refer to the
 [AutoSD documentation](https://sigs.centos.org/automotive/getting-started/proc_installing-automotive-image-builder/)
 
 Alternatively, the image builder can run from
@@ -48,7 +48,7 @@ Alternatively, the image builder can run from
 
 ## Manifests
 
-automotive-image-builder supports two types of image manifests. The
+Automotive Image Builder supports two types of image manifests. The
 default manifest uses the extension `.aib.yml` and is a high-level,
 declarative YAML-based format.
 
@@ -78,7 +78,7 @@ of functional examples.
 
 There is also support for a lowlevel manifest file format, with extension `.mpp.yml`. This is
 a format closer to the osbuild imperative format, and writing such files requires deeper
-knowledge of how osbuild works, as well as the internals of automotive-image-builder. This
+knowledge of how osbuild works, as well as the internals of Automotive Image Builder. This
 is used internally to implement the higher level manifest format, but it is also available
 to the end user. However, we don't recommend using this format as it is quite hard to use
 and not well documented.
@@ -155,7 +155,7 @@ Here are some commonly used variable supported and what they mean:
 
 ## Using qm
 
-`automotive-image-builder` supports the [QM](https://github.com/containers/qm/tree/main) package for
+Automotive Image Builder supports the [QM](https://github.com/containers/qm/tree/main) package for
 isolating quality-managed code in a separate partition. When you enable qm, OSBuild builds two pipelines -
 one for the regular filesystem, and one for the qm partition. In the final image the qm root
 filesystem will be accessible under `/usr/share/qm/rootfs`.
