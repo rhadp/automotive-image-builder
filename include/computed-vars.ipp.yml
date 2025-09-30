@@ -14,6 +14,20 @@ mpp-vars:
     mpp-eval: locals().get('qm_varpart_size', int(int(image_size) * qm_varpart_relative_size / 512))
   _qm_use_separate_var:
     mpp-eval: use_qm and _qm_varpart_size != 0
+  _qm_containers:
+    mpp-if: qm_wayland_enable
+    then:
+      mpp-join:
+        - - source: quay.io/qm-images/qm-dbus-broker
+            name: localhost/qm-dbus-broker
+        - mpp-if: qm_wayland_source == "default"
+          then:
+            - source: quay.io/qm-images/wayland-compositor
+              name: $qm_wayland_compositor_name
+          else:
+            - source: $qm_wayland_source
+              name: $qm_wayland_compositor_name
+    else: []
   ostree_os_version:
     mpp-if: not "ostree_os_version" in locals()
     then: $version
@@ -704,6 +718,11 @@ mpp-vars:
         path: /usr/share/containers/systemd/qm.container.d
         parents: true
         exist_ok: true
+    - mpp-if: use_qm and qm_wayland_enable
+      then:
+        path: /etc/qm/containers/systemd/wayland-compositor.container.d
+        parents: true
+        exist_ok: true
     - mpp-if: use_boot_check
       then:
         path: /usr/lib/systemd/system/auto-boot-check.service.d
@@ -760,6 +779,10 @@ mpp-vars:
         to: tree:///usr/.auto-unlock-key
     - from: input://extra-tree/containers.conf
       to: tree://$containers_configdir/containers.conf
+    - mpp-if: use_qm and qm_wayland_enable
+      then:
+        from: input://extra-tree/wayland-compositor.conf
+        to: tree:///etc/qm/containers/systemd/wayland-compositor.container.d/10-wayland-image.conf
     - mpp-if: use_ostree
       then:
         from: input://extra-tree/ostree_prepare_root.conf
@@ -822,6 +845,10 @@ mpp-vars:
       then:
         from: input://extra-tree/qm-automotive.conf
         to: tree:////usr/share/containers/systemd/qm.container.d/10-automotive.conf
+    - mpp-if: use_qm and qm_wayland_enable
+      then:
+        from: input://extra-tree/wayland-extra-devices.conf
+        to: tree:///usr/share/containers/systemd/qm.container.d/20-wayland-extra-devices.conf
     - from: input://extra-tree/signing_info.json
       to: tree://///etc/signing_info.json
     - from: input://extra-tree/bootc.install
@@ -925,6 +952,8 @@ mpp-vars:
           then: NetworkManager
         - mpp-if: use_qm
           then: qm
+        - mpp-if: use_qm and qm_wayland_enable
+          then: qm-oci-hooks
         # TODO-BOOTC: bootupd needs this for generate-update-metadata
         - mpp-if: use_bootc
           then: shim
