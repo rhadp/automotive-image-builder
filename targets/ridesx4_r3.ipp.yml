@@ -9,4 +9,4 @@ pipelines:
   - mpp-import-pipelines:
       path: ridesx4.ipp.yml
   - mpp-import-pipelines:
-      path: _ridesx4_r3.ipp.yml
+      path: include/_ridesx4_r3.ipp.yml
