@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/test-lib.sh"
 
 # Helper functions for Compliance policy testing
 _build_stage_selector() {
@@ -11,14 +11,16 @@ _build_stage_selector() {
 assert_kernel_cmdline_option() {
     local json_file="$1"
     local option="$2"
-    local stage_selector=$(_build_stage_selector "org.osbuild.kernel-cmdline")
+    local stage_selector
+    stage_selector=$(_build_stage_selector "org.osbuild.kernel-cmdline")
     assert_jq "$json_file" "$stage_selector | .options.kernel_opts | contains(\"$option\")"
 }
 
 assert_systemd_service_enabled() {
     local json_file="$1"
     local service="$2"
-    local stage_selector=$(_build_stage_selector "org.osbuild.systemd")
+    local stage_selector
+    stage_selector=$(_build_stage_selector "org.osbuild.systemd")
     assert_jq "$json_file" "$stage_selector | .options.enabled_services[] | select(. == \"$service\")"
 }
 
@@ -26,28 +28,32 @@ assert_sysctl_config() {
     local json_file="$1"
     local key="$2"
     local value="$3"
-    local stage_selector=$(_build_stage_selector "org.osbuild.sysctld")
+    local stage_selector
+    stage_selector=$(_build_stage_selector "org.osbuild.sysctld")
     assert_jq "$json_file" "$stage_selector | .options.config[] | select(.key == \"$key\" and .value == \"$value\")"
 }
 
 assert_sysctl_key_not_present() {
     local json_file="$1"
     local key="$2"
-    local stage_selector=$(_build_stage_selector "org.osbuild.sysctld")
+    local stage_selector
+    stage_selector=$(_build_stage_selector "org.osbuild.sysctld")
     assert_jq_not "$json_file" "$stage_selector | .options.config[] | select(.key == \"$key\")"
 }
 
 assert_kernel_module_removed() {
     local json_file="$1"
     local module="$2"
-    local stage_selector=$(_build_stage_selector "org.osbuild-auto.kernel.remove-modules")
+    local stage_selector
+    stage_selector=$(_build_stage_selector "org.osbuild-auto.kernel.remove-modules")
     assert_jq "$json_file" "$stage_selector | .options.remove | contains([\"$module\"])"
 }
 
 assert_kernel_module_not_removed() {
     local json_file="$1"
     local module="$2"
-    local stage_selector=$(_build_stage_selector "org.osbuild-auto.kernel.remove-modules")
+    local stage_selector
+    stage_selector=$(_build_stage_selector "org.osbuild-auto.kernel.remove-modules")
     assert_jq_not "$json_file" "$stage_selector | .options.remove | contains([\"$module\"])"
 }
 
