@@ -8,7 +8,7 @@ mkdir -p $STORE/sources/org.osbuild.files $BUILD/output
 
 # Copy reference sources from host
 echo Copying Source files from host
-cd $HOST_STORE/sources/org.osbuild.files
+cd $HOST_STORE/sources/org.osbuild.files || exit 2
 cat /mnt/manifest.files | xargs cp -ran -t $STORE/sources/org.osbuild.files/
 
 cp /mnt/manifest.json $BUILD/
@@ -35,7 +35,7 @@ fi
 
 echo Copying Output to host
 mkdir -p /mnt/output
-cd $BUILD/output/
+cd $BUILD/output/ || exit 3
 tar cvf /mnt/output.tar .
 
 exit 0

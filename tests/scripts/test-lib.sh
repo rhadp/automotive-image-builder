@@ -13,7 +13,7 @@ echo_fail() {
 }
 
 fatal() {
-    echo "FAIL: $@" 1>&2; exit 1
+    echo "FAIL: $*" 1>&2; exit 1
 }
 
 _fatal_print_file() {
@@ -85,7 +85,8 @@ assert_file_doesnt_have_content () {
 assert_file_has_owner() {
     local file=$1
     local expected_uid_gid=$2
-    local actual_uid_gid=$(stat -c "%u:%g" "$file")
+    local actual_uid_gid
+    actual_uid_gid=$(stat -c "%u:%g" "$file")
     if [[ "$actual_uid_gid" == "$expected_uid_gid" ]]; then
         echo_pass $file has correct UID:GID $expected_uid_gid"
     else
@@ -96,7 +97,8 @@ assert_file_has_owner() {
 assert_file_has_permission() {
     local file=$1
     local expected_perm=$2
-    local actual_perm=$(stat -c "%a" "$file")
+    local actual_perm
+    actual_perm=$(stat -c "%a" "$file")
     if [[ "$actual_perm" == "$expected_perm" ]]; then
         echo_pass $file has correct permissions $expected_perm
     else
@@ -153,7 +155,7 @@ assert_partition_relative_size() {
 
     local loop
     loop=$(sudo losetup --find --partscan --show "$img") || fatal "FAIL: Failed to setup loop device"
-    trap "sudo losetup -d $loop" RETURN
+    trap 'sudo losetup -d $loop' RETURN
 
     local img_size
     img_size=$(stat -c %s "$img") || fatal "FAIL: Failed to stat image file"
@@ -195,7 +197,7 @@ assert_partition_absolute_size() {
 
     local loop
     loop=$(sudo losetup --find --partscan --show "$img") || fatal "FAIL: Failed to setup loop device"
-    trap "sudo losetup -d $loop" RETURN
+    trap 'sudo losetup -d $loop' RETURN
 
     local part=""
     for p in /dev/$(basename "$loop")p*; do
@@ -282,10 +284,9 @@ run_vm() {
 wait_for_vm_up() {
     local login_timeout=${1:-0}
     local password=${5:-password}
-    local result=1
 
     sleep 2 # Ensure console.sock is created by qemu start
-    if $(dirname $BASH_SOURCE)/login.exp console.sock $password $login_timeout 60; then
+    if "$(dirname ${BASH_SOURCE[0]})"/login.exp console.sock $password $login_timeout 60; then
         return 0;
     else
         echo_fail "Failed to connect to virtual console"
@@ -297,7 +298,7 @@ wait_for_vm_up() {
 run_vm_command() {
     local cmd="$1"
     >&2 echo "INFO: Running VM command: $cmd"
-    $(dirname $BASH_SOURCE)/runcmd.exp console.sock "$cmd"
+    "$(dirname ${BASH_SOURCE[0]})"/runcmd.exp console.sock "$cmd"
 }
 
 # Kill the given VM by PID

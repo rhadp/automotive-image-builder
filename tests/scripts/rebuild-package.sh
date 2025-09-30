@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-source $(dirname $BASH_SOURCE)/setup-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/setup-lib.sh
 
 # Path where local a-i-b repository will be create
 AIB_LOCAL_REPO=/var/tmp/aib-local-repo
@@ -11,12 +11,12 @@ if [ "${BUILD_AIB_RPM}" != "yes" ]; then
 fi
 
 if [ ! -d "${AIB_SRPM_DIR}" ]; then
-    echo "Directory '"${AIB_SRPM_DIR}"' does not exist"
+    echo "Directory '${AIB_SRPM_DIR}' does not exist"
     exit 1
 fi
 
-if [[ $(ls -1q ${AIB_SRPM_DIR}/*.src.rpm 2> /dev/null | wc -l) < 1 ]]; then
-    echo "Directory '"${AIB_SRPM_DIR}"' does not contain any source RPM packages"
+if [[ $(ls -1q ${AIB_SRPM_DIR}/*.src.rpm 2> /dev/null | wc -l) -lt 1 ]]; then
+    echo "Directory '${AIB_SRPM_DIR}' does not contain any source RPM packages"
     exit 2
 fi
 

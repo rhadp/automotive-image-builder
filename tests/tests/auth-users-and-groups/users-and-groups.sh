@@ -1,6 +1,6 @@
 #!/usr/bin/bash -x
 
-source $(dirname $BASH_SOURCE)/../../scripts/test-lib.sh
+source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build for auth users and groups test..."
 build --export tar --extend-define "tar_paths=['etc/passwd','etc/group','etc/shadow']" test-users-and-groups.aib.yml out.tar

@@ -62,6 +62,9 @@ import-mpp:
 yamllint:
 	yamllint -c .yamllint distro/ include/ targets/ examples files/
 
+shellcheck:
+	./ci-scripts/run-shellcheck.sh
+
 .venv:
 	python3 -m venv .venv
 	. .venv/bin/activate; pip install json-schema-for-humans
