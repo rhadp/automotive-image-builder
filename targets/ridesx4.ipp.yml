@@ -38,12 +38,14 @@ mpp-vars:
         - acpi=off
         - net.naming-scheme=v252
       - - mpp-if: is_autoinit_supported and use_autoinit
-          then: rd.modules-load=ufs-qcom,qcom_geni_serial
+          then: rd.modules-load=pinctrl_msm,pinctrl_sa8775p,qcom_geni_serial,ufs_qcom
   dracut_drivers: []
   dracut_add_drivers:
-    - ufs-qcom
+    - pinctrl-msm
+    - pinctrl-sa8775p
     - qcom-geni-se
     - qcom_geni_serial
+    - ufs_qcom
   dracut_omit_drivers:
     mpp-join:
       - mpp-eval: dracut_omit_drivers
