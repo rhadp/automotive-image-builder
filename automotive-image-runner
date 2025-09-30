@@ -384,8 +384,10 @@ def main():
                         help="Work on a snapshot  of the image")
     parser.add_argument("--ovmf-dir", action="store",
                         help="Specify directory for OVMF files (Open Virtual Machine Firmware)")
-    parser.add_argument("--secureboot", dest="secureboot", action="store_true", default=False,
-                        help="Enable SecureBoot")
+    parser.add_argument("--secureboot-vars", dest="secureboot", action="store",
+                        help="Use the specified vars file for secureboot vars, will be initiated if non-existing")
+    parser.add_argument("--secureboot-writeable", dest="secureboot_writeable", action="store_true", default=False,
+                        help="Make the --secureboot-vars file persistently writeable (for enrollment).")
     parser.add_argument("--ssh-port", type=int, default=2222,
                         help="SSH port forwarding to SSH_PORT (default 2222)")
     parser.add_argument("--port-forward", type=str, metavar="host:guest,...",
@@ -431,14 +433,21 @@ def main():
     num_cpus = os.cpu_count()
 
     if args.arch == "x86_64":
-        machine = "q35"
+        if args.secureboot:
+            machine = "q35,smm=on"
+        else:
+            machine = "q35"
         default_cpu = "qemu64,+ssse3,+sse4.1,+sse4.2,+popcnt"
 
         ovmf = find_ovmf(args)
         if args.secureboot:
+            vars_file = args.secureboot
+            if not os.path.exists(vars_file):
+                subprocess.run(["cp", os.path.join(ovmf, "OVMF_VARS.fd"), vars_file], check=True)
+            perms_args = "" if args.secureboot_writeable else ",snapshot=on,readonly=off"
             qemu_args += [
                 "-drive", f"file={ovmf}/OVMF_CODE.secboot.fd,if=pflash,format=raw,unit=0,readonly=on",
-                "-drive", f"file={ovmf}/OVMF_VARS.secboot.fd,if=pflash,format=raw,unit=1,snapshot=on,readonly=off",
+                "-drive", f"file={vars_file},if=pflash,format=raw,unit=1{perms_args}",
             ]
         else:
             qemu_args += [
