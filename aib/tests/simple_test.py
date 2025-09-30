@@ -15,9 +15,9 @@ from aib.simple import (
     Contents,
     QMContents,
     ManifestLoader,
-    validateNoFusa,
     extend_with_default,
 )
+from aib.policy import Policy
 
 
 @pytest.mark.parametrize(
@@ -341,65 +341,150 @@ class TestQMContents(unittest.TestCase):
         self.assertEqual(qm_contents.get_key("simple_rpms"), "qm_simple_rpms")
 
 
-class TestValidateNoFusa(unittest.TestCase):
-    def setUp(self):
-        self.validator = Mock()
-        self.validator.is_type = Mock()
+class TestManifestPolicyValidation(unittest.TestCase):
+    """Test policy-based manifest validation in ManifestLoader."""
 
-    def test_validate_no_fusa_object_disallowed_property(self):
-        """Test validateNoFusa for objects with disallowed properties"""
-        self.validator.is_type.side_effect = (
-            lambda instance, type_name: type_name == "object"
-        )
+    def test_manifest_validation_no_policy(self):
+        """Test that manifest validation works when no policy is provided."""
+        manifest = {
+            "name": "test",
+            "version": "1.0",
+            "experimental": {
+                "internal_defines": {"test_var": "test_value"}
+            },  # This would be forbidden by compliance policy, but should pass without policy
+        }
 
-        instance = {"allowed_prop": "value", "disallowed_prop": "value"}
-        no_fusa = ["disallowed_prop"]
+        defines = {
+            "_basedir": "/usr/lib/automotive-image-builder",
+            "_workdir": "/tmp",
+        }
 
-        errors = list(validateNoFusa(self.validator, no_fusa, instance, {}))
+        with patch("builtins.open", mock_open_manifest_schema()):
+            loader = ManifestLoader(defines, policy=None)
+            with patch.object(loader, "validator") as mock_validator:
+                mock_validator.iter_errors.return_value = []
+                with patch("yaml.dump"):
+                    # Should not raise any exception
+                    loader._load(manifest, "test.yml", "/tmp")
 
-        self.assertEqual(len(errors), 1)
-        self.assertIn("disallowed_prop", str(errors[0]))
+    def test_manifest_validation_with_policy_pass(self):
+        """Test that manifest validation passes when policy allows the content."""
+        manifest = {
+            "name": "test",
+            "version": "1.0",
+            "content": {"rpms": ["bash", "systemd"]},  # Allowed packages
+        }
 
-    def test_validate_no_fusa_object_allowed_property(self):
-        """Test validateNoFusa for objects with allowed properties"""
-        self.validator.is_type.side_effect = (
-            lambda instance, type_name: type_name == "object"
-        )
+        policy_data = {
+            "name": "test-policy",
+            "description": "Test policy",
+            "restrictions": {
+                "rpms": {
+                    "disallow": ["telnet", "ftp"]
+                }  # These packages not in manifest
+            },
+        }
+        policy = Policy(policy_data, "rpi4")
 
-        instance = {"allowed_prop": "value"}
-        no_fusa = ["disallowed_prop"]
+        defines = {
+            "_basedir": "/usr/lib/automotive-image-builder",
+            "_workdir": "/tmp",
+        }
 
-        errors = list(validateNoFusa(self.validator, no_fusa, instance, {}))
+        with patch("builtins.open", mock_open_manifest_schema()):
+            loader = ManifestLoader(defines, policy=policy)
+            with patch.object(loader, "validator") as mock_validator:
+                mock_validator.iter_errors.return_value = []
+                with patch("yaml.dump"):
+                    # Should not raise any exception
+                    loader._load(manifest, "test.yml", "/tmp")
 
-        self.assertEqual(len(errors), 0)
+    def test_manifest_validation_with_policy_fail_property(self):
+        """Test that manifest validation fails when policy disallows a property."""
+        manifest = {
+            "name": "test",
+            "version": "1.0",
+            "experimental": {
+                "internal_defines": {"test_var": "test_value"}
+            },  # This property is disallowed by policy
+        }
 
-    def test_validate_no_fusa_string_disallowed_value(self):
-        """Test validateNoFusa for strings with disallowed values"""
-        self.validator.is_type.side_effect = (
-            lambda instance, type_name: type_name == "string"
-        )
+        policy_data = {
+            "name": "test-policy",
+            "description": "Test policy",
+            "restrictions": {
+                "manifest_restrictions": {"disallow": {"properties": ["experimental"]}}
+            },
+        }
+        policy = Policy(policy_data, "rpi4")
 
-        instance = "disallowed_value"
-        no_fusa = ["disallowed_value"]
+        defines = {
+            "_basedir": "/usr/lib/automotive-image-builder",
+            "_workdir": "/tmp",
+        }
 
-        errors = list(validateNoFusa(self.validator, no_fusa, instance, {}))
+        with patch("builtins.open", mock_open_manifest_schema()):
+            loader = ManifestLoader(defines, policy=policy)
+            with patch.object(loader, "validator") as mock_validator:
+                mock_validator.iter_errors.return_value = []
+                with patch("yaml.dump"):
+                    # Should raise AIBException due to policy violation
+                    with self.assertRaises(exceptions.AIBException) as ctx:
+                        loader._load(manifest, "test.yml", "/tmp")
+                    self.assertIn(
+                        "forbidden property 'experimental' found", str(ctx.exception)
+                    )
 
-        self.assertEqual(len(errors), 1)
-        self.assertIn("disallowed_value", str(errors[0]))
+    def test_manifest_validation_with_policy_fail_value(self):
+        """Test that manifest validation fails when policy disallows a value (compliance policy example)."""
+        manifest = {
+            "name": "test",
+            "version": "1.0",
+            "content": {
+                "container_images": [
+                    {
+                        "source": "quay.io/test/image",
+                        "containers-transport": "containers-storage",  # This value is disallowed by compliance policy
+                    }
+                ]
+            },
+        }
 
-    def test_validate_no_fusa_number_disallowed_value(self):
-        """Test validateNoFusa for numbers with disallowed values"""
-        self.validator.is_type.side_effect = (
-            lambda instance, type_name: type_name == "number"
-        )
+        # Use compliance policy restriction with array syntax
+        policy_data = {
+            "name": "test-compliance",
+            "description": "Test compliance policy",
+            "restrictions": {
+                "manifest_restrictions": {
+                    "disallow": {
+                        "values": {
+                            "content.container_images[].containers-transport": [
+                                "containers-storage"
+                            ]
+                        },
+                        "properties": ["experimental"],
+                    }
+                }
+            },
+        }
+        policy = Policy(policy_data, "rpi4")
 
-        instance = 42
-        no_fusa = [42]
+        defines = {
+            "_basedir": "/usr/lib/automotive-image-builder",
+            "_workdir": "/tmp",
+        }
 
-        errors = list(validateNoFusa(self.validator, no_fusa, instance, {}))
-
-        self.assertEqual(len(errors), 1)
-        self.assertIn("42", str(errors[0]))
+        with patch("builtins.open", mock_open_manifest_schema()):
+            loader = ManifestLoader(defines, policy=policy)
+            with patch.object(loader, "validator") as mock_validator:
+                mock_validator.iter_errors.return_value = []
+                with patch("yaml.dump"):
+                    # Should raise AIBException due to policy violation
+                    with self.assertRaises(exceptions.AIBException) as ctx:
+                        loader._load(manifest, "test.yml", "/tmp")
+                    self.assertIn(
+                        "has forbidden value 'containers-storage'", str(ctx.exception)
+                    )
 
 
 class TestExtendWithDefault(unittest.TestCase):
@@ -430,16 +515,15 @@ class TestExtendWithDefault(unittest.TestCase):
 
 
 class TestManifestLoader(unittest.TestCase):
-    def load_manifest(self, manifest, use_fusa=False):
+    def load_manifest(self, manifest, policy=None):
         defines = {
             "_basedir": "/usr/lib/automotive-image-builder",
             "_workdir": "/tmp",
             "arch": "x86_64",
-            "use_fusa": use_fusa,
         }
 
         with patch("builtins.open", mock_open_manifest_schema()):
-            loader = ManifestLoader(defines)
+            loader = ManifestLoader(defines, policy)
             with patch.object(loader, "validator") as mock_validator:
                 mock_validator.iter_errors.return_value = []
                 with patch("yaml.dump"):
@@ -452,7 +536,7 @@ class TestManifestLoader(unittest.TestCase):
         self.assertEqual(loader.defines["name"], "test")
         self.assertEqual(loader.defines["version"], "1.0")
 
-    def test_fusa(self):
+    def test_compliance(self):
         manifest = {
             "name": "test",
             "version": "1.0",
@@ -462,7 +546,9 @@ class TestManifestLoader(unittest.TestCase):
                 "systemd": {"enabled": ["sshd"]},
             },
         }
-        loader = self.load_manifest(manifest, use_fusa=True)
+        loader = self.load_manifest(
+            manifest, policy=None
+        )  # Compliance validation now handled by policy system
         self.assertEqual(loader.defines["name"], "test")
         self.assertEqual(loader.defines["version"], "1.0")
 
@@ -664,7 +750,6 @@ class TestManifestLoader(unittest.TestCase):
             "_basedir": "/test",
             "_workdir": "/tmp",
             "arch": "x86_64",
-            "use_fusa": False,
         }
 
         with patch("builtins.open", mock_open_manifest_schema()):
@@ -691,7 +776,6 @@ class TestManifestLoader(unittest.TestCase):
             "_basedir": "/test",
             "_workdir": "/tmp",
             "arch": "x86_64",
-            "use_fusa": False,
         }
 
         with patch("builtins.open", mock_open_manifest_schema()):

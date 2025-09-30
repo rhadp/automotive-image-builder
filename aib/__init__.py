@@ -4,7 +4,10 @@ import sys
 
 from dataclasses import dataclass
 from functools import cached_property
+from pathlib import Path
 from typing import Any
+
+from .policy import PolicyLoader, PolicyError
 
 
 @dataclass
@@ -19,6 +22,80 @@ class AIBParameters:
     @cached_property
     def build_dir(self):
         return os.path.expanduser(self.args.build_dir) if self.args.build_dir else None
+
+    def _find_policy_path(self, policy_name, search_local=True):
+        """Find policy file in search order.
+
+        Args:
+            policy_name: Policy filename (with .aibp.yml extension)
+            search_local: Whether to search current working directory first
+
+        Returns:
+            str: Path to policy file
+        """
+        search_paths = []
+
+        if search_local:
+            search_paths.append(policy_name)  # Current working directory
+
+        # System-wide policies
+        search_paths.append(
+            os.path.join("/etc/automotive-image-builder/policies", policy_name)
+        )
+        # Package-provided policies
+        search_paths.append(
+            os.path.join(self.base_dir, "files", "policies", policy_name)
+        )
+
+        for path in search_paths:
+            if os.path.exists(path):
+                return path
+
+        # Return the last path as fallback (will generate appropriate error)
+        return search_paths[-1]
+
+    @cached_property
+    def policy(self):
+        """Load and cache policy from --policy or --fusa argument.
+
+        Returns None if no policy is specified, otherwise returns the loaded Policy object.
+        Policy loading happens lazily on first access and is cached for subsequent calls.
+
+        Policy resolution:
+        - If --fusa is set, use "fusa.aibp.yml" from installed policies
+        - If --policy contains path separators, treat as full path
+        - If --policy has no extension, look in installed policy directories:
+          1. /etc/automotive-image-builder/policies/ (system-wide)
+          2. {base_dir}/files/policies/ (package-provided)
+        - If --policy has extension but no separators, try local first, then installed:
+          1. Current working directory
+          2. /etc/automotive-image-builder/policies/
+          3. {base_dir}/files/policies/
+        """
+
+        if self.args.fusa:
+            policy_input = "fusa"
+        elif self.args.policy:
+            policy_input = self.args.policy
+        else:
+            return None
+
+        # If policy input contains path separators, treat as full path
+        if os.path.sep in policy_input:
+            policy_path = policy_input
+        elif not policy_input.endswith(".aibp.yml"):
+            # No extension - only look in installed policies (no local search)
+            policy_name = policy_input + ".aibp.yml"
+            policy_path = self._find_policy_path(policy_name, search_local=False)
+        else:
+            # Has extension but no separators - search local first, then installed
+            policy_path = self._find_policy_path(policy_input, search_local=True)
+
+        try:
+            loader = PolicyLoader(self.base_dir)
+            return loader.load_policy(Path(policy_path), self.args.target)
+        except FileNotFoundError:
+            raise PolicyError(f"Policy file not found: {policy_path}")
 
     def func(self, tmpdir, runner):
         return self.args.func(self, tmpdir, runner)

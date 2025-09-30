@@ -386,26 +386,6 @@ class QMContents(Contents):
         Contents.set_defines(self)
 
 
-def validateNoFusa(validator, noFusa, instance, _schema):
-    # For objects, noFusa means we disallow the named properties
-    if validator.is_type(instance, "object"):
-        for prop in noFusa:
-            if prop in instance:
-                message = (
-                    f"With --fusa, property '{prop}' is not allowed in {instance!r}"
-                )
-                yield jsonschema.ValidationError(message)
-
-    # For values, noFusa means we don't allow any of the listed values
-    if validator.is_type(instance, "string") or validator.is_type(instance, "number"):
-        for value in noFusa:
-            if instance == value:
-                message = (
-                    f"With --fusa, value '{value}'  is not allowed in {instance!r}"
-                )
-                yield jsonschema.ValidationError(message)
-
-
 def extend_with_default(validator_class):
     validate_properties = validator_class.VALIDATORS["properties"]
 
@@ -424,23 +404,15 @@ def extend_with_default(validator_class):
 
 
 class ManifestLoader:
-    def __init__(self, defines):
+    def __init__(self, defines, policy=None):
         self.aib_basedir = defines["_basedir"]
         self.workdir = defines["_workdir"]
         self.defines = defines
-        fusa = defines["use_fusa"]
+        self.policy = policy
 
         # Note: Draft7 is what osbuild uses, and is available in rhel9
         base_cls = jsonschema.Draft7Validator
-        validator_cls = base_cls
-        if fusa:
-            validator_cls = jsonschema.validators.extend(
-                base_cls,
-                validators={
-                    "noFusa": validateNoFusa,
-                },
-            )
-        validator_cls = extend_with_default(validator_cls)
+        validator_cls = extend_with_default(base_cls)
 
         with open(
             os.path.join(self.aib_basedir, "files/manifest_schema.yml"),
@@ -570,6 +542,13 @@ class ManifestLoader:
         errors = sorted(self.validator.iter_errors(manifest), key=lambda e: e.path)
         if errors:
             raise exceptions.SimpleManifestParseError(path, errors)
+        # Policy-based manifest validation
+        if self.policy:
+            policy_errors = self.policy.validate_manifest(manifest)
+            if policy_errors:
+                raise exceptions.AIBException(
+                    "Manifest policy validation failed:\n" + "\n".join(policy_errors)
+                )
 
         # Extra include snippet for content, shared between contents
         extra_include = ExtraInclude(manifest_basedir)

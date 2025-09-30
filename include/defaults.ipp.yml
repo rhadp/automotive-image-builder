@@ -45,11 +45,6 @@ mpp-vars:
 
   denylist_rpms: []
 
-  fusa_denylist_modules:
-    - fat
-    - nfs
-    - nfs_acl
-
   timezone: UTC
   locale: en_US.UTF-8
   hostname: localhost
@@ -195,6 +190,14 @@ mpp-vars:
   use_compliance_mode: false
   use_module_sig_enforce: true
   use_efi_runtime: true
+  # Policy variables - default to empty/false when no policy is applied
+  policy_require_qm_digest: false
+  policy_require_qm_separate_partition: false
+  policy_disable_efi_features: false
+  policy_denylist_rpms: []
+  policy_denylist_modules: []
+  policy_systemctl_options: []
+  policy_selinux_booleans: []
   consoles:
     mpp-if: arch == 'aarch64'
     then: ttyAMA0
@@ -210,15 +213,6 @@ mpp-vars:
     # Disable unprivileged eBPF
     - key: kernel.unprivileged_bpf_disabled
       value: '1'
-  fusa_systemctl_options:
-    # Disable net.core.busy_poll by setting it to 0
-    - key: net.core.busy_poll
-      value: '0'
-    # disable multicast forwarding on the system
-    - key: net.ipv4.conf.all.mc_forwarding
-      value: '0'
-    - key: net.ipv4.conf.default.mc_forwarding
-      value: '0'
   dracut_modules: []
   dracut_add_modules:
     - base
@@ -328,20 +322,12 @@ mpp-vars:
   target_build_rpms: []
   target_extra_image_stages: []
   target_supported_arches: []
-  target_fusa_denylist_modules: []
 
   # These are overridden by the arch file
   arch_rpms: []
   arch_build_rpms: []
 
   osbuild_toml_rpm:
-
-  fusa_denylist_rpms:
-    - dosfstools
-    - e2fsprogs
-    - erofs-utils
-    - libbpf
-    - xfsprogs
 
   build_rpms:
     - dnf

@@ -9,6 +9,7 @@ environment:
     AIB_DISTRO: autosd10-sig
 
     AIB: $PROJECT_DIR/automotive-image-builder
+    AIB_BASEDIR: $PROJECT_DIR
     AIR: $PROJECT_DIR/automotive-image-runner
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
@@ -18,6 +19,11 @@ provision:
     how: local
 
 prepare:
+    - name: Install required packages
+      how: install
+      package:
+        - jq
+
     - name: Setup local environment
       how: shell
       script: |

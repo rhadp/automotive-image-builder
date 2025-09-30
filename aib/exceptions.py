@@ -72,14 +72,6 @@ class InvalidMountRelSize(AIBException):
         return f"Invalid relative size for {self.mountpoint}, must be between 0 and 1"
 
 
-class NotAllowedFusa(AIBException):
-    def __init__(self, option):
-        self.option = option
-
-    def __str__(self):
-        return f"{self.option} is not allowed when using --fusa"
-
-
 class NoMatchingFilesError(AIBException):
     def __init__(self, glob_pattern):
         self.glob_pattern = glob_pattern

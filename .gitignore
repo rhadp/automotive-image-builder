@@ -10,3 +10,4 @@ __pycache__
 report.xml
 .pre-commit-config.yaml
 .idea/
+_build

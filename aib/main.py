@@ -8,7 +8,6 @@ import platform
 import json
 import tempfile
 import shutil
-
 import yaml
 
 from .utils import extract_comment_header, get_osbuild_major_version
@@ -235,11 +234,17 @@ def parse_args(args, base_dir):
         default="image",
         help="Build this image mode (package, image)",
     )
-    format_parser.add_argument(
+
+    policy_group = format_parser.add_mutually_exclusive_group()
+    policy_group.add_argument(
+        "--policy",
+        type=str,
+        help="Path to policy file (.aibp.yml) for build restrictions",
+    )
+    policy_group.add_argument(
         "--fusa",
         action="store_true",
-        default=False,
-        help="Enable required options for functional safety",
+        help="Use built-in FUSA compliance policy (equivalent to --policy fusa.aibp.yml)",
     )
     format_parser.add_argument(
         "--ostree-repo", action="store", type=str, help="Path to ostree repo"
@@ -393,16 +398,21 @@ def strip_ext(path):
     return os.path.splitext(os.path.splitext(path)[0])[0]
 
 
-def validate_fusa_args(args):
-    if not args.fusa:
-        return
-
-    if args.mode != "image":
-        raise exceptions.NotAllowedFusa("The option --mode=package")
+def validate_policy_args(args):
+    """Validate build arguments against policy restrictions."""
+    if args.policy:
+        # Validate build arguments
+        errors = args.policy.validate_build_args(
+            args.mode, args.target, args.distro, args.arch
+        )
+        if errors:
+            raise exceptions.AIBException(
+                "Policy validation failed:\n" + "\n".join(errors)
+            )
 
 
 def create_osbuild_manifest(args, tmpdir, out, runner):
-    validate_fusa_args(args)
+    validate_policy_args(args)
 
     with open(args.manifest) as f:
         try:
@@ -425,7 +435,6 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
         "target": args.target,
         "distro_name": args.distro,
         "image_mode": args.mode,
-        "use_fusa": args.fusa,
         "osbuild_major_version": get_osbuild_major_version(
             runner, use_container=(args.vm or args.container)
         ),
@@ -438,8 +447,33 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
 
     defines["exports"] = args.export if args.export else []
 
+    # Add policy-derived variables
+    if args.policy:
+        policy = args.policy
+
+        # Add forced variables from policy
+        forced_vars = policy.get_forced_variables()
+        defines.update(forced_vars)
+
+        # Add denylist variables
+        defines["policy_denylist_rpms"] = policy.disallowed_rpms
+        defines["policy_denylist_modules"] = policy.disallowed_kernel_modules
+
+        # Add sysctl options
+        sysctl_options = []
+        for key, value in policy.get_forced_sysctl().items():
+            sysctl_options.append({"key": key, "value": value})
+        defines["policy_systemctl_options"] = sysctl_options
+
+        # Add SELinux booleans
+        selinux_booleans = []
+        for key, value in policy.get_forced_selinux_booleans().items():
+            bool_str = "true" if value else "false"
+            selinux_booleans.append(f"{key}={bool_str}")
+        defines["policy_selinux_booleans"] = selinux_booleans
+
     if args.simple_manifest:
-        loader = ManifestLoader(defines)
+        loader = ManifestLoader(defines, args.policy)
 
         loader.load(args.simple_manifest, os.path.dirname(args.simple_manifest))
 
@@ -707,7 +741,6 @@ def build_bootc_builder(args, tmpdir, runner):
     args.export = ["bootc"]
     args.target = "qemu"
     args.mode = "image"
-    args.fusa = False
     print(args.manifest)
     build(args, tmpdir, runner)
 

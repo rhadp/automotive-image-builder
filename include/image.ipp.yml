@@ -25,7 +25,7 @@ mpp-vars:
 
 pipelines:
   - mpp-if: "_error(f'Rootfs contains denied rpms: {space.join(denied)}') if (denied := [rpm for rpm in denylist_rpms if rpm in rpms['rootfs']]) else False"
-  - mpp-if: "_error(f'No separate partition for /var/qm, as required by --fusa') if use_fusa and use_qm and not _qm_use_separate_var else False"
+  - mpp-if: "_error(f'No separate partition for /var/qm, as required by policy') if policy_require_qm_separate_partition and use_qm and not _qm_use_separate_var else False"
 
   - name: image
     build: name:build

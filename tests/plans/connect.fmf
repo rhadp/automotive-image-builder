@@ -21,6 +21,7 @@ environment:
     AIB_SRPM_DIR: /var/tmp/aib-srpm
 
     AIB: automotive-image-builder
+    AIB_BASEDIR: /usr/lib/automotive-image-builder
     AIR: automotive-image-runner
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
@@ -47,6 +48,7 @@ prepare:
       how: install
       package:
           - automotive-image-builder
+          - jq
 
     - name: Report a-i-b version
       how: shell

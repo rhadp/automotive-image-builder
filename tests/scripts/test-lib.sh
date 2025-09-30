@@ -82,6 +82,26 @@ assert_file_doesnt_have_content () {
     done
 }
 
+assert_jq () {
+    local json_file="$1"
+    local jq_query="$2"
+    local error_msg="${3:-jq query '$jq_query' failed on file '$json_file'}"
+    
+    if ! jq -e "$jq_query" "$json_file" > /dev/null; then
+        fatal "$error_msg"
+    fi
+}
+
+assert_jq_not () {
+    local json_file="$1"
+    local jq_query="$2"
+    local error_msg="${3:-jq query '$jq_query' should not match on file '$json_file'}"
+    
+    if jq -e "$jq_query" "$json_file" > /dev/null; then
+        fatal "$error_msg"
+    fi
+}
+
 assert_file_has_owner() {
     local file=$1
     local expected_uid_gid=$2
@@ -259,6 +279,25 @@ build() {
       exit 1
    fi
    save_to_tmt_test_data build.log
+}
+
+trycompose() {
+    $AIB compose \
+        --distro=$AIB_DISTRO \
+        --cache $OUTDIR/dnf-cache \
+        $FAST_OPTIONS \
+        --define reproducible_image=true \
+        "$@" > compose.log
+}
+
+compose() {
+   if ! trycompose "$@"; then
+      echo FAILED to compose manifest
+      tail -n 50 compose.log
+      save_to_tmt_test_data compose.log
+      exit 1
+   fi
+   save_to_tmt_test_data compose.log
 }
 
 # Check if the image was created

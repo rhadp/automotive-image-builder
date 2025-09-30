@@ -21,7 +21,11 @@ install:
 		install -m 0644 -t $(DESTDIR)$(DATADIR)/$$dir $$dir/*.yml ; \
 	done
 	mkdir -p $(DESTDIR)$(DATADIR)/files
-	install -m 0644 -t $(DESTDIR)$(DATADIR)/files files/*
+	find files -maxdepth 1 -type f -exec install -m 0644 {} $(DESTDIR)$(DATADIR)/files/ \;
+	mkdir -p $(DESTDIR)$(DATADIR)/files/policies
+	install -m 0644 files/policies/* $(DESTDIR)$(DATADIR)/files/policies/
+	mkdir -p $(DESTDIR)/etc/automotive-image-builder/policies
+	install -m 0644 files/policies/README.md $(DESTDIR)/etc/automotive-image-builder/policies/
 	mkdir -p $(DESTDIR)$(DATADIR)/aib
 	install  -t $(DESTDIR)$(DATADIR)/aib aib/*.py
 	mkdir -p $(DESTDIR)$(DATADIR)/mpp/aibosbuild/util

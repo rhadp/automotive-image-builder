@@ -1,0 +1,50 @@
+name: fusa-compliance
+description: Functional Safety (FuSa) compliance policy
+
+restrictions:
+  modes:
+    allow:
+      - image
+
+  manifest_restrictions:
+    disallow:
+      values:
+        "content.container_images[].containers-transport": ["containers-storage"]
+      properties:
+        - "experimental"
+
+  variables:
+    force:
+      disable_ipv6: true
+      ld_so_cache_protected: true
+      policy_require_qm_digest: true
+      policy_require_qm_separate_partition: true
+      policy_disable_efi_features: true
+
+  rpms:
+    disallow:
+      - dosfstools
+      - e2fsprogs
+      - erofs-utils
+      - libbpf
+      - xfsprogs
+
+  kernel_modules:
+    disallow:
+      - fat
+      - nfs
+      - nfs_acl
+    disallow@rcar_s4:
+      - ufs-renesas
+      - at24
+      - pcie-rcar-gen4
+
+  selinux_booleans:
+    force:
+      deny_ptrace: true
+
+  sysctl:
+    force:
+      "net.core.busy_poll": "0"
+      "net.ipv4.conf.all.mc_forwarding": "0"
+      "net.ipv4.conf.default.mc_forwarding": "0"

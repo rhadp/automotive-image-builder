@@ -6,10 +6,6 @@ mpp-vars:
   consoles: "ttySC0,1843200"
   use_boot: aboot
   use_efi_runtime: false
-  target_fusa_denylist_modules:
-    - ufs-renesas
-    - at24
-    - pcie-rcar-gen4
   static_ip_modules:
     - gpio-rcar
     - marvell10g

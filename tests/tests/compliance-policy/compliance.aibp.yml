@@ -1,0 +1,44 @@
+name: test-compliance
+description: Test compliance policy for policy system validation
+
+restrictions:
+  modes:
+    allow:
+      - image
+
+  manifest_restrictions:
+    disallow:
+      values:
+        "content.container_images[].containers-transport": ["containers-storage"]
+      properties:
+        - "experimental"
+
+  variables:
+    force:
+      disable_ipv6: true
+
+  rpms:
+    disallow:
+      - nano
+      - vim-enhanced
+      - wget
+      - rsync
+
+  kernel_modules:
+    disallow:
+      - bluetooth
+      - btusb
+    disallow@rcar_s4:
+      - rcar_can
+      - rcar_thermal
+      - rcar_dmac
+
+  selinux_booleans:
+    force:
+      httpd_can_network_connect: false
+
+  sysctl:
+    force:
+      "net.ipv4.ip_forward": "0"
+      "net.ipv6.conf.all.forwarding": "0"
+      "kernel.dmesg_restrict": "1"
