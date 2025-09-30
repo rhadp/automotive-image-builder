@@ -305,6 +305,12 @@ def parse_args(args, base_dir):
         help="Export this image type",
         required=True,
     )
+    parser_build.add_argument(
+        "--progress",
+        action=argparse.BooleanOptionalAction,
+        help="Disable progress bar",
+        default=sys.stdout.isatty(),
+    )
 
     parser_build.add_argument("manifest", type=str, help="Source manifest file")
     parser_build.add_argument("out", type=str, help="Output path")
@@ -623,8 +629,9 @@ def _build(args, tmpdir, runner):
     if args.cache_max_size:
         cmdline += ["--cache-max-size=" + args.cache_max_size]
 
-    # Add JSONSeqMonitor for progress monitoring
-    cmdline += ["--monitor", "JSONSeqMonitor"]
+    if args.progress:
+        # Add JSONSeqMonitor for progress monitoring
+        cmdline += ["--monitor", "JSONSeqMonitor"]
 
     has_repo = False
     exports = []
@@ -644,7 +651,9 @@ def _build(args, tmpdir, runner):
         # Download sources on host, using no exports
 
         cmdline += [osbuild_manifest]
-        runner.run_in_container(cmdline, capture_output=args.verbose)
+        runner.run_in_container(
+            cmdline, progress=args.progress, capture_output=args.verbose
+        )
 
         # Now do the build in the vm
 
@@ -703,7 +712,10 @@ def _build(args, tmpdir, runner):
         cmdline += [osbuild_manifest]
 
         runner.run_in_container(
-            cmdline, need_osbuild_privs=True, capture_output=args.verbose
+            cmdline,
+            need_osbuild_privs=True,
+            progress=args.progress,
+            capture_output=args.verbose,
         )
 
     if args.ostree_repo:

@@ -188,6 +188,7 @@ class Runner:
         self,
         cmdline,
         need_osbuild_privs=False,
+        progress=False,
         capture_output=False,
     ):
         use_container = self.use_container
@@ -201,7 +202,7 @@ class Runner:
             use_container=use_container,
             as_root=as_root,
             need_osbuild_privs=need_osbuild_privs,
-            with_progress=True,
+            with_progress=progress,
         )
 
     # Run commandline as user, either directly, or in a container, it
