@@ -1,0 +1,32 @@
+name: efivars
+
+content:
+  repos:
+    - id: efitools-copr
+      baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/efitools/epel-10-$arch/
+
+  rpms:
+    - openssl
+    - efitools
+  make_dirs:
+    - path: /usr/share/secureboot-keys
+  add_files:
+    - source_path: enroll-keys.sh
+      path: /usr/bin/enroll-keys.sh
+    - path: /usr/share/secureboot-keys
+      source_glob: secureboot-keys/*
+  chmod_files:
+    - path: /usr/bin/enroll-keys.sh
+      mode: "0755"
+
+kernel:
+  kernel_package: 'kernel'
+
+auth:
+  # "password"
+  root_password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.
+
+experimental:
+  internal_defines:
+    # This is needed with the standard kernel. Probably beacuse of some module missing in the initrd.
+    use_autoinit: false

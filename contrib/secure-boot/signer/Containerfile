@@ -1,0 +1,10 @@
+FROM quay.io/centos/centos:10
+
+RUN dnf install -y openssl nss-tools pesign
+COPY sign-files.sh /usr/bin/
+
+RUN mkdir /work
+VOLUME /work
+WORKDIR /work
+
+ENTRYPOINT ["/usr/bin/sign-files.sh"]
