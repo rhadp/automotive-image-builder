@@ -262,6 +262,8 @@ integration_tests_10:
     # TODO: change to autosd10-sig once automotive-image-builder-1.1.0 with proper AutoSD 10 support is released
     - sh ci-scripts/run_tmt_tests.sh autosd10-latest-sig
   artifacts:
+    when: always
     paths:
       - tmt-run
-    when: always
+    reports:
+      junit: tmt-run/**/junit.xml
