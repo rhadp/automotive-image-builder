@@ -6,7 +6,7 @@ mpp-vars:
   # distro_baseurl needs to be provided via parameters to the a-i-b
   distro_baseurl: ""
   distro_baseurl_repo: $distro_baseurl/RHIVOS/$arch/os/
-  distro_chroot: centos-stream-$distro_version-$arch
+  distro_chroot: centos-stream-10-$arch
   uefi_vendor: redhat
   release_rpm: redhat-release
   selinux_policy: automotive
