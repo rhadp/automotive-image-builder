@@ -193,7 +193,7 @@ def run_vm(
     accel_list = qemu_available_accels(qemu)
     qemu_args = [qemu, "-nographic", "--kernel", kernel]
 
-    num_cpus = os.cpu_count()
+    num_cpus = os.cpu_count() or 1
 
     tty = "ttyS0"
     if arch == "x86_64":
@@ -204,7 +204,7 @@ def run_vm(
         machine = "virt"
         cpu = "cortex-a57"
         # for up to 8 cores (limitation of qemu-system-aarch64)
-        num_cpus = min(os.cpu_count(), 8)
+        num_cpus = min(num_cpus, 8)
     else:
         exit_error(f"unsupported architecture {arch}")
 
