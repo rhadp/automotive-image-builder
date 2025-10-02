@@ -24,6 +24,7 @@ from .podman import (
     podman_image_exists,
     podman_image_info,
     podman_run_bootc_image_builder,
+    PodmanImageMount,
 )
 
 default_distro = "autosd10-sig"
@@ -343,6 +344,31 @@ def parse_args(args, base_dir):
         action="store",
         help="bootc build container image to use",
     )
+
+    parser_bootc_extract_for_signing = subparsers.add_parser(
+        "bootc-extract-for-signing", help="Extract file that need signing"
+    )
+    parser_bootc_extract_for_signing.add_argument(
+        "container", type=str, help="Bootc container name"
+    )
+    parser_bootc_extract_for_signing.add_argument(
+        "out", type=str, help="Output directory"
+    )
+    parser_bootc_extract_for_signing.set_defaults(func=bootc_extract_for_signing)
+
+    parser_bootc_inject_signed = subparsers.add_parser(
+        "bootc-inject-signed", help="Inject signed files"
+    )
+    parser_bootc_inject_signed.add_argument(
+        "container", type=str, help="Bootc container name"
+    )
+    parser_bootc_inject_signed.add_argument(
+        "srcdir", type=str, help="Directory with signed files"
+    )
+    parser_bootc_inject_signed.add_argument(
+        "new_container", type=str, help="Destination container name"
+    )
+    parser_bootc_inject_signed.set_defaults(func=bootc_inject_signed)
 
     res = parser.parse_args(args)
     if "manifest" in res:
@@ -782,6 +808,75 @@ def bootc_to_disk_image(args, tmpdir, runner):
     )
     if res != 0:
         sys.exit(1)  # bc-i-b will have printed the error
+
+
+def bootc_extract_for_signing(args, tmpdir, runner):
+    if not podman_image_exists(args.container):
+        log.error(
+            "Source bootc image '%s' isn't in local container store", args.container
+        )
+        sys.exit(1)
+    os.makedirs(args.out, exist_ok=True)
+    with PodmanImageMount(args.container) as mount:
+        if mount.has_file("/etc/signing_info.json"):
+            content = mount.read_file("/etc/signing_info.json")
+            info = json.loads(content)
+
+            with open(os.path.join(args.out, "signing_info.json"), "a") as f:
+                f.write(content)
+            for f in info.get("signed_files", []):
+                _type = f["type"]
+                filename = f["filename"]
+                src = f["paths"][0]  # All files should be the same, copy out first
+
+                if _type == "efi":
+                    destdir = os.path.join(args.out, "efi")
+                else:
+                    log.error("Unknown signature type {_type}")
+                    sys.exit(1)
+
+                os.makedirs(destdir, exist_ok=True)
+
+                log.info(f"Extracting {filename} from {src}")
+                dest = os.path.join(destdir, filename)
+                mount.copy_out_file(src, dest)
+        else:
+            log.info("No /etc/signing-info.json, nothing to sign")
+            sys.exit(0)
+
+
+def bootc_inject_signed(args, tmpdir, runner):
+    if not podman_image_exists(args.container):
+        log.error(
+            "Source bootc image '%s' isn't in local container store", args.container
+        )
+        sys.exit(1)
+
+    with PodmanImageMount(
+        args.container, writable=True, commit_image=args.new_container
+    ) as mount:
+        if mount.has_file("/etc/signing_info.json"):
+            content = mount.read_file("/etc/signing_info.json")
+            info = json.loads(content)
+
+            for f in info.get("signed_files", []):
+                _type = f["type"]
+                filename = f["filename"]
+
+                if _type == "efi":
+                    srcdir = os.path.join(args.srcdir, "efi")
+                else:
+                    log.error("Unknown signature type {_type}")
+                    sys.exit(1)
+
+                src = os.path.join(srcdir, filename)
+                log.info(f"Injecting {filename} from {src}")
+
+                for dest_path in f["paths"]:
+                    mount.copy_in_file(src, dest_path)
+        else:
+            log.info("No /etc/signing-info.json, nothing needed signing")
+            sys.exit(0)
 
 
 def no_subcommand(_args, _tmpdir, _runner):

@@ -716,6 +716,8 @@ mpp-vars:
       then:
         from: input://extra-tree/qm-automotive.conf
         to: tree:////usr/share/containers/systemd/qm.container.d/10-automotive.conf
+    - from: input://extra-tree/signing_info.json
+      to: tree://///etc/signing_info.json
     - from: input://extra-tree/bootc.install
       to: tree://///usr/lib/bootc/install/05-aib.toml
     - from: input://extra-tree/disk.yaml

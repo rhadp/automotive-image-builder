@@ -217,6 +217,31 @@ mpp-vars:
     mpp-format-string: |
       { newline.join(root_ssh_keys) }
 
+  signing_info:
+    signed_files:
+      mpp-join:
+        - mpp-if: use_ukiboot
+          then:
+            - type: efi
+              filename: aboot.img
+              paths:
+                - mpp-eval: _kernel_dir + "/aboot.img"
+            - type: efi
+              filename:
+                mpp-format-string: ukiboot{efiarch}.efi
+              paths:
+                - mpp-format-string: /usr/lib/bootupd/updates/EFI/centos/ukiboot{efiarch}.efi
+                - mpp-format-string: /usr/lib/bootupd/updates/EFI/centos/shim{efiarch}.efi
+                - mpp-format-string: /usr/lib/bootupd/updates/EFI/BOOT/{efibootfile}
+            - type: efi
+              filename: slot_a.addon.efi
+              paths:
+                - /usr/lib/bootupd/updates/EFI/centos/ukiboot_a.efi.extra.d/slot_a.addon.efi
+            - type: efi
+              filename: slot_b.addon.efi
+              paths:
+                - /usr/lib/bootupd/updates/EFI/centos/ukiboot_b.efi.extra.d/slot_b.addon.efi
+
   bootc_install_options:
     mpp-format-string: |
       [install.filesystem.root]
@@ -727,6 +752,22 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile/{embedded['bootc.install']}
               to: tree:///bootc.install
+
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: signing_info.json
+              text:
+                mpp-eval: _json.dumps(_materialize(signing_info))
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['signing_info.json']}
+              to: tree:///signing_info.json
+
       - type: org.osbuild.copy
         inputs:
           inlinefile:
