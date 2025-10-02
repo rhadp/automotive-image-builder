@@ -29,7 +29,7 @@ def exit_error(s):
 
 
 def runcmd(cmdline, **opts):
-    log.info(f"Running: {shlex.join(cmdline)}")
+    log.info("Running: %s", shlex.join(cmdline))
     try:
         subprocess.run(cmdline, check=True, **opts)
     except FileNotFoundError:
@@ -173,7 +173,7 @@ def run_virtiofs_server(socket, sharedir):
         "--log-level",
         "off",
     ]
-    log.info(f"Running: {shlex.join(vio_args)}")
+    log.info("Running: %s", shlex.join(vio_args))
     return subprocess.Popen(vio_args)
 
 

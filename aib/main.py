@@ -810,7 +810,9 @@ def bootc_to_disk_image(args, tmpdir, runner):
                 "Either specify another with --build-container, or create it using: "
             )
             log.error(
-                f" automotive-image-builder build-bootc-builder --distro {distro}  {build_container}"
+                " automotive-image-builder build-bootc-builder --distro %s %s",
+                distro,
+                build_container,
             )
             sys.exit(1)
 
@@ -852,7 +854,7 @@ def bootc_extract_for_signing(args, tmpdir, runner):
 
                 os.makedirs(destdir, exist_ok=True)
 
-                log.info(f"Extracting {filename} from {src}")
+                log.info("Extracting %s from %s", filename, src)
                 dest = os.path.join(destdir, filename)
                 mount.copy_out_file(src, dest)
         else:
@@ -885,7 +887,7 @@ def bootc_inject_signed(args, tmpdir, runner):
                     sys.exit(1)
 
                 src = os.path.join(srcdir, filename)
-                log.info(f"Injecting {filename} from {src}")
+                log.info("Injecting %s from %s", filename, src)
 
                 for dest_path in f["paths"]:
                     mount.copy_in_file(src, dest_path)
