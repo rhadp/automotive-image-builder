@@ -120,6 +120,7 @@ class Runner:
         need_osbuild_privs=False,
         with_progress=False,
         capture_output=False,
+        verbose=False,
     ):
         if use_container:
             cmdline = (
@@ -145,7 +146,7 @@ class Runner:
         if with_progress:
             log.debug("Running with progress: %s", shlex.join(cmdline))
 
-            progress_monitor = OSBuildProgressMonitor(verbose=capture_output)
+            progress_monitor = OSBuildProgressMonitor(verbose=verbose)
 
             try:
                 return_code = progress_monitor.run(cmdline)
@@ -190,6 +191,7 @@ class Runner:
         need_osbuild_privs=False,
         progress=False,
         capture_output=False,
+        verbose=False,
     ):
         use_container = self.use_container
         if use_container:
@@ -203,6 +205,7 @@ class Runner:
             as_root=as_root,
             need_osbuild_privs=need_osbuild_privs,
             with_progress=progress,
+            verbose=verbose,
         )
 
     # Run commandline as user, either directly, or in a container, it

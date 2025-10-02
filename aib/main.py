@@ -677,9 +677,7 @@ def _build(args, tmpdir, runner):
         # Download sources on host, using no exports
 
         cmdline += [osbuild_manifest]
-        runner.run_in_container(
-            cmdline, progress=args.progress, capture_output=args.verbose
-        )
+        runner.run_in_container(cmdline, progress=args.progress, verbose=args.verbose)
 
         # Now do the build in the vm
 
@@ -741,7 +739,7 @@ def _build(args, tmpdir, runner):
             cmdline,
             need_osbuild_privs=True,
             progress=args.progress,
-            capture_output=args.verbose,
+            verbose=args.verbose,
         )
 
     if args.ostree_repo:
@@ -916,6 +914,9 @@ def main():
         runner.add_volume(tmpdir)
         try:
             return args.func(tmpdir, runner)
+        except KeyboardInterrupt:
+            log.info("Build interrupted by user")
+            sys.exit(130)
         except (exceptions.AIBException, FileNotFoundError) as e:
             log.error("%s", e)
             sys.exit(1)
