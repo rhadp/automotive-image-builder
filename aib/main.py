@@ -916,6 +916,9 @@ def main():
         runner.add_volume(tmpdir)
         try:
             return args.func(tmpdir, runner)
+        except KeyboardInterrupt:
+            log.info("Build interrupted by user")
+            sys.exit(130)
         except (exceptions.AIBException, FileNotFoundError) as e:
             log.error("%s", e)
             sys.exit(1)
