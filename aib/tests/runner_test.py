@@ -64,6 +64,7 @@ def test_run_args_root(
     "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @pytest.mark.parametrize("capture_output", [True, False])
+@pytest.mark.parametrize("verbose", [True, False])
 @patch("aib.runner.subprocess")
 def test_run_args_container_without_progress(
     subprocess_mock,
@@ -71,6 +72,7 @@ def test_run_args_container_without_progress(
     use_container,
     use_user_container,
     capture_output,
+    verbose,
 ):
     subprocess_run = MagicMock()
     subprocess_mock.run = subprocess_run
@@ -82,7 +84,9 @@ def test_run_args_container_without_progress(
     runner.use_sudo_for_root = use_sudo_for_root
 
     cmd = ["touch", "example"]
-    runner.run_in_container(cmd, progress=False, capture_output=capture_output)
+    runner.run_in_container(
+        cmd, progress=False, capture_output=capture_output, verbose=verbose
+    )
 
     subprocess_run.assert_called_once_with(
         (
@@ -109,6 +113,7 @@ def test_run_args_container_without_progress(
     "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @pytest.mark.parametrize("capture_output", [True, False])
+@pytest.mark.parametrize("verbose", [True, False])
 @patch("aib.runner.OSBuildProgressMonitor")
 def test_run_args_container_with_progress(
     progress_monitor_mock,
@@ -116,6 +121,7 @@ def test_run_args_container_with_progress(
     use_container,
     use_user_container,
     capture_output,
+    verbose,
 ):
     # Setup progress monitor mock
     monitor_instance = MagicMock()
@@ -129,10 +135,12 @@ def test_run_args_container_with_progress(
     runner.use_sudo_for_root = use_sudo_for_root
 
     cmd = ["touch", "example"]
-    runner.run_in_container(cmd, progress=True, capture_output=capture_output)
+    runner.run_in_container(
+        cmd, progress=True, capture_output=capture_output, verbose=verbose
+    )
 
     # Progress monitor should be created and used
-    progress_monitor_mock.assert_called_once_with(verbose=capture_output)
+    progress_monitor_mock.assert_called_once_with(verbose=verbose)
 
     if use_container or use_user_container:
         monitor_instance.run.assert_called_once_with(AnyListContaining("podman"))
@@ -150,6 +158,7 @@ def test_run_args_container_with_progress(
     "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @pytest.mark.parametrize("capture_output", [True, False])
+@pytest.mark.parametrize("verbose", [True, False])
 @patch("aib.runner.subprocess")
 def test_run_args_osbuild_without_progress(
     subprocess_mock,
@@ -157,6 +166,7 @@ def test_run_args_osbuild_without_progress(
     use_container,
     use_user_container,
     capture_output,
+    verbose,
 ):
     subprocess_run = MagicMock()
     subprocess_mock.run = subprocess_run
@@ -169,7 +179,11 @@ def test_run_args_osbuild_without_progress(
 
     cmd = ["touch", "example"]
     runner.run_in_container(
-        cmd, need_osbuild_privs=True, progress=False, capture_output=capture_output
+        cmd,
+        need_osbuild_privs=True,
+        progress=False,
+        capture_output=capture_output,
+        verbose=verbose,
     )
 
     subprocess_run.assert_called_once_with(
@@ -197,6 +211,7 @@ def test_run_args_osbuild_without_progress(
     "use_container,use_user_container", [(False, False), (True, False), (False, True)]
 )
 @pytest.mark.parametrize("capture_output", [True, False])
+@pytest.mark.parametrize("verbose", [True, False])
 @patch("aib.runner.OSBuildProgressMonitor")
 def test_run_args_osbuild_with_progress(
     progress_monitor_mock,
@@ -204,6 +219,7 @@ def test_run_args_osbuild_with_progress(
     use_container,
     use_user_container,
     capture_output,
+    verbose,
 ):
     # Setup progress monitor mock
     monitor_instance = MagicMock()
@@ -218,11 +234,15 @@ def test_run_args_osbuild_with_progress(
 
     cmd = ["touch", "example"]
     runner.run_in_container(
-        cmd, need_osbuild_privs=True, progress=True, capture_output=capture_output
+        cmd,
+        need_osbuild_privs=True,
+        progress=True,
+        capture_output=capture_output,
+        verbose=verbose,
     )
 
     # Progress monitor should be created and used
-    progress_monitor_mock.assert_called_once_with(verbose=capture_output)
+    progress_monitor_mock.assert_called_once_with(verbose=verbose)
 
     if use_container or use_user_container:
         monitor_instance.run.assert_called_once_with(AnyListContaining("podman"))
