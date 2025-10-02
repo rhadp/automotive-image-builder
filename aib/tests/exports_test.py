@@ -131,6 +131,7 @@ class TestExport(unittest.TestCase):
             [
                 "skopeo",
                 "copy",
+                "--quiet",
                 "oci-archive:" + test_file,
                 "containers-storage:" + dest,
             ]

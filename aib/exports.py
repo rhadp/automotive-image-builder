@@ -115,6 +115,7 @@ def export(outputdir, dest, dest_is_directory, export, runner):
             [
                 "skopeo",
                 "copy",
+                "--quiet",
                 "oci-archive:" + export_file,
                 "containers-storage:" + dest,
             ]
@@ -126,6 +127,7 @@ def export(outputdir, dest, dest_is_directory, export, runner):
             [
                 "skopeo",
                 "copy",
+                "--quiet",
                 "oci-archive:" + export_file,
                 "containers-storage:" + dest,
             ]
