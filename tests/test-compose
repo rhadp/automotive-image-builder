@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 import subprocess
 import json
 import shlex
@@ -96,9 +97,12 @@ def filter_by_distro(elms, distro):
 
 def target_runs_on_arch(target, arch):
     t = target["value"]
-    if t not in target_arches:
-        return True
-    return arch["value"] in target_arches[t]
+    a = arch["value"]
+    for pattern, arches in target_arches.items():
+        # First match wins
+        if re.fullmatch(re.compile(pattern), t):
+            return a in arches
+    return True
 
 
 to_run = []

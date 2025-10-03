@@ -13,8 +13,7 @@
                 "rpi4"
               ],
     "target-arches": {
-        "abootqemu": ["aarch64"],
-        "abootqemukvm": ["aarch64"],
+        "abootqemu.*": ["disable-due-to-missing", "autosig-qemu-dtb"],
         "acrn": ["x86_64"],
         "am62sk": ["aarch64"],
         "am69sk": ["aarch64"],
@@ -22,7 +21,8 @@
         "j784s4evm": ["aarch64"],
         "qdrive3": ["aarch64"],
         "rcar_s4": ["aarch64"],
-        "ridesx4": ["aarch64"],
+        "ridesx4_scmi": ["disable-due-to-missing", "downstream-dtbs", "kmod-qcom-scmi"],
+        "ridesx4.*": ["aarch64"],
         "rpi4": ["aarch64"],
         "tda4vm_sk": ["aarch64"]
     },
