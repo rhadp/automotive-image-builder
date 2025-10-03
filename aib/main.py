@@ -335,7 +335,7 @@ def parse_args(args, base_dir):
         "bootc-to-disk-image", help="Create disk image from bootc container"
     )
     parser_bootc_to_disk_image.add_argument(
-        "container", type=str, help="Bootc container name"
+        "src_container", type=str, help="Bootc container name"
     )
     parser_bootc_to_disk_image.add_argument("out", type=str, help="Output image name")
     parser_bootc_to_disk_image.set_defaults(func=bootc_to_disk_image)
@@ -355,7 +355,7 @@ def parse_args(args, base_dir):
         "bootc-extract-for-signing", help="Extract file that need signing"
     )
     parser_bootc_extract_for_signing.add_argument(
-        "container", type=str, help="Bootc container name"
+        "src_container", type=str, help="Bootc container name"
     )
     parser_bootc_extract_for_signing.add_argument(
         "out", type=str, help="Output directory"
@@ -366,7 +366,7 @@ def parse_args(args, base_dir):
         "bootc-inject-signed", help="Inject signed files"
     )
     parser_bootc_inject_signed.add_argument(
-        "container", type=str, help="Bootc container name"
+        "src_container", type=str, help="Bootc container name"
     )
     parser_bootc_inject_signed.add_argument(
         "srcdir", type=str, help="Directory with signed files"
@@ -787,10 +787,10 @@ def build_bootc_builder(args, tmpdir, runner):
 
 
 def bootc_to_disk_image(args, tmpdir, runner):
-    info = podman_image_info(args.container)
+    info = podman_image_info(args.src_container)
     if not info:
         log.error(
-            "Source bootc image '%s' isn't in local container store", args.container
+            "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
 
@@ -821,20 +821,20 @@ def bootc_to_disk_image(args, tmpdir, runner):
         build_type = "qcow2"
 
     res = podman_run_bootc_image_builder(
-        args.bib_container, build_container, args.container, build_type, args.out
+        args.bib_container, build_container, args.src_container, build_type, args.out
     )
     if res != 0:
         sys.exit(1)  # bc-i-b will have printed the error
 
 
 def bootc_extract_for_signing(args, tmpdir, runner):
-    if not podman_image_exists(args.container):
+    if not podman_image_exists(args.src_container):
         log.error(
-            "Source bootc image '%s' isn't in local container store", args.container
+            "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
     os.makedirs(args.out, exist_ok=True)
-    with PodmanImageMount(args.container) as mount:
+    with PodmanImageMount(args.src_container) as mount:
         if mount.has_file("/etc/signing_info.json"):
             content = mount.read_file("/etc/signing_info.json")
             info = json.loads(content)
@@ -863,14 +863,14 @@ def bootc_extract_for_signing(args, tmpdir, runner):
 
 
 def bootc_inject_signed(args, tmpdir, runner):
-    if not podman_image_exists(args.container):
+    if not podman_image_exists(args.src_container):
         log.error(
-            "Source bootc image '%s' isn't in local container store", args.container
+            "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
 
     with PodmanImageMount(
-        args.container, writable=True, commit_image=args.new_container
+        args.src_container, writable=True, commit_image=args.new_container
     ) as mount:
         if mount.has_file("/etc/signing_info.json"):
             content = mount.read_file("/etc/signing_info.json")
