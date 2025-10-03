@@ -72,7 +72,7 @@ compose-test-modified-distro:
 compose-test-modified-target:
   stage: test
   script:
-    - 'tests/test-compose tests/test-compose.json target "$(git diff --diff-filter=d --name-only ${CI_MERGE_REQUEST_DIFF_BASE_SHA} | grep ^targets/ | xargs -r basename -s .ipp.yml)"'
+    - 'tests/test-compose tests/test-compose.json target "$(git diff --diff-filter=d --name-only ${CI_MERGE_REQUEST_DIFF_BASE_SHA} | grep -v "^targets/include" | grep "^targets/" | xargs -r basename -s .ipp.yml)"'
   rules:
     - changes:
         - targets/*.ipp.yml

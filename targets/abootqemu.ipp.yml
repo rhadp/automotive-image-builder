@@ -14,4 +14,4 @@ pipelines:
   - mpp-import-pipelines:
       path: qemu.ipp.yml
   - mpp-import-pipelines:
-      path: _abootqemu.ipp.yml
+      path: include/_abootqemu.ipp.yml
