@@ -10,7 +10,13 @@ import tempfile
 import shutil
 import yaml
 
-from .utils import extract_comment_header, get_osbuild_major_version
+from .utils import (
+    extract_comment_header,
+    get_osbuild_major_version,
+    read_public_key,
+    read_keys,
+    generate_keys,
+)
 from .exports import export, EXPORT_DATAS, get_export_data
 from .runner import Runner
 from .ostree import OSTree
@@ -24,6 +30,7 @@ from .podman import (
     podman_image_exists,
     podman_image_info,
     podman_run_bootc_image_builder,
+    podman_bootc_inject_pubkey,
     PodmanImageMount,
 )
 
@@ -509,12 +516,10 @@ def build_bootc_builder(args, tmpdir, runner):
     build(args, tmpdir, runner)
 
 
-def bootc_to_disk_image(args, tmpdir, runner):
-    info = podman_image_info(args.src_container)
+def get_build_container_for(container):
+    info = podman_image_info(container)
     if not info:
-        log.error(
-            "Source bootc image '%s' isn't in local container store", args.src_container
-        )
+        log.error("'%s' not found in local container store", container)
         sys.exit(1)
 
     # Use same distro for build image as the source container image
@@ -522,22 +527,31 @@ def bootc_to_disk_image(args, tmpdir, runner):
     if info.build_info:
         distro = info.build_info.get("DISTRO", distro)
 
+    build_container = aib_build_container_name(distro)
+    if not podman_image_exists(build_container):
+        log.error("Build container %s isn't in local container store", build_container)
+        log.error(
+            "Either specify another one with --build-container, or create it using: "
+        )
+        log.error(
+            " automotive-image-builder build-bootc-builder --distro %s %s",
+            distro,
+            build_container,
+        )
+        sys.exit(1)
+    return build_container
+
+
+def bootc_to_disk_image(args, tmpdir, runner):
+    if not podman_image_exists(args.src_container):
+        log.error(
+            "Source bootc image '%s' isn't in local container store", args.src_container
+        )
+        sys.exit(1)
+
     build_container = args.build_container
     if not build_container:
-        build_container = aib_build_container_name(distro)
-        if not podman_image_exists(build_container):
-            log.error(
-                "Build container %s isn't in local container stored", build_container
-            )
-            log.error(
-                "Either specify another with --build-container, or create it using: "
-            )
-            log.error(
-                " automotive-image-builder build-bootc-builder --distro %s %s",
-                distro,
-                build_container,
-            )
-            sys.exit(1)
+        build_container = get_build_container_for(args.src_container)
 
     build_type = "raw"
     if args.out.endswith(".qcow2"):
@@ -623,6 +637,84 @@ def bootc_inject_signed(args, tmpdir, runner):
         else:
             log.info("No /etc/signing-info.json, nothing needed signing")
             sys.exit(0)
+
+
+def bootc_reseal(args, tmpdir, runner):
+    if not podman_image_exists(args.src_container):
+        log.error(
+            "Source bootc image '%s' isn't in local container store", args.src_container
+        )
+        sys.exit(1)
+
+    if args.key:
+        (pubkey, privkey) = read_keys(args.key, args.passwd)
+        src_container = args.src_container
+    else:
+        (pubkey, privkey) = generate_keys()
+
+        pubkey_file = os.path.join(tmpdir, "pubkey")
+        with open(pubkey_file, "w", encoding="utf8") as f:
+            f.write(pubkey)
+
+        build_container = args.build_container
+        if not build_container:
+            build_container = get_build_container_for(args.src_container)
+
+        src_container = podman_bootc_inject_pubkey(
+            args.src_container, None, pubkey_file, build_container, args.verbose
+        )
+
+    privkey_file = os.path.join(tmpdir, "pkey")
+    with os.fdopen(
+        os.open(privkey_file, os.O_CREAT | os.O_WRONLY, mode=0o600), "w"
+    ) as f:
+        f.write(privkey)
+
+    runner.run_in_container(
+        [
+            "rpm-ostree",
+            "experimental",
+            "compose",
+            "build-chunked-oci",
+            "--sign-commit",
+            f"ed25519={privkey_file}",
+            "--bootc",
+            "--format-version=1",
+            f"--from={src_container}",
+            f"--output=containers-storage:{args.new_container}",
+        ],
+        stdout_to_devnull=not args.verbose,
+    )
+
+
+def bootc_prepare_reseal(args, tmpdir, runner):
+    if not podman_image_exists(args.src_container):
+        log.error(
+            "Source bootc image '%s' isn't in local container store", args.src_container
+        )
+        sys.exit(1)
+
+    if not args.key:
+        log.error("No key specified")
+        sys.exit(1)
+
+    build_container = args.build_container
+    if not build_container:
+        build_container = get_build_container_for(args.src_container)
+
+    pubkey = read_public_key(args.key, args.passwd)
+    pubkey_file = os.path.join(tmpdir, "pubkey")
+
+    with open(pubkey_file, "w", encoding="utf8") as f:
+        f.write(pubkey)
+
+    podman_bootc_inject_pubkey(
+        args.src_container,
+        args.new_container,
+        pubkey_file,
+        build_container,
+        args.verbose,
+    )
 
 
 def no_subcommand(_args, _tmpdir, _runner):
@@ -816,6 +908,18 @@ SHARED_BUILD_ARGS = {
     },
 }
 
+SHARED_RESEAL_ARGS = {
+    "--build-container": {
+        "type": "str",
+        "help": "bootc build container image to use",
+    },
+    "--passwd": {
+        "type": "str",
+        "help": "openssl password source, see man openssl-passphrase-options",
+    },
+    "--key": {"type": "str", "help": "Path to ed25519 PEM private key file"},
+}
+
 subcommands = [
     ["list-dist", "list available distributions", list_dist, LIST_ARGS],
     ["list-targets", "list available targets", list_targets, LIST_ARGS],
@@ -913,6 +1017,26 @@ subcommands = [
         {
             "src_container": "Bootc container name",
             "srcdir": "Directory with signed files",
+            "new_container": "Destination container name",
+        },
+    ],
+    [
+        "bootc-prepare-reseal",
+        "Prepare re-seal bootc image",
+        bootc_prepare_reseal,
+        SHARED_RESEAL_ARGS,
+        {
+            "src_container": "Bootc container name",
+            "new_container": "Destination container name",
+        },
+    ],
+    [
+        "bootc-reseal",
+        "Re-seal bootc image",
+        bootc_reseal,
+        SHARED_RESEAL_ARGS,
+        {
+            "src_container": "Bootc container name",
             "new_container": "Destination container name",
         },
     ],

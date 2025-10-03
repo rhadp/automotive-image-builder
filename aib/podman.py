@@ -3,7 +3,12 @@ import shlex
 import subprocess
 import shutil
 import tempfile
+from pathlib import Path
 
+from .utils import (
+    detect_initrd_compression,
+    create_cpio_archive,
+)
 from . import log
 
 
@@ -278,3 +283,80 @@ def podman_run_bootc_image_builder(
         finally:
             # Need sudo to have permissions to clean up the tmpdir
             run_cmd(["rm", "-rf", tmpdir])
+
+
+def podman_bootc_inject_pubkey(
+    src_container, dest_container, pub_key, build_container, verbose
+):
+    with tempfile.TemporaryDirectory(prefix="initrd-append-") as td:
+        td = Path(td)
+
+        # Extract the initrd
+        extracted_initrd = td / "initrd"
+
+        with PodmanImageMount(src_container) as mount:
+            ostree_initrd_path = mount.get_ostree_initrd()
+            if not ostree_initrd_path:
+                raise Exception(
+                    f"Can't find initramfs in bootc image '{src_container}'"
+                )
+            mount.copy_out_file(ostree_initrd_path, extracted_initrd)
+
+        compression = detect_initrd_compression(extracted_initrd)
+
+        root = Path("root")
+        dest_rel = Path("etc/ostree/initramfs-root-binding.key")
+        dest_abs = td / root / dest_rel
+        dest_abs.parent.mkdir(parents=True)
+        shutil.copyfile(pub_key, dest_abs)
+
+        rel_paths = [
+            "etc",
+            "etc/ostree",
+            "etc/ostree/initramfs-root-binding.key",
+        ]
+
+        to_append = td / Path("initrd.append")
+
+        create_cpio_archive(to_append, td / root, rel_paths, compression)
+
+        # Pad initrd parts to 4 bytes
+        s = os.stat(extracted_initrd)
+        padding = (4 - (s.st_size % 4)) % 4
+
+        # Append cpio to initrd
+        with open(extracted_initrd, "ab") as f_out:
+            for i in range(padding):
+                f_out.write(b"\0")
+            with open(to_append, "rb") as f_in:
+                shutil.copyfileobj(f_in, f_out)
+
+        with PodmanImageMount(
+            src_container, writable=True, commit_image=dest_container
+        ) as mount:
+            # Copy in the modified initrd
+            mount.copy_in_file(extracted_initrd, ostree_initrd_path)
+
+            kdir = mount.get_kernel_subdir()
+
+            if mount.has_file(f"/usr/lib/modules/{kdir}/aboot.img"):
+                kwargs = {}
+                if not verbose:
+                    kwargs["stdout_pipe"] = subprocess.DEVNULL
+                run_cmd(
+                    [
+                        "podman",
+                        "run",
+                        "-ti",
+                        "-v",
+                        f"{mount.mount_path}:/sysroot",
+                        build_container,
+                        "aboot-update",
+                        "-p",
+                        "-r",
+                        "/sysroot",
+                        kdir,
+                    ],
+                    **kwargs,
+                )
+        return mount.image_id
