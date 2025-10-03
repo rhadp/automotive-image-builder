@@ -290,6 +290,12 @@ def parse_args(args, base_dir):
         default=os.getenv("OSBUILD_BUILDDIR"),
         help="Directory where intermediary files are stored)",
     )
+    parser_buildbase.add_argument(
+        "--progress",
+        action=argparse.BooleanOptionalAction,
+        help="Disable progress bar",
+        default=sys.stdout.isatty(),
+    )
 
     # Arguments for "build" command
     parser_build = subparsers.add_parser(
@@ -305,12 +311,6 @@ def parse_args(args, base_dir):
         default=[],
         help="Export this image type",
         required=True,
-    )
-    parser_build.add_argument(
-        "--progress",
-        action=argparse.BooleanOptionalAction,
-        help="Disable progress bar",
-        default=sys.stdout.isatty(),
     )
 
     parser_build.add_argument("manifest", type=str, help="Source manifest file")
