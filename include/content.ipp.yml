@@ -230,17 +230,17 @@ mpp-vars:
               filename:
                 mpp-format-string: ukiboot{efiarch}.efi
               paths:
-                - mpp-format-string: /usr/lib/bootupd/updates/EFI/centos/ukiboot{efiarch}.efi
-                - mpp-format-string: /usr/lib/bootupd/updates/EFI/centos/shim{efiarch}.efi
+                - mpp-format-string: /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot{efiarch}.efi
+                - mpp-format-string: /usr/lib/bootupd/updates/EFI/{uefi_vendor}/shim{efiarch}.efi
                 - mpp-format-string: /usr/lib/bootupd/updates/EFI/BOOT/{efibootfile}
             - type: efi
               filename: slot_a.addon.efi
               paths:
-                - /usr/lib/bootupd/updates/EFI/centos/ukiboot_a.efi.extra.d/slot_a.addon.efi
+                - /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_a.efi.extra.d/slot_a.addon.efi
             - type: efi
               filename: slot_b.addon.efi
               paths:
-                - /usr/lib/bootupd/updates/EFI/centos/ukiboot_b.efi.extra.d/slot_b.addon.efi
+                - /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_b.efi.extra.d/slot_b.addon.efi
 
   bootc_install_options:
     mpp-format-string: |
