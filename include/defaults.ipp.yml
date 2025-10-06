@@ -62,6 +62,7 @@ mpp-vars:
   # These are used to add rpms to the qm partition
   qm_extra_repos: []
   qm_extra_rpms: []
+  simple_repos: []
   qm_simple_repos: []
   qm_simple_rpms: []
   qm_simple_add_devel_repos: false
