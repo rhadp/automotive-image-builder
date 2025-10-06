@@ -591,7 +591,7 @@ mpp-vars:
                 - from:
                     mpp-format-string: input://tree/usr/libexec/ukiboot/efi/ukiboot{efiarch}.efi
                   to:
-                    mpp-format-string: tree:///boot/efi/EFI/centos/shim{efiarch}.efi
+                    mpp-format-string: tree:///boot/efi/EFI/{uefi_vendor}/shim{efiarch}.efi
                 - from:
                     mpp-format-string: input://tree/usr/libexec/ukiboot/efi/ukiboot{efiarch}.efi
                   to:
