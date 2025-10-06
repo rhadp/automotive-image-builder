@@ -29,7 +29,7 @@ def exit_error(s):
 
 
 def runcmd(cmdline, **opts):
-    log.info(f"Running: {shlex.join(cmdline)}")
+    log.info("Running: %s", shlex.join(cmdline))
     try:
         subprocess.run(cmdline, check=True, **opts)
     except FileNotFoundError:
@@ -173,7 +173,7 @@ def run_virtiofs_server(socket, sharedir):
         "--log-level",
         "off",
     ]
-    log.info(f"Running: {shlex.join(vio_args)}")
+    log.info("Running: %s", shlex.join(vio_args))
     return subprocess.Popen(vio_args)
 
 
@@ -193,7 +193,7 @@ def run_vm(
     accel_list = qemu_available_accels(qemu)
     qemu_args = [qemu, "-nographic", "--kernel", kernel]
 
-    num_cpus = os.cpu_count()
+    num_cpus = os.cpu_count() or 1
 
     tty = "ttyS0"
     if arch == "x86_64":
@@ -204,7 +204,7 @@ def run_vm(
         machine = "virt"
         cpu = "cortex-a57"
         # for up to 8 cores (limitation of qemu-system-aarch64)
-        num_cpus = min(os.cpu_count(), 8)
+        num_cpus = min(num_cpus, 8)
     else:
         exit_error(f"unsupported architecture {arch}")
 
