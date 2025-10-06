@@ -331,6 +331,9 @@ $defs:
         description: The size of the total image, allows suffixes like "GB" (powers of 1000) or "GiB" (powers of 1024)
         type: string
         pattern: "^[0-9]+ *(kB|KiB|MB|MiB|GB|GiB|TB|TiB)$"
+      sealed:
+        description: "Sealed images can only boot the original, or re-sealed images, not e.g. layered bootc images. Defaults to true."
+        type: boolean
       selinux_mode:
         description: The selinux mode (enforcing or permissive)
         default: enforcing
