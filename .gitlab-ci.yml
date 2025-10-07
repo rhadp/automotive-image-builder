@@ -20,7 +20,6 @@ stages:
   - test
   - container
   - deploy
-  - trigger
 
 linter:
   image: python:latest
@@ -194,10 +193,9 @@ container-latest-manifest:
     - if: $CI_PIPELINE_SOURCE == "web"
 
 trigger-pipeline:
-  parallel:
-    matrix:
-      - BUILD_BRANCH:
-          - AutoSD-10
+  stage: test
+  variables:
+    BUILD_BRANCH: AutoSD-10
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
