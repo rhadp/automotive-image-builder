@@ -1,3 +1,11 @@
+import base64
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
 def extract_comment_header(file):
     lines = []
     for line in file:
@@ -39,3 +47,181 @@ def get_osbuild_major_version(runner, use_container):
     osbuild_major_version = osbuild_version.split()[-1].split(".")[0]
 
     return int(osbuild_major_version)
+
+
+def detect_initrd_compression(path):
+    with open(path, "rb") as f:
+        head = f.read(16)
+
+    def u32_le(b):
+        return int.from_bytes(b[:4], "little") if len(b) >= 4 else -1
+
+    magic32 = u32_le(head)
+
+    # LZ4 family
+    if magic32 == 0x184D2204:  # 04 22 4D 18
+        return "lz4"  # modern frame
+    if magic32 == 0x184C2102:  # 02 21 4C 18
+        return "lz4-legacy"
+    if 0x184D2A50 <= magic32 <= 0x184D2A5F:  # P* M 18 .. P/*M18
+        return "lz4-skippable"
+
+    # Other common ones
+    if head.startswith(b"\x1f\x8b"):
+        return "gzip"
+    if head.startswith(b"\xfd\x37\x7a\x58\x5a\x00"):
+        return "xz"
+    if head.startswith(b"\x28\xb5\x2f\xfd"):
+        return "zstd"
+    if head.startswith(b"BZh"):
+        return "bzip2"
+
+    # Raw/uncompressed newc cpio (ASCII)
+    if head.startswith(b"070701") or head.startswith(b"070702"):
+        return "cpio"
+
+    # lzo/lzop (less common for initramfs, but seen)
+    if head.startswith(b"\x89LZO\x00\x0d\x0a\x1a\x0a"):
+        return "lzo"
+
+    return "unknown"
+
+
+def initrd_compressor_for(kind):
+    if kind == "gzip":
+        return ["gzip", "-c"]
+    if kind == "xz":
+        return ["xz", "-C", "crc32", "-z", "-c"]
+    if kind == "zstd":
+        return ["zstd", "-q", "-c"]
+    if kind == "lz4":
+        return ["lz4", "-9", "-c"]  # modern
+    if kind == "lz4-legacy":
+        return ["lz4", "-l", "-9", "-c"]  # legacy: note the -l
+    if kind == "bzip2":
+        return ["bzip2", "-c"]
+    if kind == "cpio":
+        return []  # no compression; append raw cpio
+    if kind == "lzo":
+        return ["lzop", "-c"]
+    raise RuntimeError(f"Unsupported/unknown compression: {kind}")
+
+
+def create_cpio_archive(dest, basedir, files, compression):
+    # Start up cpio
+    cpio_cmd = ["cpio", "--null", "-o", "-H", "newc", "--owner", "0:0"]
+    try:
+        cpio_proc = subprocess.Popen(
+            cpio_cmd,
+            cwd=basedir,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except FileNotFoundError:
+        raise RuntimeError("cpio not found in PATH")
+
+    # Stream files to cpio, and then close stdin
+    assert cpio_proc.stdin is not None
+    cpio_proc.stdin.write(b"\x00".join(p.encode() for p in files) + b"\x00")
+    cpio_proc.stdin.close()
+
+    comp_cmd = initrd_compressor_for(compression)
+    comp_proc = None
+    if comp_cmd:
+        try:
+            comp_proc = subprocess.Popen(
+                comp_cmd,
+                stdin=cpio_proc.stdout,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except FileNotFoundError as e:
+            cpio_proc.kill()
+            raise RuntimeError(
+                f"compressor missing for {compression}: {comp_cmd[0]}"
+            ) from e
+
+        cpio_proc.stdout.close()  # Owned by compressor now
+        pipe_stdout = comp_proc.stdout
+    else:
+        pipe_stdout = cpio_proc.stdout
+
+    # Write pipeline output to dest
+    with open(dest, "wb") as out:
+        shutil.copyfileobj(pipe_stdout, out, length=1024 * 1024)
+    pipe_stdout.close()
+
+    comp_rc = 0
+    if comp_proc:
+        comp_stdout, comp_stderr = comp_proc.communicate()
+        comp_rc = comp_proc.returncode
+
+    # Note: We can't user cpio_proc.communicate() here because we closed stdin
+    cpio_rc = cpio_proc.wait()
+    cpio_stderr = cpio_proc.stderr.read().decode(errors="ignore")
+
+    if cpio_rc != 0:
+        raise RuntimeError(f"cpio failed (rc={cpio_rc}): {cpio_stderr}")
+
+    if comp_rc != 0:
+        raise RuntimeError(f"{' '.join(comp_cmd)} failed (rc={comp_rc}): {comp_stderr}")
+
+
+def openssl_stdout(*args, passargs=None):
+    args = list(args)
+    if passargs:
+        args = args + ["-passin", passargs]
+    res = subprocess.run(
+        ["openssl"] + args, stdout=subprocess.PIPE, input=None, check=True
+    )
+    return res.stdout
+
+
+def read_public_key(pemfile, passargs=None):
+    # Extract the public parts from key (last 32 byte in PEM file)
+    pubkey = openssl_stdout(
+        "pkey", "-outform", "DER", "-pubout", "-in", pemfile, passargs=passargs
+    )[-32:]
+
+    # Ostree stores keys in base64
+    pubkey_b64 = base64.b64encode(pubkey).decode("utf8")
+
+    return pubkey_b64
+
+
+def read_keys(pemfile, passargs=None):
+    # Extract the seed/public parts from generated key (last 32 byte in PEM file)
+    pubkey = openssl_stdout(
+        "pkey", "-outform", "DER", "-pubout", "-in", pemfile, passargs=passargs
+    )[-32:]
+    seed = openssl_stdout("pkey", "-outform", "DER", "-in", pemfile, passargs=passargs)[
+        -32:
+    ]
+
+    # Private key is seed and public key joined
+    seckey = seed + pubkey
+
+    # Ostree stores keys in base64
+    pubkey_b64 = base64.b64encode(pubkey).decode("utf8")
+    seckey_b64 = base64.b64encode(seckey).decode("utf8")
+
+    return (pubkey_b64, seckey_b64)
+
+
+# Generates an (unencrypted) PEM format ed25519 private key at path
+def generate_keys():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        keypath = os.path.join(tmpdir, "key")
+        cmd = [
+            "openssl",
+            "genpkey",
+            "-algorithm",
+            "ed25519",
+            "-outform",
+            "PEM",
+            "-out",
+            keypath,
+        ]
+        subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, input=None, check=True)
+        return read_keys(keypath)
