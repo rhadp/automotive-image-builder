@@ -61,6 +61,7 @@ class PodmanImageMount:
         self.writable = writable
         self.commit_image = commit_image
         self.container_id = None
+        self.image_id = None
 
     def __enter__(self):
         if self.writable:
@@ -83,8 +84,11 @@ class PodmanImageMount:
                 # Unmount the container
                 self.capture(["podman", "unmount", self.container_id])
                 # Commit the container to a new image if requested
-                if self.commit_image:
-                    self.run(["podman", "commit", self.container_id, self.commit_image])
+                if not exc_type:
+                    cmd = ["podman", "commit", self.container_id]
+                    if self.commit_image:
+                        cmd = cmd + [self.commit_image]
+                    self.image_id = self.capture(cmd)
                 # Remove the container
                 self.capture(["podman", "rm", self.container_id])
             else:
@@ -144,6 +148,27 @@ class PodmanImageMount:
         dir_path = self._get_full_path(path)
         output = self.capture(["ls", "-1", dir_path])
         return output.split("\n") if output.strip() else []
+
+    def get_kernel_subdir(self):
+        self._ensure_mounted()
+        return self.read_dir("/usr/lib/modules")[0]
+
+    def get_ostree_initrd(self):
+        kernel_subdir = self.get_kernel_subdir()
+        ostree_boot_dir = "/usr/lib/ostree-boot"
+        ostree_boot_files = self.read_dir(ostree_boot_dir)
+        initrd_file = next(
+            (
+                f
+                for f in ostree_boot_files
+                if f.startswith(f"initramfs-{kernel_subdir}.img-")
+            ),
+            None,
+        )
+        if initrd_file:
+            return os.path.join(ostree_boot_dir, initrd_file)
+        else:
+            return None
 
     def copy_in_file(self, source_path, dest_path):
         """Copy a file from the host filesystem into the mounted image."""
