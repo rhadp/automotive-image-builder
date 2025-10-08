@@ -28,6 +28,9 @@ from .podman import (
 )
 
 default_distro = "autosd10-sig"
+default_container_image_name = "quay.io/centos-sig-automotive/automotive-image-builder"
+base_dir = os.path.realpath(sys.argv[1])
+default_bib_container = "quay.io/centos-bootc/bootc-image-builder:latest"
 
 
 def list_ipp_items(args, item_type):
@@ -85,308 +88,6 @@ def parse_define(d, option):
     except yaml.parser.ParserError as e:
         raise exceptions.InvalidOption(option, yaml_v) from e
     return k, v
-
-
-def parse_args(args, base_dir):
-    parser = argparse.ArgumentParser(
-        prog="automotive-image-builder", description="Build automotive images"
-    )
-    parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
-    )
-    parser.add_argument("--verbose", default=False, action="store_true")
-    parser.add_argument(
-        "--container",
-        default=False,
-        action="store_true",
-        help="Use containerized build",
-    )
-    parser.add_argument(
-        "--user-container",
-        default=False,
-        action="store_true",
-        help="Use rootless containerized build",
-    )
-    container_image_name_default = (
-        "quay.io/centos-sig-automotive/automotive-image-builder"
-    )
-    parser.add_argument(
-        "--container-image-name",
-        action="store",
-        type=str,
-        default=container_image_name_default,
-        help=f"Container image name, {container_image_name_default} is "
-        "default if this option remains unused",
-    )
-    parser.add_argument(
-        "--container-autoupdate",
-        default=False,
-        action="store_true",
-        help="Automatically pull new container image if available",
-    )
-    parser.add_argument(
-        "--include",
-        action="append",
-        type=str,
-        default=[],
-        help="Add include directory",
-    )
-    parser.add_argument("--vm", default=False, action="store_true")
-    parser.set_defaults(func=no_subcommand)
-    subparsers = parser.add_subparsers(help="sub-command help")
-
-    # Arguments for "list-dist" command
-    parser_list_dist = subparsers.add_parser(
-        "list-dist", help="list available distributions"
-    )
-    parser_list_dist.set_defaults(func=list_dist)
-    parser_list_dist.add_argument("--quiet", default=False, action="store_true")
-
-    # Arguments for "list-targets" command
-    parser_list_target = subparsers.add_parser(
-        "list-targets", help="list available targets"
-    )
-    parser_list_target.set_defaults(func=list_targets)
-    parser_list_target.add_argument("--quiet", default=False, action="store_true")
-
-    # Arguments for "list-exports" command
-    parser_list_export = subparsers.add_parser(
-        "list-exports", help="list available exports"
-    )
-    parser_list_export.set_defaults(func=list_exports)
-    parser_list_export.add_argument("--quiet", default=False, action="store_true")
-
-    # Base arguments for formating mpp files, doesn't include options not used by build-bootc-builder
-    formatbase_parser = argparse.ArgumentParser(add_help=False)
-    formatbase_parser.add_argument(
-        "--arch",
-        default=platform.machine(),
-        action="store",
-        help=f"Arch to run for (default {platform.machine()})",
-    )
-    formatbase_parser.add_argument(
-        "--osbuild-mpp",
-        action="store",
-        type=str,
-        default=os.path.join(base_dir, "mpp/aib-osbuild-mpp"),
-        help="Use this osbuild-mpp binary",
-    )
-    formatbase_parser.add_argument(
-        "--distro",
-        action="store",
-        type=str,
-        default=default_distro,
-        help="Build for this distro specification",
-    )
-    formatbase_parser.add_argument(
-        "--mpp-arg",
-        action="append",
-        type=str,
-        default=[],
-        help="Add custom mpp arg",
-    )
-    formatbase_parser.add_argument(
-        "--cache",
-        action="store",
-        type=str,
-        help="Add mpp cache-directory to use",
-    )
-    formatbase_parser.add_argument(
-        "--define",
-        action="append",
-        type=str,
-        default=[],
-        help="Define key=yaml-value",
-    )
-    formatbase_parser.add_argument(
-        "--define-file",
-        action="append",
-        type=str,
-        default=[],
-        help="Add yaml file of defines",
-    )
-    formatbase_parser.add_argument(
-        "--extend-define",
-        action="append",
-        type=str,
-        default=[],
-        help="Extend array by item or list key=yaml-value",
-    )
-    formatbase_parser.add_argument(
-        "--dump-variables",
-        default=False,
-        action="store_true",
-        help="Dump variables that would be used when building and exit.",
-    )
-
-    # Full arguments for formating mpp files
-    format_parser = argparse.ArgumentParser(add_help=False, parents=[formatbase_parser])
-    format_parser.add_argument(
-        "--target",
-        action="store",
-        type=str,
-        default="qemu",
-        help="Build for this target",
-    )
-    format_parser.add_argument(
-        "--mode",
-        action="store",
-        type=str,
-        default="image",
-        help="Build this image mode (package, image)",
-    )
-
-    policy_group = format_parser.add_mutually_exclusive_group()
-    policy_group.add_argument(
-        "--policy",
-        type=str,
-        help="Path to policy file (.aibp.yml) for build restrictions",
-    )
-    policy_group.add_argument(
-        "--fusa",
-        action="store_true",
-        help="Use built-in FUSA compliance policy (equivalent to --policy fusa.aibp.yml)",
-    )
-    format_parser.add_argument(
-        "--ostree-repo", action="store", type=str, help="Path to ostree repo"
-    )
-
-    # Arguments for "compose" command
-    parser_compose = subparsers.add_parser(
-        "compose", help="Compose osbuild manifest", parents=[format_parser]
-    )
-    parser_compose.add_argument("manifest", type=str, help="Source manifest file")
-    parser_compose.add_argument("out", type=str, help="Output osbuild json")
-    parser_compose.set_defaults(func=compose)
-
-    # Arguments for "list-rpms" command
-    parser_listrpms = subparsers.add_parser(
-        "list-rpms", help="List rpms", parents=[format_parser]
-    )
-    parser_listrpms.add_argument("manifest", type=str, help="Source manifest file")
-    parser_listrpms.set_defaults(func=listrpms)
-
-    # Base arguments for building, doesn't include options not used by build-bootc-builder
-    parser_buildbase = argparse.ArgumentParser(add_help=False)
-    parser_buildbase.add_argument(
-        "--osbuild-manifest",
-        action="store",
-        type=str,
-        help="Path to store osbuild manifest",
-    )
-    parser_buildbase.add_argument(
-        # We set the default size to 2GB, which allows about two copies
-        # of the build pipeline.
-        "--cache-max-size",
-        action="store",
-        default="2GB",
-        type=str,
-        help="Max cache size",
-    )
-    parser_buildbase.add_argument(
-        "--build-dir",
-        action="store",
-        type=str,
-        default=os.getenv("OSBUILD_BUILDDIR"),
-        help="Directory where intermediary files are stored)",
-    )
-    parser_buildbase.add_argument(
-        "--progress",
-        action=argparse.BooleanOptionalAction,
-        help="Disable progress bar",
-        default=sys.stdout.isatty(),
-    )
-
-    # Arguments for "build" command
-    parser_build = subparsers.add_parser(
-        "build",
-        help="Compose and build osbuild manifest",
-        parents=[format_parser, parser_buildbase],
-    )
-
-    parser_build.add_argument(
-        "--export",
-        action="append",
-        type=str,
-        default=[],
-        help="Export this image type",
-        required=True,
-    )
-
-    parser_build.add_argument("manifest", type=str, help="Source manifest file")
-    parser_build.add_argument("out", type=str, help="Output path")
-    parser_build.set_defaults(func=build)
-
-    # Arguments for "build-bootc-builder" command
-    parser_build_builder = subparsers.add_parser(
-        "build-bootc-builder",
-        help="Create container image to build physical bootc images",
-        parents=[formatbase_parser, parser_buildbase],
-    )
-
-    parser_build_builder.add_argument(
-        "out", type=str, help="Name of container image to build"
-    )
-    parser_build_builder.set_defaults(func=build_bootc_builder)
-
-    # Arguments for "bootc-to-disk-image" command
-    bib_container_default = "quay.io/centos-bootc/bootc-image-builder:latest"
-    parser_bootc_to_disk_image = subparsers.add_parser(
-        "bootc-to-disk-image", help="Create disk image from bootc container"
-    )
-    parser_bootc_to_disk_image.add_argument(
-        "container", type=str, help="Bootc container name"
-    )
-    parser_bootc_to_disk_image.add_argument("out", type=str, help="Output image name")
-    parser_bootc_to_disk_image.set_defaults(func=bootc_to_disk_image)
-    parser_bootc_to_disk_image.add_argument(
-        "--bib-container",
-        default=bib_container_default,
-        action="store",
-        help="bootc-image builder-container image to use",
-    )
-    parser_bootc_to_disk_image.add_argument(
-        "--build-container",
-        action="store",
-        help="bootc build container image to use",
-    )
-
-    parser_bootc_extract_for_signing = subparsers.add_parser(
-        "bootc-extract-for-signing", help="Extract file that need signing"
-    )
-    parser_bootc_extract_for_signing.add_argument(
-        "container", type=str, help="Bootc container name"
-    )
-    parser_bootc_extract_for_signing.add_argument(
-        "out", type=str, help="Output directory"
-    )
-    parser_bootc_extract_for_signing.set_defaults(func=bootc_extract_for_signing)
-
-    parser_bootc_inject_signed = subparsers.add_parser(
-        "bootc-inject-signed", help="Inject signed files"
-    )
-    parser_bootc_inject_signed.add_argument(
-        "container", type=str, help="Bootc container name"
-    )
-    parser_bootc_inject_signed.add_argument(
-        "srcdir", type=str, help="Directory with signed files"
-    )
-    parser_bootc_inject_signed.add_argument(
-        "new_container", type=str, help="Destination container name"
-    )
-    parser_bootc_inject_signed.set_defaults(func=bootc_inject_signed)
-
-    res = parser.parse_args(args)
-    if "manifest" in res:
-        if (
-            res.manifest.endswith(".aib")
-            or res.manifest.endswith(".aib.yml")
-            or res.manifest.endswith(".aib.yaml")
-        ):
-            res.simple_manifest = res.manifest
-            res.manifest = os.path.join(base_dir, "files/simple.mpp.yml")
-
-    return res
 
 
 def make_embed_path_abs(stage, path):
@@ -787,10 +488,10 @@ def build_bootc_builder(args, tmpdir, runner):
 
 
 def bootc_to_disk_image(args, tmpdir, runner):
-    info = podman_image_info(args.container)
+    info = podman_image_info(args.src_container)
     if not info:
         log.error(
-            "Source bootc image '%s' isn't in local container store", args.container
+            "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
 
@@ -821,20 +522,20 @@ def bootc_to_disk_image(args, tmpdir, runner):
         build_type = "qcow2"
 
     res = podman_run_bootc_image_builder(
-        args.bib_container, build_container, args.container, build_type, args.out
+        args.bib_container, build_container, args.src_container, build_type, args.out
     )
     if res != 0:
         sys.exit(1)  # bc-i-b will have printed the error
 
 
 def bootc_extract_for_signing(args, tmpdir, runner):
-    if not podman_image_exists(args.container):
+    if not podman_image_exists(args.src_container):
         log.error(
-            "Source bootc image '%s' isn't in local container store", args.container
+            "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
     os.makedirs(args.out, exist_ok=True)
-    with PodmanImageMount(args.container) as mount:
+    with PodmanImageMount(args.src_container) as mount:
         if mount.has_file("/etc/signing_info.json"):
             content = mount.read_file("/etc/signing_info.json")
             info = json.loads(content)
@@ -863,14 +564,14 @@ def bootc_extract_for_signing(args, tmpdir, runner):
 
 
 def bootc_inject_signed(args, tmpdir, runner):
-    if not podman_image_exists(args.container):
+    if not podman_image_exists(args.src_container):
         log.error(
-            "Source bootc image '%s' isn't in local container store", args.container
+            "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
 
     with PodmanImageMount(
-        args.container, writable=True, commit_image=args.new_container
+        args.src_container, writable=True, commit_image=args.new_container
     ) as mount:
         if mount.has_file("/etc/signing_info.json"):
             content = mount.read_file("/etc/signing_info.json")
@@ -900,8 +601,278 @@ def no_subcommand(_args, _tmpdir, _runner):
     log.info("No subcommand specified, see --help for usage")
 
 
+def add_arg(parser, groups, name, data):
+    if isinstance(data, str):
+        data = {"help": data}
+
+    groupname = data.get("exclusive-group", None)
+    if groupname:
+        if groupname not in groups:
+            groups[groupname] = parser.add_mutually_exclusive_group()
+        dst = groups[groupname]
+    else:
+        dst = parser
+
+    t = data.get("type", "bool" if name.startswith("-") else "str")
+    if t == "bool":
+        a = dst.add_argument(name, default=False, action="store_true")
+    elif t == "bool-optional":
+        a = dst.add_argument(name, action=argparse.BooleanOptionalAction)
+    elif t == "version":
+        a = dst.add_argument(name, action="version", version=f"%(prog)s {__version__}")
+    elif t == "str":
+        a = dst.add_argument(
+            name,
+            action="store",
+            type=str,
+        )
+    elif t == "append":
+        a = dst.add_argument(
+            name,
+            action="append",
+            type=str,
+            default=[],
+        )
+    else:
+        log.error("Unknown arg type %s", t)
+
+    if "help" in data:
+        a.help = data["help"]
+    if "required" in data:
+        a.required = data["required"]
+    if "default" in data:
+        a.default = data["default"]
+
+
+def add_args(parser, groups, args):
+    for name, data in args.items():
+        add_arg(parser, groups, name, data)
+
+
+def parse_args(args, base_dir):
+    parser = argparse.ArgumentParser(
+        prog="automotive-image-builder", description="Build automotive images"
+    )
+    add_args(parser, {}, COMMON_ARGS)
+    parser.set_defaults(func=no_subcommand)
+
+    subparsers = parser.add_subparsers(help="sub-command help")
+    for s in subcommands:
+        groups = {}
+        name = s[0]
+        helptext = s[1]
+        callback = s[2]
+        subcmd_args = s[3:]
+        subparser = subparsers.add_parser(name, help=helptext)
+        subparser.set_defaults(func=callback)
+        for _args in subcmd_args:
+            add_args(subparser, groups, _args)
+
+    res = parser.parse_args(args)
+    if "manifest" in res:
+        if (
+            res.manifest.endswith(".aib")
+            or res.manifest.endswith(".aib.yml")
+            or res.manifest.endswith(".aib.yaml")
+        ):
+            res.simple_manifest = res.manifest
+            res.manifest = os.path.join(base_dir, "files/simple.mpp.yml")
+
+    return res
+
+
+COMMON_ARGS = {
+    "--version": {"type": "version"},
+    "--verbose": {},
+    "--container": "Use containerized build",
+    "--user-container": "Use rootless containerized build",
+    "--container-image-name": {
+        "type": "str",
+        "default": default_container_image_name,
+        "help": f"Container image name, {default_container_image_name} is default if this option remains unused",
+    },
+    "--container-autoupdate": "Automatically pull new container image if available",
+    "--include": {"type": "append", "help": "Add include directory"},
+    "--vm": {},
+}
+
+LIST_ARGS = {"--quiet": {}}
+
+# Shared arguments for formating mpp files, doesn't include options not used by build-bootc-builder
+SHARED_FORMAT_ARGS = {
+    "--arch": {
+        "default": platform.machine(),
+        "type": "str",
+        "help": f"Arch to run for (default {platform.machine()})",
+    },
+    "--osbuild-mpp": {
+        "type": "str",
+        "default": os.path.join(base_dir, "mpp/aib-osbuild-mpp"),
+        "help": "Use this osbuild-mpp binary",
+    },
+    "--distro": {
+        "type": "str",
+        "default": default_distro,
+        "help": "Build for this distro specification",
+    },
+    "--mpp-arg": {"type": "append", "help": "Add custom mpp arg"},
+    "--cache": {"type": "str", "help": "Add mpp cache-directory to use"},
+    "--define": {
+        "type": "append",
+        "help": "Define key=yaml-value",
+    },
+    "--define-file": {
+        "type": "append",
+        "help": "Add yaml file of defines",
+    },
+    "--extend-define": {
+        "type": "append",
+        "help": "Extend array by item or list key=yaml-value",
+    },
+    "--dump-variables": "Dump variables that would be used when building and exit.",
+}
+
+# Full arguments for formating mpp files
+FORMAT_ARGS = {
+    "--target": {
+        "type": "str",
+        "default": "qemu",
+        "help": "Build for this target",
+    },
+    "--mode": {
+        "type": "str",
+        "default": "image",
+        "help": "Build this image mode (package, image)",
+    },
+    "--policy": {
+        "type": "str",
+        "help": "Path to policy file (.aibp.yml) for build restrictions",
+        "exclusive-group": "policy",
+    },
+    "--fusa": {
+        "help": "Use built-in FUSA compliance policy (equivalent to --policy fusa.aibp.yml)",
+        "exclusive-group": "policy",
+    },
+    "--ostree-repo": {"type": "str", "help": "Path to ostree repo"},
+}
+
+# Base arguments for building, doesn't include options not used by build-bootc-builder
+SHARED_BUILD_ARGS = {
+    "--osbuild-manifest": {
+        "type": "str",
+        "help": "Path to store osbuild manifest",
+    },
+    "--cache-max-size": {
+        "type": "str",
+        # We set the default size to 2GB, which allows about two copies of the build pipeline.
+        "default": "2GB",
+        "help": "Max cache size",
+    },
+    "--build-dir": {
+        "type": "str",
+        "default": os.getenv("OSBUILD_BUILDDIR"),
+        "help": "Directory where intermediary files are stored)",
+    },
+    "--progress": {
+        "type": "bool-optional",
+        "help": "Disable progress bar",
+        "default": sys.stdout.isatty(),
+    },
+}
+
+subcommands = [
+    ["list-dist", "list available distributions", list_dist, LIST_ARGS],
+    ["list-targets", "list available targets", list_targets, LIST_ARGS],
+    ["list-exports", "list available exports", list_exports, LIST_ARGS],
+    [
+        "compose",
+        "Compose osbuild manifest",
+        compose,
+        SHARED_FORMAT_ARGS,
+        FORMAT_ARGS,
+        {
+            "manifest": "Source manifest file",
+            "out": "Output osbuild json",
+        },
+    ],
+    [
+        "list-rpms",
+        "List rpms",
+        listrpms,
+        SHARED_FORMAT_ARGS,
+        FORMAT_ARGS,
+        {
+            "manifest": "Source manifest file",
+        },
+    ],
+    [
+        "build",
+        "Compose and build osbuild manifest",
+        build,
+        SHARED_FORMAT_ARGS,
+        FORMAT_ARGS,
+        SHARED_BUILD_ARGS,
+        {
+            "--export": {
+                "type": "append",
+                "help": "Export this image type",
+                "required": True,
+            },
+            "manifest": "Source manifest file",
+            "out": "Output path",
+        },
+    ],
+    [
+        "build-bootc-builder",
+        "Create container image to build physical bootc images",
+        build_bootc_builder,
+        SHARED_FORMAT_ARGS,
+        SHARED_BUILD_ARGS,
+        {
+            "out": "Name of container image to build",
+        },
+    ],
+    [
+        "bootc-to-disk-image",
+        "Create disk image from bootc container",
+        bootc_to_disk_image,
+        {
+            "--bib-container": {
+                "type": "str",
+                "default": default_bib_container,
+                "help": "bootc-image builder-container image to use",
+            },
+            "--build-container": {
+                "type": "str",
+                "help": "bootc build container image to use",
+            },
+            "src_container": "Bootc container name",
+            "out": "Output image name",
+        },
+    ],
+    [
+        "bootc-extract-for-signing",
+        "Extract file that need signing",
+        bootc_extract_for_signing,
+        {
+            "src_container": "Bootc container name",
+            "out": "Output directory",
+        },
+    ],
+    [
+        "bootc-inject-signed",
+        "Inject signed files",
+        bootc_inject_signed,
+        {
+            "src_container": "Bootc container name",
+            "srcdir": "Directory with signed files",
+            "new_container": "Destination container name",
+        },
+    ],
+]
+
+
 def main():
-    base_dir = os.path.realpath(sys.argv[1])
     args = AIBParameters(args=parse_args(sys.argv[2:], base_dir), base_dir=base_dir)
 
     if args.verbose:
