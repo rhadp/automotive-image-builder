@@ -1,5 +1,13 @@
 version: '2'
 
+mpp-vars:
+  ukibootctl_dos_id:
+    mpp-eval: parttab_uuid.split('-')[0]
+  ukibootctl_dos_partnum:
+    mpp-eval: next((p.partnum for p in image.layout.partitions if p.id == 'ukibootctl'), 0)
+  ukibootctl_dos:
+    mpp-format-string: /dev/disk/by-partuuid/$ukibootctl_dos_id-{ukibootctl_dos_partnum:02d}
+
 pipelines:
   - name: build-keys
     build: name:build
@@ -69,6 +77,20 @@ pipelines:
             options:
               osname:
                 mpp-eval: osname
+
+          - mpp-if: use_ukiboot and partition_label == 'dos'
+            then:
+              type: org.osbuild.systemd.unit
+              options:
+                unit: ukiboot-set-success.service
+                dropin: ukiboot-dos.conf
+                config:
+                  Service:
+                    Environment:
+                      - key: UKIBOOTCTL
+                        value:
+                          mpp-eval: ukibootctl_dos
+
           - type: org.osbuild.systemd
             options:
               enabled_services:
