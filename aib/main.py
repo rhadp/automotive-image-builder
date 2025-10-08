@@ -544,10 +544,16 @@ def bootc_to_disk_image(args, tmpdir, runner):
         build_type = "qcow2"
 
     res = podman_run_bootc_image_builder(
-        args.bib_container, build_container, args.src_container, build_type, args.out
+        args.bib_container,
+        build_container,
+        args.src_container,
+        build_type,
+        args.out,
+        args.verbose,
     )
     if res != 0:
-        sys.exit(1)  # bc-i-b will have printed the error
+        log.error("bootc-image-builder failed to create the image")
+        sys.exit(1)
 
 
 def bootc_extract_for_signing(args, tmpdir, runner):

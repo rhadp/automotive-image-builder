@@ -224,7 +224,7 @@ def podman_image_info(image):
 
 
 def podman_run_bootc_image_builder(
-    bib_container, build_container, bootc_container, build_type, dest_path
+    bib_container, build_container, bootc_container, build_type, dest_path, verbose
 ):
     if build_type == "raw":
         src_path = "image/disk.raw"
@@ -264,7 +264,10 @@ def podman_run_bootc_image_builder(
                 build_type,
                 bootc_container,
             ]
-            res = run_cmd(cmdline)
+            if verbose:
+                res = run_cmd(cmdline)
+            else:
+                res = run_cmd(cmdline, stdout_pipe=subprocess.DEVNULL)
 
             if res == 0:
                 src = os.path.join(tmpdir, src_path)
