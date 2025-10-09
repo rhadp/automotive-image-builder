@@ -1,7 +1,7 @@
 # Implementation of ridesx4_scmi.ipp.yml, but loaded after derived target
 version: '2'
 mpp-vars:
-  aboot_dtb_file: "extra/qcom/sa8775p-ride-fw-managed.dtb"
+  aboot_dtb_file: "extra/qcom/sa8775p-ride-scmi.dtb"
   target_rpms:
     mpp-join:
       - mpp-eval: target_rpms
