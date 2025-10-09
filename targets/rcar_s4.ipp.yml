@@ -22,6 +22,4 @@ mpp-vars:
   aboot_partition_a: "/dev/disk/by-partlabel/boot_a"
   aboot_partition_b: "/dev/disk/by-partlabel/boot_b"
   aboot_dtb_file: "renesas/r8a779f0-spider.dtb"
-  # Renesas' u-boot doesn't like any compression
-  aboot_compress_kernel: false
 pipelines: []
