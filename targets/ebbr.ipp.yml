@@ -1,0 +1,39 @@
+# Target for systems compliant with the EBBR Specification
+#
+# References
+#   EBBR specification: https://arm-software.github.io/ebbr/
+#   U-Boot: https://www.denx.de/wiki/U-Boot
+#
+# This target defines a generic "ebbr" target fragment for boards that
+# follow the Embedded Base Boot Requirements (EBBR) specification.
+#
+# Note that many ARM boards use a hybrid boot layout: firmware and bootloader
+# (e.g. U-Boot) are flashed to a non-removable device such as SPI/NOR
+# flash or a separate firmware partition, while the OS image (kernel,
+# initramfs/rootfs) lives on another device like eMMC, SD, or NVMe.
+#
+# This split layout is compatible with EBBR and the recommended for
+# "ebbr" target. When using U-Boot as a bootloader, a widely-used
+# bootloader on ARM platforms, making the U-Boot deployment
+# "EBBR-compliant" depends on the specific U-Boot build, configuration,
+#  platform initialization and the provided boot scripts/firmware support.
+# U-Boot itself provides the features (device tree handling, kernel boot
+# chaining, console selection, boot scripts, environment) that allow a
+# platform to meet EBBR requirements, but compliance is not automatic
+# out-of-the-box.
+
+version: '2'
+mpp-vars:
+  use_autoinit: true
+  # We're listing here all possible consoles for the supported boards. That
+  # may be overkill for some boards, but it doesn't hurt either. We need to
+  # think about how to handle this better in the long run.
+  # - ttyS2 is for the TI K3 platforms
+  # - ttySC0 is for the Renesas R-car S4 platform.
+  consoles: 'ttyS2,115200n8 ttySC0,1843200'
+  kernel_opts:
+    mpp-join:
+      - mpp-eval: kernel_opts
+      # That's actually a debug helper to get early kernel messages on those
+      # platforms that support it in their device tree.
+      - - earlycon
