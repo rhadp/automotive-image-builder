@@ -33,6 +33,10 @@ base_dir = os.path.realpath(sys.argv[1])
 default_bib_container = "quay.io/centos-bootc/bootc-image-builder:latest"
 
 
+def aib_build_container_name(distro):
+    return f"localhost/aib-build:{distro}"
+
+
 def list_ipp_items(args, item_type):
     items = {}
     for inc in args.include_dirs:
@@ -502,7 +506,7 @@ def bootc_to_disk_image(args, tmpdir, runner):
 
     build_container = args.build_container
     if not build_container:
-        build_container = f"localhost/auto-bootc-build-{distro}:latest"
+        build_container = aib_build_container_name(distro)
         if not podman_image_exists(build_container):
             log.error(
                 "Build container %s isn't in local container stored", build_container
