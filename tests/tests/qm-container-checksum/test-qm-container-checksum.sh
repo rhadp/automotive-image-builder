@@ -50,6 +50,10 @@ else
         echo_log "Checksum line not found, showing last 10 lines:"
         tail -n 10 "$LOG_FILE" || true
     fi
+
+    QM_JSON_FILE="qm-json-file.log"
+    run_vm_command "auto-boot-check-tool container-display qm" > "$QM_JSON_FILE" || true
+    save_to_tmt_test_data "$QM_JSON_FILE"
     success=1
 fi
 

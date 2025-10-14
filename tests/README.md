@@ -79,6 +79,23 @@ cd tests
 tmt run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes plan --name connect
 ```
 
+### Running special tests
+
+We have several tests marked with `special` tag (for example
+[minimal-image-boot](https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/tree/main/tests/tests/minimal-image-boot?ref_type=heads)
+or [qm-container-checksum](https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/tree/main/tests/tests/qm-container-checksum?ref_type=heads))
+to not run those tests as a part of `connect` or `local` plan execution.
+To run those tests you need to provide additional parameters on the command line to bypass default test filter and
+specify the test you want to run:
+
+```shell
+cd tests
+tmt run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes \
+    plan --name connect \
+    test --name qm-container-checksum \
+    --filter 'tag:special'
+```
+
 ### Customizing test execution
 
 Following environment variable exists to customize test execution:
@@ -346,7 +363,7 @@ tmt tests ls --filter tag:upstream-only
 ```
 
 ### How to use in tmt run command:
-In order to use `tmt` filtering, `--filter tag:<tag name>` is required. for example (filtering special and upstream-only): 
+In order to use `tmt` filtering, `--filter tag:<tag name>` is required. for example (filtering special and upstream-only):
 
 ```shell
 tmt run -vvv -eNODE="<IP or hostname>" plan --name connect tests \
