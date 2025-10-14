@@ -1,0 +1,23 @@
+summary: Verify that the image includes the custom kernel package and version
+description: |
+  Builds a custom automotive kernel from source, creates a local RPM repository,
+  and verifies that the built image boots with the custom kernel version.
+
+  Test inputs:
+    Custom a-i-b manifest, which specifies custom kernel package.
+
+  Expected results:
+    - PASS: 'Expected kernel version <version>_custom detected in VM!'
+
+  Results location:
+    output.txt
+
+
+test: |
+    ./test-custom-kernel.sh
+require:
+  - qemu-kvm
+  - sshpass
+duration: 60m
+tag: [special]
+id: 51bcd0d6-1dba-40f6-80e4-c39f08403df7
