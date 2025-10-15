@@ -31,7 +31,6 @@ mpp-vars:
         # boot partition or SPI and the DIP switches are set to to initially
         # boot from those this can be avoided (and essentially all the TI
         # images unified)
-        # FIXME these don't work in image mode. Use eMMC or SPI flash for firmware
         paths:
           - from:
               mpp-format-string: input://rootfs/usr/share/k3-upstream-boot/$k3_board/tiboot3.bin
