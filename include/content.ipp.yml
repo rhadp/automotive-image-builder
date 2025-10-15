@@ -236,11 +236,11 @@ mpp-vars:
             - type: efi
               filename: slot_a.addon.efi
               paths:
-                - /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_a.efi.extra.d/slot_a.addon.efi
+                - mpp-format-string: /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_a.efi.extra.d/slot_a.addon.efi
             - type: efi
               filename: slot_b.addon.efi
               paths:
-                - /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_b.efi.extra.d/slot_b.addon.efi
+                - mpp-format-string: /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_b.efi.extra.d/slot_b.addon.efi
 
   bootc_install_options:
     mpp-format-string: |
