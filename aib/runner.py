@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 from . import log
+from . import exceptions
 from .progress import OSBuildProgressMonitor
 
 # Runner is a mechanism to run commands in a different context.
@@ -121,6 +122,7 @@ class Runner:
         with_progress=False,
         capture_output=False,
         verbose=False,
+        log_file=None,
     ):
         if use_container:
             cmdline = (
@@ -146,7 +148,12 @@ class Runner:
         if with_progress:
             log.debug("Running with progress: %s", shlex.join(cmdline))
 
-            progress_monitor = OSBuildProgressMonitor(verbose=verbose)
+            if log_file is None:
+                raise exceptions.MissingLogFile()
+
+            progress_monitor = OSBuildProgressMonitor(
+                log_file=log_file, verbose=verbose
+            )
 
             try:
                 return_code = progress_monitor.run(cmdline)
@@ -159,9 +166,14 @@ class Runner:
             log.debug("Running: %s", shlex.join(cmdline))
 
             try:
-                r = subprocess.run(cmdline, capture_output=capture_output, check=True)
                 if capture_output:
+                    r = subprocess.run(cmdline, capture_output=True, check=True)
                     return r.stdout.decode("utf-8").rstrip()
+                elif log_file is not None:
+                    with open(log_file, "w", encoding="utf-8") as f:
+                        subprocess.run(cmdline, check=True, stdout=f, stderr=f)
+                else:
+                    subprocess.run(cmdline, check=True)
             except subprocess.CalledProcessError:
                 sys.exit(1)  # cmd will have printed the error
 
@@ -192,6 +204,7 @@ class Runner:
         progress=False,
         capture_output=False,
         verbose=False,
+        log_file=None,
     ):
         use_container = self.use_container
         if use_container:
@@ -206,6 +219,7 @@ class Runner:
             need_osbuild_privs=need_osbuild_privs,
             with_progress=progress,
             verbose=verbose,
+            log_file=log_file,
         )
 
     # Run commandline as user, either directly, or in a container, it

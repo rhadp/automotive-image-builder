@@ -4,7 +4,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, IO
 
 try:
     from rich.console import Console
@@ -284,12 +284,13 @@ class StageEventInfo(ProgressInfo):
 class OSBuildProgressMonitor:
     """Monitor osbuild JSONSeqMonitor output and display progress using rich."""
 
-    def __init__(self, verbose=False):
+    def __init__(self, log_file: str, verbose=False):
         self.console = Console()
         self.stages_total = 0
         self.stages_completed = 0
         self.current_stage = ""
         self.verbose = verbose
+        self.log_file = log_file
 
     def parse_json_sequence_line(self, line: str) -> Optional[Dict[str, Any]]:
         """Parse a single JSON sequence line from osbuild monitor output."""
@@ -303,11 +304,17 @@ class OSBuildProgressMonitor:
             # Not a JSON line, might be other output
             return None
 
-    def extract_progress_info(self, data: Dict[str, Any]) -> Optional[ProgressInfo]:
+    def extract_progress_info(
+        self, data: Dict[str, Any], log_file: Optional[IO] = None
+    ) -> Optional[ProgressInfo]:
         """Extract progress information from osbuild JSONSeqMonitor format."""
         message = data.get("message", "").rstrip()
-        if self.verbose and message:
-            self.console.print(f"[dim]{message}[/dim]")
+        if message:
+            if log_file:
+                log_file.write(f"{message}\n")
+                log_file.flush()
+            if self.verbose:
+                self.console.print(f"[dim]{message}[/dim]")
 
         # Check for osbuild JSONSeqMonitor progress format
         if "progress" in data:
@@ -370,7 +377,11 @@ class OSBuildProgressMonitor:
         progress.refresh()
 
     def monitor_subprocess_output(
-        self, process: subprocess.Popen, progress=None, task_id=None
+        self,
+        process: subprocess.Popen,
+        progress=None,
+        task_id=None,
+        log_file: Optional[IO] = None,
     ):
         """Monitor subprocess output line by line and extract progress information."""
         try:
@@ -384,7 +395,7 @@ class OSBuildProgressMonitor:
                     # Try to parse as JSON sequence
                     json_data = self.parse_json_sequence_line(line_str)
                     if json_data:
-                        progress_info = self.extract_progress_info(json_data)
+                        progress_info = self.extract_progress_info(json_data, log_file)
                         if progress_info:
                             self.update_progress(progress_info, progress, task_id)
                     else:
@@ -427,30 +438,35 @@ class OSBuildProgressMonitor:
             task_id = progress.add_task("Preparing build...", total=100)
 
             try:
-                with subprocess.Popen(
-                    cmdline,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    universal_newlines=False,
-                    **subprocess_kwargs,
-                ) as process:
-                    self.monitor_subprocess_output(process, progress, task_id)
-                    return_code = process.wait()
+                with open(self.log_file, "w", encoding="utf-8") as log_file:
+                    with subprocess.Popen(
+                        cmdline,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        universal_newlines=False,
+                        **subprocess_kwargs,
+                    ) as process:
+                        self.monitor_subprocess_output(
+                            process, progress, task_id, log_file
+                        )
+                        return_code = process.wait()
 
-                if return_code == 0:
-                    # Ensure we show 100% completion
-                    progress.update(
-                        task_id,
-                        completed=self.stages_total if self.stages_total > 0 else 100,
-                        description="[green]Build completed successfully![/green]",
-                    )
-                else:
-                    progress.update(
-                        task_id,
-                        description="[red][✗] Build failed![/red]",
-                    )
+                    if return_code == 0:
+                        # Ensure we show 100% completion
+                        progress.update(
+                            task_id,
+                            completed=(
+                                self.stages_total if self.stages_total > 0 else 100
+                            ),
+                            description="[green]Build completed successfully![/green]",
+                        )
+                    else:
+                        progress.update(
+                            task_id,
+                            description="[red][✗] Build failed![/red]",
+                        )
 
-                return return_code
+                    return return_code
 
             except (subprocess.CalledProcessError, OSError) as e:
                 progress.update(

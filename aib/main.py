@@ -382,7 +382,12 @@ def _build(args, tmpdir, runner):
         # Download sources on host, using no exports
 
         cmdline += [osbuild_manifest]
-        runner.run_in_container(cmdline, progress=args.progress, verbose=args.verbose)
+        runner.run_in_container(
+            cmdline,
+            progress=args.progress,
+            verbose=args.verbose,
+            log_file=args.log_file,
+        )
 
         # Now do the build in the vm
 
@@ -445,6 +450,7 @@ def _build(args, tmpdir, runner):
             need_osbuild_privs=True,
             progress=args.progress,
             verbose=args.verbose,
+            log_file=args.log_file,
         )
 
     if args.ostree_repo:
@@ -776,6 +782,14 @@ SHARED_BUILD_ARGS = {
         "type": "str",
         "default": os.getenv("OSBUILD_BUILDDIR"),
         "help": "Directory where intermediary files are stored)",
+    },
+    "--logfile": {
+        "type": "str",
+        "default": None,
+        "help": (
+            "Path to file to write logs to. "
+            "Default is <build-dir>/automotive-image-builder-[timestamp].log"
+        ),
     },
     "--progress": {
         "type": "bool-optional",
