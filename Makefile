@@ -16,9 +16,9 @@ install:
 	install automotive-image-builder.installed $(DESTDIR)$(BINDIR)/automotive-image-builder
 	install -t $(DESTDIR)$(BINDIR) automotive-image-runner
 	install -t $(DESTDIR)$(BINDIR) automotive-image-vm
-	for dir in distro include targets ; do \
-		mkdir -p $(DESTDIR)$(DATADIR)/$$dir ; \
-		install -m 0644 -t $(DESTDIR)$(DATADIR)/$$dir $$dir/*.yml ; \
+	for subdir in distro include targets targets/include ; do \
+		mkdir -p $(DESTDIR)$(DATADIR)/$$subdir ; \
+		install -m 0644 -t $(DESTDIR)$(DATADIR)/$$subdir $$subdir/*.yml ; \
 	done
 	mkdir -p $(DESTDIR)$(DATADIR)/files
 	find files -maxdepth 1 -type f -exec install -m 0644 {} $(DESTDIR)$(DATADIR)/files/ \;
