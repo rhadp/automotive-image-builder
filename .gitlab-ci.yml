@@ -52,6 +52,17 @@ crossref-job:
   script:
     - git crossref -v check
 
+ai-review:
+  stage: pre
+  image: registry.gitlab.com/redhat/edge/ci-cd/ai-code-review:latest
+  variables:
+    AI_API_KEY: $GEMINI_API_KEY
+  script:
+    - ai-code-review --post
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  allow_failure: true
+
 compose-test-job:
   stage: test
   script:
