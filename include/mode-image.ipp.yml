@@ -427,7 +427,7 @@ pipelines:
                 - name:ostree-tree
           options:
             paths:
-              - from: input://tree/usr/lib/ostree-boot/efi/EFI
+              - from: input://tree/usr/lib/ostree-boot/efi/
                 to: tree:///boot/efi
       - type: org.osbuild.ostree.selinux
         options:
