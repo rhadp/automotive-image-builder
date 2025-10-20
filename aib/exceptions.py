@@ -92,3 +92,8 @@ class TooManyFilesError(AIBException):
             f"but max_files limit is {self.max_files}. Consider using more specific "
             f"patterns or increase max_files if needed."
         )
+
+
+class MissingLogFile(AIBException):
+    def __str__(self):
+        return "Log file must be specified when progress monitoring is enabled"

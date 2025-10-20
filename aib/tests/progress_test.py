@@ -1,4 +1,6 @@
 import unittest
+import pytest
+import tempfile
 from unittest.mock import Mock, patch
 from aib.progress import (
     OSBuildProgressMonitor,
@@ -7,6 +9,13 @@ from aib.progress import (
     NestedProgressInfo,
     StageEventInfo,
 )
+
+
+@pytest.fixture
+def temp_log_file():
+    """Fixture that provides a temporary log file and cleans it up after the test."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=True) as f:
+        yield f
 
 
 class TestProgressStep(unittest.TestCase):
@@ -44,9 +53,16 @@ class TestProgressStep(unittest.TestCase):
 
 
 class TestOSBuildProgressMonitor(unittest.TestCase):
-    def setUp(self):
-        self.monitor = OSBuildProgressMonitor(verbose=False)
-        self.verbose_monitor = OSBuildProgressMonitor(verbose=True)
+    @pytest.fixture(autouse=True)
+    def setup_fixtures(self, temp_log_file):
+        """Setup fixtures for all tests in this class."""
+        self.log_file_path = temp_log_file.name
+        self.monitor = OSBuildProgressMonitor(
+            log_file=self.log_file_path, verbose=False
+        )
+        self.verbose_monitor = OSBuildProgressMonitor(
+            log_file=self.log_file_path, verbose=True
+        )
 
     def test_init(self):
         """Test OSBuildProgressMonitor initialization."""
@@ -82,7 +98,6 @@ class TestOSBuildProgressMonitor(unittest.TestCase):
 
     def test_extract_progress_info_nested(self):
         """Test extracting nested progress information."""
-        monitor = OSBuildProgressMonitor(verbose=False)
         data = {
             "progress": {
                 "name": "pipelines/sources",
@@ -94,7 +109,7 @@ class TestOSBuildProgressMonitor(unittest.TestCase):
             "message": "Building packages",
         }
 
-        result = monitor.extract_progress_info(data)
+        result = self.monitor.extract_progress_info(data)
 
         self.assertIsInstance(result, NestedProgressInfo)
         self.assertIsInstance(result.parent, ProgressStep)
@@ -166,7 +181,7 @@ class TestOSBuildProgressMonitor(unittest.TestCase):
     def test_update_progress_stage_event(self):
         """Test updating progress with stage event info."""
         # Create a fresh monitor to avoid any state issues
-        monitor = OSBuildProgressMonitor(verbose=False)
+        monitor = OSBuildProgressMonitor(log_file=self.log_file_path, verbose=False)
         mock_progress = Mock()
         task_id = 0
 
@@ -260,17 +275,21 @@ class TestOSBuildProgressMonitor(unittest.TestCase):
     def test_run_with_fallback_progress(self):
         """Test command execution with fallback progress bar."""
         # Test that monitor can be created regardless of rich availability
-        monitor = OSBuildProgressMonitor(verbose=False)
-        self.assertIsNotNone(monitor.console)
+        self.assertIsNotNone(self.monitor.console)
 
         # Test that _progress_args returns a ProgressArgs object
-        progress_args = monitor._progress_args()
+        progress_args = self.monitor._progress_args()
         self.assertIsInstance(progress_args, ProgressArgs)
         self.assertIsInstance(progress_args.columns, list)
         self.assertIsInstance(progress_args.kwargs, dict)
 
 
 class TestProgressArgs(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def setup_fixtures(self, temp_log_file):
+        """Setup fixtures for all tests in this class."""
+        self.log_file_path = temp_log_file.name
+
     def test_progress_args_creation(self):
         """Test ProgressArgs dataclass creation."""
         # Test with default values
@@ -287,7 +306,7 @@ class TestProgressArgs(unittest.TestCase):
 
     def test_progress_args_from_monitor(self):
         """Test that OSBuildProgressMonitor._progress_args returns ProgressArgs."""
-        monitor = OSBuildProgressMonitor(verbose=False)
+        monitor = OSBuildProgressMonitor(log_file=self.log_file_path, verbose=False)
         progress_args = monitor._progress_args()
 
         self.assertIsInstance(progress_args, ProgressArgs)

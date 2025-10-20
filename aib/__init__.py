@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import time
 
 from dataclasses import dataclass
 from functools import cached_property
@@ -99,6 +100,23 @@ class AIBParameters:
 
     def func(self, tmpdir, runner):
         return self.args.func(self, tmpdir, runner)
+
+    @property
+    def log_file(self):
+        if self.args.progress or self.args.logfile:
+            try:
+                return (
+                    self.args.logfile
+                    if self.args.logfile
+                    else os.path.join(
+                        self.args.build_dir,
+                        f"automotive-image-builder-{time.strftime('%Y%m%d-%H%M%S')}.log",
+                    )
+                )
+            except TypeError:
+                # In case build_dir is not set, pass silently and return None
+                pass
+        return None
 
     def __getattr__(self, name: str) -> Any:
         return vars(self.args).get(name)
