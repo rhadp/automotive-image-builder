@@ -1,5 +1,5 @@
-name: fusa-compliance
-description: Functional Safety (FuSa) compliance policy
+name: hardened
+description: Hardened security and safety policy
 
 restrictions:
   modes:

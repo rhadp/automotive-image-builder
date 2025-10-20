@@ -57,13 +57,12 @@ class AIBParameters:
 
     @cached_property
     def policy(self):
-        """Load and cache policy from --policy or --fusa argument.
+        """Load and cache policy from --policy argument.
 
         Returns None if no policy is specified, otherwise returns the loaded Policy object.
         Policy loading happens lazily on first access and is cached for subsequent calls.
 
         Policy resolution:
-        - If --fusa is set, use "fusa.aibp.yml" from installed policies
         - If --policy contains path separators, treat as full path
         - If --policy has no extension, look in installed policy directories:
           1. /etc/automotive-image-builder/policies/ (system-wide)
@@ -75,7 +74,7 @@ class AIBParameters:
         """
 
         if self.args.fusa:
-            policy_input = "fusa"
+            policy_input = "hardened"
         elif self.args.policy:
             policy_input = self.args.policy
         else:
