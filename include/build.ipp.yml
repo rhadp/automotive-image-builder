@@ -258,34 +258,48 @@ pipelines:
           paths:
             - path: /etc
             - path: /etc/selinux
+            - path: /usr
+            - path: /usr/lib
+            - path: /usr/lib/sysusers.d
       - type: org.osbuild.copy
         inputs:
           inlinefile:
             type: org.osbuild.files
             origin: org.osbuild.source
             mpp-embed:
+              id: selinux.conf
+              text: $selinux_conf
+          inlinefile2:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
               id: passwd
               text: $base_passwd
-          inlinefile2:
+          inlinefile3:
             type: org.osbuild.files
             origin: org.osbuild.source
             mpp-embed:
               id: group
               text: $base_group
-          inlinefile3:
+          inlinefile4:
             type: org.osbuild.files
             origin: org.osbuild.source
             mpp-embed:
-              id: selinux.conf
-              text: $selinux_conf
+              id: sysusers
+              text: $base_systemd_sysusers
         options:
           paths:
             - from:
-                mpp-format-string: input://inlinefile/{embedded['passwd']}
+                mpp-format-string: input://inlinefile/{embedded['selinux.conf']}
+              to: tree:///etc/selinux/config
+            - from:
+                mpp-format-string: input://inlinefile2/{embedded['passwd']}
               to: tree:///etc/passwd
             - from:
-                mpp-format-string: input://inlinefile2/{embedded['group']}
+                mpp-format-string: input://inlinefile3/{embedded['group']}
               to: tree:///etc/group
             - from:
-                mpp-format-string: input://inlinefile3/{embedded['selinux.conf']}
-              to: tree:///etc/selinux/config
+                mpp-format-string: input://inlinefile4/{embedded['sysusers']}
+              to: tree:///usr/lib/sysusers.d/base-users.conf
+
+      - type: org.osbuild.systemd-sysusers

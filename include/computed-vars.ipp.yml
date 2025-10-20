@@ -365,11 +365,14 @@ mpp-vars:
       paths:
         - path: /etc
         - path: /etc/selinux
-  # Initialize /etc/passwd and /etc/group either with the static base
-  # content (to avoid dynamic uid allocations changing between versions)
-  # or from the copy in QM (to merge dynamic uid allocations)
-  # Also init selinux config so package post-installs install selinux
-  # modules for the right policy.
+        - path: /usr
+        - path: /usr/lib
+        - path: /usr/lib/sysusers.d
+  # Initialize systemd-sysusers, /etc/passwd and /etc/group (root users)
+  # either with the static base content (to avoid dynamic uid allocations
+  # changing between versions) or from the copy in QM (to merge dynamic
+  # uid allocations). Also init selinux config so package post-installs
+  # install selinux modules for the right policy.
   init_rootfs_files_stage:
     type: org.osbuild.copy
     inputs:
@@ -392,6 +395,8 @@ mpp-vars:
           to: tree:///etc/passwd
         - from: input://etc-tree/etc/group
           to: tree:///etc/group
+        - from: input://etc-tree/usr/lib/sysusers.d/base-users.conf
+          to: tree:///usr/lib/sysusers.d/base-users.conf
         - from: input://data-tree/etc/selinux/config
           to: tree:///etc/selinux/config
 
