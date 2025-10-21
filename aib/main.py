@@ -760,7 +760,7 @@ FORMAT_ARGS = {
         "exclusive-group": "policy",
     },
     "--fusa": {
-        "help": "Use built-in FUSA compliance policy (equivalent to --policy fusa.aibp.yml)",
+        "help": "Use built-in hardened policy (equivalent to --policy hardened)",
         "exclusive-group": "policy",
     },
     "--ostree-repo": {"type": "str", "help": "Path to ostree repo"},
