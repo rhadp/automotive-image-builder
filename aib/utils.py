@@ -2,7 +2,7 @@ def extract_comment_header(file):
     lines = []
     for line in file:
         line = line.strip()
-        if line[0] != "#":
+        if not line.startswith("#"):
             break
         lines.append(line[1:])
 
