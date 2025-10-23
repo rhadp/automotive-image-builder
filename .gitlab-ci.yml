@@ -267,8 +267,7 @@ integration_tests_10:
     - *prepare-cs-tmt-setup
     - *prepare-aws-setup
   script:
-    # TODO: change to autosd10-sig once automotive-image-builder-1.1.0 with proper AutoSD 10 support is released
-    - sh ci-scripts/run_tmt_tests.sh autosd10-latest-sig
+    - sh ci-scripts/run_tmt_tests.sh autosd10-sig
   artifacts:
     when: always
     paths:
