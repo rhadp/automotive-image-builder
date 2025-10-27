@@ -68,8 +68,8 @@ mpp-vars:
   qm_simple_add_devel_repos: false
   qm_simple_add_debug_repos: false
   boot_check_qm_digest_default:
-    aarch64: "d4a31f8a7e2a381e2cc5ed2dc8143bfc19436c703caa618d17394f3b18b67b8e"
-    x86_64: "81646aedc3cfaab04f341199e7c0889720b63c84d8208ef6ccefcdf7d74a1ac9"
+    aarch64: "cd1a2bc09ceb9c6904a891417e02cfe839423150dd38a12f68a97f6d8a2df2bf"
+    x86_64: "3628949a510fa5487c7cc97f7022ffc44fe9d63183c63a3ad018a081ae7514f1"
 
   use_luks: false
   luks_passphrase: password
