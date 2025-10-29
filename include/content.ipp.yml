@@ -5,7 +5,7 @@ mpp-vars:
     mpp-format-string: |
       [Unit]
       Before=local-fs.target
-      After=blockdev@dev-disk-by\\x2dpartuuid-{bootpart_uuid.replace("-", _dash_escape)}.target
+      After=blockdev@dev-disk-by\\x2duuid-{bootfs_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
       What=/dev/disk/by-uuid/$bootfs_uuid
@@ -31,7 +31,7 @@ mpp-vars:
     mpp-format-string: |
       [Unit]
       Before=local-fs.target
-      After=blockdev@dev-disk-by\\x2dpartuuid-{varpart_uuid.replace("-", _dash_escape)}.target
+      After=blockdev@dev-disk-by\\x2duuid-{varfs_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
       What=/dev/disk/by-uuid/$varfs_uuid
@@ -44,7 +44,7 @@ mpp-vars:
     mpp-format-string: |
       [Unit]
       Before=local-fs.target
-      After=blockdev@dev-disk-by\\x2dpartuuid-{qm_varpart_uuid.replace("-", _dash_escape)}.target
+      After=blockdev@dev-disk-by\\x2duuid-{qm_varfs_uuid.replace("-", _dash_escape)}.target
 
       [Mount]
       What=/dev/disk/by-uuid/$qm_varfs_uuid
