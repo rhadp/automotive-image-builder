@@ -2,9 +2,10 @@ import pytest
 import unittest
 import tempfile
 import os
+import shutil
 import yaml
 import jsonschema
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, mock_open
 
 from aib import exceptions
 from aib.simple import (
@@ -76,14 +77,66 @@ def test_json_bool(value, expected):
     assert json_bool(value) == expected
 
 
+@pytest.mark.parametrize(
+    "path,should_be_valid",
+    [
+        # Valid paths under allowed directories
+        ("/etc/custom-files/file.txt", True),
+        ("/usr/bin/script.sh", True),
+        ("/usr/lib/app.so", True),
+        ("/bin/custom-binary", True),
+        ("/lib/custom.so", True),
+        ("/lib32/custom32.so", True),
+        ("/lib64/custom64.so", True),
+        ("/sbin/custom-service", True),
+        # Invalid paths - disallowed even though under /usr/
+        ("/usr/local/bin/script.sh", False),
+        ("/usr/local/lib/app.so", False),
+        # Invalid paths not under allowed directories
+        ("/custom-dir/file.txt", False),
+        ("/test.txt", False),
+        ("/myapp/config.txt", False),
+        ("/data/file.txt", False),
+        ("/opt/app/bin", False),
+        ("/var/log/app.log", False),
+        ("/boot/grub/grub.cfg", False),
+        ("/home/user/.bashrc", False),
+        ("/root/.ssh/authorized_keys", False),
+    ],
+)
+def test_validate_paths(path, should_be_valid):
+    """Test path validation for both allowed and disallowed directories"""
+    mock_loader = Mock()
+    extra_include = ExtraInclude("/tmp/test-basedir")
+
+    if should_be_valid:
+        # Test with add_files - should not raise exception
+        data = {"add_files": [{"path": path, "text": "content"}]}
+        Contents(mock_loader, data, extra_include)
+
+        # Test with make_dirs - should not raise exception
+        data = {"make_dirs": [{"path": path}]}
+        Contents(mock_loader, data, extra_include)
+    else:
+        # Test with add_files - should raise InvalidTopLevelPath
+        data = {"add_files": [{"path": path, "text": "content"}]}
+        with pytest.raises(exceptions.InvalidTopLevelPath) as exc_info:
+            Contents(mock_loader, data, extra_include)
+        assert path in str(exc_info.value)
+
+        # Test with make_dirs - should raise InvalidTopLevelPath
+        data = {"make_dirs": [{"path": path}]}
+        with pytest.raises(exceptions.InvalidTopLevelPath) as exc_info:
+            Contents(mock_loader, data, extra_include)
+        assert path in str(exc_info.value)
+
+
 class TestExtraInclude(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
         self.extra_include = ExtraInclude(self.tmpdir)
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_init(self):
@@ -222,8 +275,6 @@ class TestContents(unittest.TestCase):
         self.extra_include = ExtraInclude(self.tmpdir)
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_init(self):
@@ -299,22 +350,22 @@ class TestContents(unittest.TestCase):
     def test_set_defines_with_files(self):
         """Test set_defines with file operations"""
         data = {
-            "make_dirs": ["/tmp/test"],
-            "chmod_files": [{"path": "/tmp/test", "mode": "755"}],
-            "chown_files": [{"path": "/tmp/test", "owner": "root", "group": "root"}],
-            "remove_files": [{"path": "/tmp/old"}],
+            "make_dirs": [{"path": "/etc/test"}],
+            "chmod_files": [{"path": "/etc/test", "mode": "755"}],
+            "chown_files": [{"path": "/etc/test", "owner": "root", "group": "root"}],
+            "remove_files": [{"path": "/etc/old"}],
         }
         contents = Contents(self.mock_loader, data, self.extra_include)
         contents.set_defines()
 
-        self.mock_loader.set.assert_any_call("simple_mkdir", ["/tmp/test"])
+        self.mock_loader.set.assert_any_call("simple_mkdir", [{"path": "/etc/test"}])
         self.mock_loader.set.assert_any_call(
-            "simple_chmod", {"/tmp/test": {"mode": "755"}}
+            "simple_chmod", {"/etc/test": {"mode": "755"}}
         )
         self.mock_loader.set.assert_any_call(
-            "simple_chown", {"/tmp/test": {"owner": "root", "group": "root"}}
+            "simple_chown", {"/etc/test": {"owner": "root", "group": "root"}}
         )
-        self.mock_loader.set.assert_any_call("simple_remove", ["/tmp/old"])
+        self.mock_loader.set.assert_any_call("simple_remove", ["/etc/old"])
 
 
 class TestQMContents(unittest.TestCase):
@@ -326,8 +377,6 @@ class TestQMContents(unittest.TestCase):
         self.extra_include = ExtraInclude(self.tmpdir)
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_get_key_with_use_prefix(self):
@@ -797,8 +846,6 @@ class TestManifestLoader(unittest.TestCase):
 
 def mock_open_manifest_schema():
     """Mock the manifest schema file"""
-    from unittest.mock import mock_open
-
     schema_content = {
         "type": "object",
         "properties": {
@@ -863,8 +910,6 @@ class TestExtraIncludeGlob(unittest.TestCase):
 
     def _cleanup_test_dir(self):
         """Clean up the temporary test directory."""
-        import shutil
-
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_glob_files_flatten(self):

@@ -1,0 +1,8 @@
+name: test_invalid_custom_dir
+content:
+  make_dirs:
+    - path: /custom-dir
+  add_files:
+    - path: /custom-dir/test.txt
+      text: |
+        This should fail validation

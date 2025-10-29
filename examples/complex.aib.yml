@@ -56,7 +56,7 @@ qm:
         tag: latest
         name: localhost/auto-apps
     add_files:
-      - path: /extra_files.json
+      - path: /etc/extra_files.json
         url: https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/extra_files.json
 
 network:
