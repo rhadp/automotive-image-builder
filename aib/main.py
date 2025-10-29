@@ -318,7 +318,8 @@ def listrpms(args, tmpdir, runner):
 
 
 def _build(args, tmpdir, runner):
-    runner.add_volume_for(args.out)
+    if args.out:
+        runner.add_volume_for(args.out)
 
     osbuild_manifest = os.path.join(tmpdir, "osbuild.json")
     if args.osbuild_manifest:
@@ -459,7 +460,9 @@ def _build(args, tmpdir, runner):
             ["ostree", "pull-local", "--repo=" + args.ostree_repo, repodir]
         )
 
-    if len(args.export) == 1:
+    if len(args.export) == 0:
+        pass
+    elif len(args.export) == 1:
         # Export directly to args.out
         export(outputdir, args.out, False, args.export[0], runner)
     else:
@@ -483,6 +486,15 @@ def build(args, tmpdir, runner):
             os.path.join(tmpdir, "image_output")
         ):
             runner.run_as_root(["rm", "-rf", tmpdir])
+
+
+def download(args, tmpdir, runner):
+    if not args.build_dir:
+        log.error("No build dir specified, refusing to download to temporary directory")
+        sys.exit(1)
+    args.out = None
+    args.export = []
+    build(args, tmpdir, runner)
 
 
 def build_bootc_builder(args, tmpdir, runner):
@@ -838,6 +850,17 @@ subcommands = [
             },
             "manifest": "Source manifest file",
             "out": "Output path",
+        },
+    ],
+    [
+        "download",
+        "Download all sources that are needed to build for the image",
+        download,
+        SHARED_FORMAT_ARGS,
+        FORMAT_ARGS,
+        SHARED_BUILD_ARGS,
+        {
+            "manifest": "Source manifest file",
         },
     ],
     [
