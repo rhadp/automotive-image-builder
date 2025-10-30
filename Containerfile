@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream9 AS base
+FROM quay.io/centos/centos:stream10 AS base
 
 RUN dnf update -y && \
     dnf install -y 'dnf-command(config-manager)' 'dnf-command(copr)'
@@ -6,7 +6,7 @@ RUN dnf update -y && \
 RUN dnf copr enable -y @osbuild/osbuild-stable && \
     dnf copr enable -y @centos-automotive-sig/osbuild-auto && \
     rpm --import https://www.centos.org/keys/RPM-GPG-KEY-CentOS-SIG-Automotive && \
-    dnf config-manager --add-repo 'https://mirror.stream.centos.org/SIGs/9-stream/autosd/$basearch/packages-main'
+    dnf config-manager --add-repo 'https://mirror.stream.centos.org/SIGs/10-stream/autosd/$basearch/packages-main'
 
 
 FROM base as builder
