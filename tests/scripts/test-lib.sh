@@ -86,7 +86,7 @@ assert_jq () {
     local json_file="$1"
     local jq_query="$2"
     local error_msg="${3:-jq query '$jq_query' failed on file '$json_file'}"
-    
+
     if ! jq -e "$jq_query" "$json_file" > /dev/null; then
         fatal "$error_msg"
     fi
@@ -96,7 +96,7 @@ assert_jq_not () {
     local json_file="$1"
     local jq_query="$2"
     local error_msg="${3:-jq query '$jq_query' should not match on file '$json_file'}"
-    
+
     if jq -e "$jq_query" "$json_file" > /dev/null; then
         fatal "$error_msg"
     fi
@@ -261,12 +261,34 @@ save_to_tmt_test_data () {
 FAST_OPTIONS="--define sign_kernel_modules=false"
 
 trybuild() {
+    local build_dir="$BUILDDIR/$TMT_TEST_NAME"
+    local result=0
+
+    if [ -d "$build_dir" ]; then
+        echo "Build directory '$build_dir' exist, skipping populating in from the cache"
+    else
+        if [ -d "$BUILDCACHEDIR" ]; then
+            echo "Populating build directory '$build_dir' from cache '$BUILDCACHEDIR'"
+            cp -r "$BUILDCACHEDIR" "$build_dir"
+        else
+            echo "Cache directory '$BUILDCACHEDIR' doesn't exist, build directory will not be prepopulated"
+        fi
+    fi
+
     $AIB build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
-        --build-dir $BUILDDIR $FAST_OPTIONS \
+        --build-dir $BUILDDIR/$TMT_TEST_NAME $FAST_OPTIONS \
         --define reproducible_image=true \
         "$@" > build.log
+    result=$?
+
+    if [ -d "$build_dir" ]; then
+        echo "Removing build directory '$build_dir'"
+        rm -rf "$build_dir"
+    fi
+
+    return $result
 }
 
 build() {

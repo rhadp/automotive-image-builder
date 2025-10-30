@@ -25,6 +25,7 @@ environment:
     AIR: automotive-image-runner
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
+    BUILDCACHEDIR: $OUTDIR/build-cache
     RUNDIR: $OUTDIR/run
 
 provision:
@@ -53,7 +54,12 @@ prepare:
     - name: Report a-i-b version
       how: shell
       script: |
-         rpm -qi automotive-image-builder
+          rpm -qi automotive-image-builder
+
+    - name: Populate build cache directory
+      how: shell
+      script: |
+          ./scripts/init-build-cache.sh
 
 discover:
     how: fmf

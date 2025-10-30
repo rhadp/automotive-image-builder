@@ -65,17 +65,19 @@ scp -o StrictHostKeyChecking=no -i $PWD/automotive_sig.ssh *.src.rpm root@$ip:/v
 
 section_end duffy_setup
 
-cd tests && tmt run -vvv \
+# Run tests with 5 parallel test executions
+export TMT_RUN_OPTIONS="-q \
   -eNODE=$ip \
-  -eNODE_SSH_KEY=$PWD/../automotive_sig.ssh \
+  -eNODE_SSH_KEY=$PWD/automotive_sig.ssh \
   -eBUILD_AIB_RPM=yes \
   -eAIB_DISTRO=$AIB_DISTRO \
   -eAIB_BASE_REPO=$AIB_BASE_REPO \
-  plan --name connect
+  plan --name connect"
+( cd tests && ../ci-scripts/parallel-test-runner.sh 5 )
 
 success=$?
 
-mkdir -p ../tmt-run
-cp -r /var/tmp/tmt/* ../tmt-run/
+mkdir -p tmt-run
+cp -r /var/tmp/tmt/* tmt-run/
 
 exit $success
