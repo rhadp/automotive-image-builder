@@ -13,6 +13,8 @@ mpp-vars:
   efipart_geometry:
     heads: 64
     sectors-per-track: 32
+  target_supported_arches:
+    - aarch64
   target_rpms:
     - k3-upstream-boot
   target_extra_image_stages:

@@ -7,6 +7,8 @@ mpp-vars:
     - id: ti-board-support
       baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/ti-board-support/$distro_chroot/
       priority: 1
+  target_supported_arches:
+    - aarch64
   kernel_package: 'kernel'
   consoles: 'ttyS2,115200n8'
   use_boot: grub2 # Currently no ukiboot support, since not using GPT partitioning

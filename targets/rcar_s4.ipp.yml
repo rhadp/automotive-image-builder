@@ -1,6 +1,9 @@
 # Target for Renesas R-Car S4 with stock functionality
 version: '2'
 mpp-vars:
+  target_supported_arches:
+    - aarch64
+    - x86_64 # TODO: This is used in a test atm, so allow it even if its weird
   use_autoinit: true
   use_autoinit_root: true
   consoles: "ttySC0,1843200"

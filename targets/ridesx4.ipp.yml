@@ -1,6 +1,8 @@
 # A target for the QC RIDESX4 board.
 version: '2'
 mpp-vars:
+  target_supported_arches:
+    - aarch64
   use_boot: aboot
   skip_root_on_cmdline: true # This uses ABL bootloader which appends root= cmdline
   use_efi_runtime: false
