@@ -1,3 +1,4 @@
+import contextlib
 import os
 import shutil
 import shlex
@@ -121,6 +122,7 @@ class Runner:
         need_osbuild_privs=False,
         with_progress=False,
         capture_output=False,
+        stdout_to_devnull=False,
         verbose=False,
         log_file=None,
     ):
@@ -166,14 +168,19 @@ class Runner:
             log.debug("Running: %s", shlex.join(cmdline))
 
             try:
-                if capture_output:
-                    r = subprocess.run(cmdline, capture_output=True, check=True)
-                    return r.stdout.decode("utf-8").rstrip()
-                elif log_file is not None:
-                    with open(log_file, "w", encoding="utf-8") as f:
-                        subprocess.run(cmdline, check=True, stdout=f, stderr=f)
-                else:
-                    subprocess.run(cmdline, check=True)
+                with contextlib.ExitStack() as cn:
+                    kwargs = {}
+                    if stdout_to_devnull:
+                        kwargs["stdout"] = subprocess.DEVNULL
+                    elif capture_output:
+                        kwargs["capture_output"] = True
+                    elif log_file is not None:
+                        f = cn.enter_context(open(log_file, "w", encoding="utf-8"))
+                        kwargs["stdout"] = f
+                        kwargs["stderr"] = f
+                    r = subprocess.run(cmdline, check=True, **kwargs)
+                    if capture_output:
+                        return r.stdout.decode("utf-8").rstrip()
             except subprocess.CalledProcessError:
                 sys.exit(1)  # cmd will have printed the error
 
@@ -203,6 +210,7 @@ class Runner:
         need_osbuild_privs=False,
         progress=False,
         capture_output=False,
+        stdout_to_devnull=False,
         verbose=False,
         log_file=None,
     ):
@@ -218,6 +226,7 @@ class Runner:
             as_root=as_root,
             need_osbuild_privs=need_osbuild_privs,
             with_progress=progress,
+            stdout_to_devnull=stdout_to_devnull,
             verbose=verbose,
             log_file=log_file,
         )

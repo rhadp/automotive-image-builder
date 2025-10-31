@@ -516,6 +516,7 @@ class ManifestLoader:
                     self.set(k + "part_size", int(part_size / 512))
         self.set_from("hostname", image, "hostname")
         self.set_from("ostree_ref", image, "ostree_ref")
+        self.set_from("use_composefs_signed", image, "sealed")
         self.set_from("selinux_mode", image, "selinux_mode")
         self.set_from("selinux_policy", image, "selinux_policy")
         bools = image.get("selinux_booleans", {})
