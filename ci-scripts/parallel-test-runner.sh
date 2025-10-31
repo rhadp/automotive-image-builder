@@ -20,14 +20,22 @@ format_time() {
     printf "%02d:%02d:%02d" $h $m $s
  }
 
+format_test_id() {
+    local test_run_idx=$1
+    local test_name=$2
+    echo "$(printf "%02d" $(( test_run_idx + 1)))-$test_name"
+}
+
 execute_test() {
-    local test_name=$1
+    local test_run_idx=$1
+    local test_name=${TEST_NAMES[$test_run_idx]}
     local start_time
 
     echo "Starting test '$test_name'"
     start_time=$(date +%s)
     # TODO: simplify when https://github.com/teemtee/tmt/issues/2757 is fixed
     tmt -q run \
+        -i "$(format_test_id "$test_run_idx" "$test_name")" \
         "${TMT_RUN_OPTIONS[@]}" test --name "$test_name" \
         discover prepare provision execute -h tmt --no-progress-bar report &
     local pid=$!
@@ -39,7 +47,7 @@ START_TIME=$(date +%s)
 
 echo "Preparing tests execution"
 # Execute phases up to prepare
-tmt -q run -B execute "${TMT_RUN_OPTIONS[@]}"
+tmt -q run -i "$(format_test_id "-1" "prepare-tests")" -B execute "${TMT_RUN_OPTIONS[@]}"
 
 # Gather discovered tests
 mapfile -t TEST_NAMES< <(grep "name:" < ~/.config/tmt/last-run/plans/connect/discover/tests.yaml | sed 's/.*tests\///')
@@ -53,7 +61,7 @@ SUCCESSFUL_TESTS=0
 
 # Start max allowed test executed at the beginning
 while [[ $INDEX -lt $TEST_COUNT && ${#TEST_PIDS[@]} -lt $MAX_CONCURRENT_TESTS ]]; do
-    execute_test "${TEST_NAMES[$INDEX]}"
+    execute_test "$INDEX"
     INDEX=$(( INDEX + 1 ))
     sleep 0.1  # Small stagger
 done
@@ -78,7 +86,7 @@ while [[ ${#TEST_PIDS[@]} -gt 0 ]]; do
 
             # Start next test if available
             if [[ $INDEX -lt $TEST_COUNT ]]; then
-                execute_test "${TEST_NAMES[$INDEX]}"
+                execute_test "$INDEX"
                 INDEX=$(( INDEX + 1 ))
             fi
         fi
