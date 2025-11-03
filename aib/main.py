@@ -1073,6 +1073,7 @@ subcommands = [
         "bootc-prepare-reseal",
         "Prepare re-seal bootc image",
         bootc_prepare_reseal,
+        [],
         SHARED_RESEAL_ARGS,
         {
             "src_container": "Bootc container name",
@@ -1083,6 +1084,7 @@ subcommands = [
         "bootc-reseal",
         "Re-seal bootc image",
         bootc_reseal,
+        [],
         SHARED_RESEAL_ARGS,
         {
             "src_container": "Bootc container name",
