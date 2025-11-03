@@ -721,7 +721,7 @@ def no_subcommand(_args, _tmpdir, _runner):
     log.info("No subcommand specified, see --help for usage")
 
 
-def add_arg(parser, groups, name, data):
+def add_arg(parser, groups, name, data, suppress_default=False):
     if isinstance(data, str):
         data = {"help": data}
 
@@ -734,24 +734,42 @@ def add_arg(parser, groups, name, data):
         dst = parser
 
     t = data.get("type", "bool" if name.startswith("-") else "str")
+
+    # Determine default value (normal or SUPPRESS for subparsers)
+    # SUPPRESS prevents subparsers from setting a default value, which would otherwise
+    # overwrite any value already captured by the main parser. This allows shareable
+    # arguments to work both before and after subcommands (e.g., both
+    # `aib --container build ...` and `aib build --container ...`)
+    if suppress_default:
+        default = argparse.SUPPRESS
+    elif t == "bool":
+        default = False
+    elif t == "append":
+        default = []
+    else:
+        default = None
+
     if t == "bool":
-        a = dst.add_argument(name, default=False, action="store_true")
+        a = dst.add_argument(name, default=default, action="store_true")
     elif t == "bool-optional":
+        # bool-optional doesn't need suppress_default handling
         a = dst.add_argument(name, action=argparse.BooleanOptionalAction)
     elif t == "version":
+        # version doesn't need suppress_default handling
         a = dst.add_argument(name, action="version", version=f"%(prog)s {__version__}")
     elif t == "str":
         a = dst.add_argument(
             name,
             action="store",
             type=str,
+            default=default,
         )
     elif t == "append":
         a = dst.add_argument(
             name,
             action="append",
             type=str,
-            default=[],
+            default=default,
         )
     else:
         log.error("Unknown arg type %s", t)
@@ -760,13 +778,13 @@ def add_arg(parser, groups, name, data):
         a.help = data["help"]
     if "required" in data:
         a.required = data["required"]
-    if "default" in data:
+    if "default" in data and not suppress_default:
         a.default = data["default"]
 
 
-def add_args(parser, groups, args):
+def add_args(parser, groups, args, suppress_default=False):
     for name, data in args.items():
-        add_arg(parser, groups, name, data)
+        add_arg(parser, groups, name, data, suppress_default=suppress_default)
 
 
 def parse_args(args, base_dir):
@@ -774,6 +792,9 @@ def parse_args(args, base_dir):
         prog="automotive-image-builder", description="Build automotive images"
     )
     add_args(parser, {}, COMMON_ARGS)
+    # Add shareable args to main parser with normal defaults
+    for arg_dict in SHAREABLE_ARGS.values():
+        add_args(parser, {}, arg_dict, suppress_default=False)
     parser.set_defaults(func=no_subcommand)
 
     subparsers = parser.add_subparsers(help="sub-command help")
@@ -782,9 +803,19 @@ def parse_args(args, base_dir):
         name = s[0]
         helptext = s[1]
         callback = s[2]
-        subcmd_args = s[3:]
+        # List of shareable arg keys like ["container", "include"]
+        shareable_args = s[3]
+        subcmd_args = s[4:]
+
         subparser = subparsers.add_parser(name, help=helptext)
         subparser.set_defaults(func=callback)
+
+        # Add shareable args to subparser with SUPPRESS default to preserve main parser values
+        # This allows arguments to work in both positions without overwriting each other
+        for key in shareable_args:
+            add_args(subparser, groups, SHAREABLE_ARGS[key], suppress_default=True)
+
+        # Add remaining args
         for _args in subcmd_args:
             add_args(subparser, groups, _args)
 
@@ -804,16 +835,26 @@ def parse_args(args, base_dir):
 COMMON_ARGS = {
     "--version": {"type": "version"},
     "--verbose": {},
-    "--container": "Use containerized build",
-    "--user-container": "Use rootless containerized build",
-    "--container-image-name": {
-        "type": "str",
-        "default": default_container_image_name,
-        "help": f"Container image name, {default_container_image_name} is default if this option remains unused",
+}
+
+# Shareable argument groups that can be used before or after subcommands
+SHAREABLE_ARGS = {
+    "container": {
+        "--container": "Use containerized build",
+        "--user-container": "Use rootless containerized build",
+        "--container-image-name": {
+            "type": "str",
+            "default": default_container_image_name,
+            "help": f"Container image name, {default_container_image_name} is default if this option remains unused",
+        },
+        "--container-autoupdate": "Automatically pull new container image if available",
     },
-    "--container-autoupdate": "Automatically pull new container image if available",
-    "--include": {"type": "append", "help": "Add include directory"},
-    "--vm": {},
+    "include": {
+        "--include": {"type": "append", "help": "Add include directory"},
+    },
+    "vm": {
+        "--vm": {},
+    },
 }
 
 LIST_ARGS = {"--quiet": {}}
@@ -921,13 +962,14 @@ SHARED_RESEAL_ARGS = {
 }
 
 subcommands = [
-    ["list-dist", "list available distributions", list_dist, LIST_ARGS],
-    ["list-targets", "list available targets", list_targets, LIST_ARGS],
-    ["list-exports", "list available exports", list_exports, LIST_ARGS],
+    ["list-dist", "list available distributions", list_dist, ["include"], LIST_ARGS],
+    ["list-targets", "list available targets", list_targets, ["include"], LIST_ARGS],
+    ["list-exports", "list available exports", list_exports, [], LIST_ARGS],
     [
         "compose",
         "Compose osbuild manifest",
         compose,
+        ["container", "include"],
         SHARED_FORMAT_ARGS,
         FORMAT_ARGS,
         {
@@ -939,6 +981,7 @@ subcommands = [
         "list-rpms",
         "List rpms",
         listrpms,
+        ["container", "include"],
         SHARED_FORMAT_ARGS,
         FORMAT_ARGS,
         {
@@ -949,6 +992,7 @@ subcommands = [
         "build",
         "Compose and build osbuild manifest",
         build,
+        ["container", "include", "vm"],
         SHARED_FORMAT_ARGS,
         FORMAT_ARGS,
         SHARED_BUILD_ARGS,
@@ -966,6 +1010,7 @@ subcommands = [
         "download",
         "Download all sources that are needed to build for the image",
         download,
+        [],
         SHARED_FORMAT_ARGS,
         FORMAT_ARGS,
         SHARED_BUILD_ARGS,
@@ -977,6 +1022,7 @@ subcommands = [
         "build-bootc-builder",
         "Create container image to build physical bootc images",
         build_bootc_builder,
+        ["container", "include", "vm"],
         SHARED_FORMAT_ARGS,
         SHARED_BUILD_ARGS,
         {
@@ -987,6 +1033,7 @@ subcommands = [
         "bootc-to-disk-image",
         "Create disk image from bootc container",
         bootc_to_disk_image,
+        [],
         {
             "--bib-container": {
                 "type": "str",
@@ -1005,6 +1052,7 @@ subcommands = [
         "bootc-extract-for-signing",
         "Extract file that need signing",
         bootc_extract_for_signing,
+        [],
         {
             "src_container": "Bootc container name",
             "out": "Output directory",
@@ -1014,6 +1062,7 @@ subcommands = [
         "bootc-inject-signed",
         "Inject signed files",
         bootc_inject_signed,
+        [],
         {
             "src_container": "Bootc container name",
             "srcdir": "Directory with signed files",
