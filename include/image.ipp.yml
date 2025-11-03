@@ -60,7 +60,11 @@ pipelines:
                       else: name:image-tree
               options:
                 from:
-                  mpp-format-string: "input://tree/boot/{_aboot_img()}"
+                  mpp-if: use_ostree
+                  then:
+                    mpp-format-string: "input://tree/{ _kernel_dir()}/aboot.img"
+                  else:
+                    mpp-format-string: "input://tree/boot/{_aboot_img()}"
           - mpp-if: use_efipart
             then:
               type: org.osbuild.mkfs.fat
