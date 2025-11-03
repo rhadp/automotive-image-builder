@@ -768,7 +768,20 @@ mpp-vars:
     - bootupd
 
   package_mode_rpms:
-    - shim
+    mpp-join:
+      - - shim
+        - dnf
+      - mpp-if: use_aboot_like
+        then:
+          - aboot-update # This is needed for kernel package updates to work
+      - mpp-if: use_aboot # Needed by aboot-update on real android boot
+        then:
+          - android-tools
+          - kernel-tools
+      - mpp-if: use_ukiboot # Needed by aboot-update on ukiboot
+        then:
+          - systemd-ukify
+          - systemd-boot
 
   image_rpms:
     mpp-join:
