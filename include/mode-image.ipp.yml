@@ -202,58 +202,6 @@ pipelines:
               type: org.osbuild.bootupd.gen-metadata
           - mpp-if: use_aboot_like
             then:
-              type: org.osbuild-auto.aboot.conf
-              options:
-                boot_type:
-                  mpp-if: use_ukiboot
-                  then: ukiboot
-                pagesize:
-                  mpp-if: "locals().get('aboot_pagesize',) != None"
-                  then:
-                    mpp-format-string: "{aboot_pagesize}"
-                kernel_offset:
-                  mpp-if: "locals().get('aboot_kernel_offset') != None"
-                  then:
-                    mpp-format-string: "{aboot_kernel_offset}"
-                partition_a:
-                  mpp-if: "locals().get('aboot_partition_a') != None"
-                  then:
-                    mpp-format-string: "{aboot_partition_a}"
-                partition_b:
-                  mpp-if: "locals().get('aboot_partition_b') != None"
-                  then:
-                    mpp-format-string: "{aboot_partition_b}"
-                partition_ctl:
-                  mpp-if: "locals().get('partition_ctl') != None"
-                  then:
-                    mpp-format-string: "{partition_ctl}"
-                second_offset:
-                  mpp-if: "locals().get('aboot_second_offset') != None"
-                  then:
-                    mpp-format-string: "{aboot_second_offset}"
-                tags_offset:
-                  mpp-if: "locals().get('aboot_tags_offset') != None"
-                  then:
-                    mpp-format-string: "{aboot_tags_offset}"
-                base:
-                  mpp-if: "locals().get('aboot_base') != None"
-                  then:
-                    mpp-format-string: "{aboot_base}"
-                dtb_file:
-                  mpp-if: "locals().get('aboot_dtb_file') != None"
-                  then:
-                    mpp-format-string: "{aboot_dtb_file}"
-                preptree: true
-                compress_kernel:
-                  mpp-if: "aboot_compress_kernel != None"
-                  then:
-                    mpp-eval: aboot_compress_kernel
-                ramdisk_offset:
-                  mpp-if: "locals().get('aboot_ramdisk_offset') != None"
-                  then:
-                    mpp-format-string: "{aboot_ramdisk_offset}"
-          - mpp-if: use_aboot_like
-            then:
               type: org.osbuild-auto.aboot.update
               options:
                 preptree: true
