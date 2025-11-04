@@ -2,7 +2,7 @@
 
 This test suite validates that the system boots into a healthy and secure state.  
 It includes checks for kernel logs, systemd status, and SELinux configuration.
-All tests are run automatically on boot through a **test-runner.service**.
+All tests run automatically on boot through a **test-runner.service**.
 
 ---
 

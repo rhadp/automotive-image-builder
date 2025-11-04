@@ -1,11 +1,11 @@
-# Testing secure boot with automotive-image-builder
+# Testing secure boot with Automotive Image Builder
 
-This directory contains some (non-suported) example files of how you would
+This directory contains some (non-supported) example files of how you would
 generate and enroll secureboot keys to use when testing secureboot with
-a-i-b generated images.
+AIB generated images.
 
 **WARNING**: Signing files in a secure way for production use is
-complicated and should be done by experts. The approach show here is
+complicated and should be done by experts. The approach shown here is
 simple, and not secure (for example, it stores unencrypted keys on
 disk). It is not meant for production, but for development and
 testing.
@@ -23,7 +23,7 @@ public.
 
 ## Generating secureboot keys for testing
 
-First, lets generate some random keys:
+First, let's generate some random keys:
 ```
 $ ./generate-sb-keys.sh secureboot-keys
 Generating secureboot keys in secureboot-keys
@@ -34,7 +34,7 @@ Keys generated under secureboot-keys
 ```
 
 This generates the `secureboot-keys` directory that contains various
-files.  Note that it asks for a passwordk for the generated PKCS#12
+files.  Note that it asks for a password for the generated PKCS#12
 file. This can optionally be supplied to the script from a file like
 so:
 
@@ -116,18 +116,18 @@ And additionally we have:
 In a real machine the EFI keys are stored in the EFI variables in
 firmware. When the system is in "setup mode" the EFI secureboot
 variables can be set freely. But when a PK key is loaded it turns into
-"user mode" and the other variables can only be se it they are signed
+"user mode" and the other variables can only be set if they are signed
 by the PK. Also, the system will only boot EFI firmware files
 containing trusted signatures.
 
 In qemu, the EFI variables is stored in a file, which can be specified
-in automotive-image-runner with the `--secureboot-vars` and
+in `automotive-image-runner` with the `--secureboot-vars` and
 `--secureboot-writeable` arguments. So, to enroll the keys we boot an
 image with an empty variable file, and enroll the keys. This will
 update the file which we can then later reuse to boot any image,
 knowing that it will now only boot EFI files signed by the PK.
 
-To do this, build and run the `enroll.aib.yml` image which embedds the keys that
+To do this, build and run the `enroll.aib.yml` image which embeds the keys that
 where generated above (in the `secureboot-keys` directory.
 ```
 $ automotive-image-builder build --distro autosd10-latest-sig --export image enroll.aib.yml enroll.img
@@ -142,7 +142,7 @@ generated `secboot_vars.fd` for later use (with --secureboot).
 If you have an image where the EFI files are signed with the
 secureboot keys you can use the `secboot_vars.fd` file generated above
 by passing `--secureboot-vars=secboot_vars.fd` to
-autmotive-image-builder. This will fail to boot an non-signed or
+`automotive-image-builder`. This will fail to boot a non-signed or
 incorrectly signed image.
 
 ## Signing EFI files
