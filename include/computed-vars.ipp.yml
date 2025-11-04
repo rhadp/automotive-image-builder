@@ -172,6 +172,8 @@ mpp-vars:
   use_kernel_debug_package:
     mpp-if: "'debug' in locals().get('kernel_package')"
     then: true
+  use_ostree:
+    mpp-eval: use_ostree or image_mode == 'image'
   _kernel_subdir:
     mpp-eval: _kernel_evra + ("+debug" if use_kernel_debug_package else "")
   _kernel_dir:
@@ -179,12 +181,18 @@ mpp-vars:
   _aboot_img:
     mpp-eval: |
       "aboot-" + _kernel_subdir + ".img"
+  _boot_aboot_img:
+    mpp-if: use_ostree
+    then:
+      mpp-eval: |
+        _kernel_dir + "/aboot.img"
+    else:
+      mpp-eval: |
+        "/boot/" + _aboot_img
   systemd_timeout:
     mpp-eval: "'180s' if use_debug or use_kernel_debug_package else systemd_timeout"
   coredump_storage:
     mpp-eval: "'external' if use_debug or use_kernel_debug_package else coredump_storage"
-  use_ostree:
-    mpp-eval: use_ostree or image_mode == 'image'
   _dash_escape: "\\x2d"
   denylist_rpms:
     mpp-join:
