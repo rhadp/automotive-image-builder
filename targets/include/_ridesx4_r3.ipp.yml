@@ -1,4 +1,0 @@
-# Implementation of ridesx4_r3.ipp.yml but loaded after derived target
-version: '2'
-mpp-vars:
-  aboot_dtb_file: "qcom/sa8775p-ride-r3.dtb"
