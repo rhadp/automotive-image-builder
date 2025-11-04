@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import time
+import warnings
 
 from dataclasses import dataclass
 from functools import cached_property
@@ -74,6 +75,11 @@ class AIBParameters:
         """
 
         if self.args.fusa:
+            warnings.warn(
+                "The --fusa argument is deprecated, use --policy instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             policy_input = "hardened"
         elif self.args.policy:
             policy_input = self.args.policy
