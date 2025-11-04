@@ -1,4 +1,4 @@
-# AutoSD 9 - based on nightly autosd compose
+# AutoSD 10 - based on nightly autosd compose
 version: '2'
 mpp-vars:
   distro_name: autosd
