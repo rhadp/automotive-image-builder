@@ -1,4 +1,4 @@
-# AutoSD 9 - based on nightly autosd compose, plus the automotive sig community packages
+# AutoSD 10 - based on nightly autosd compose, plus the automotive sig community packages
 version: '2'
 mpp-vars:
   distro_name: autosd-sig
