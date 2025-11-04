@@ -2,12 +2,17 @@ summary: Verify that custom files and directories (exact paths or globs) are pro
 description: |
   Builds an AIB image with custom files using direct paths and glob patterns,
   and verifies their presence in the output image according to the configured behavior.
+  Also tests that invalid top-level paths are properly rejected during validation.
 
   Test inputs:
-    Custom a-i-b manifest, which specifies files and directories to be added to the image.
+    - Custom a-i-b manifest with files in allowed directories (/etc, /var)
+    - Invalid manifests with custom top-level directories and root-level files
 
   Expected results:
     - PASS: 'Image contains all required files'
+    - PASS: 'Build failed as expected for custom top-level directory'
+    - PASS: 'Build failed as expected for root-level file'
+    - PASS: 'Path validation correctly rejects invalid paths'
 
   Results location:
     output.txt

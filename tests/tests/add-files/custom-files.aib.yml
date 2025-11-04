@@ -1,35 +1,35 @@
 name: add_files
 content:
   make_dirs:
-    - path: /dir
-    - path: /test-glob
-    - path: /test-glob-preserve
-    - path: /test-glob-preserve-log
+    - path: /etc/custom-files
+    - path: /etc/test-glob
+    - path: /etc/test-glob-preserve
+    - path: /etc/test-glob-preserve-log
 
   add_files:
-    - path: /dir/file1.txt
+    - path: /etc/custom-files/file1.txt
       source_path: custom-files.aib.yml
 
-    - path: /dir/file2.txt
+    - path: /etc/custom-files/file2.txt
       text: |
         This is the file content
 
-    - path: /dir/file3.txt
+    - path: /etc/custom-files/file3.txt
       url: "https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/raw/main/README.md?ref_type=heads&inline=false"
 
     # Test basic glob pattern (flatten files)
-    - path: /test-glob
+    - path: /etc/test-glob
       source_glob: "test-data/*.txt"
       preserve_path: false
 
     # Test glob pattern recursive (flatten files)
-    - path: /test-glob-preserve-log
+    - path: /etc/test-glob-preserve-log
       source_glob: "test-data/**/*.log"
       preserve_path: false
 
     # Test large glob pattern with path preservation
     # Limit to 100 files to test max_files functionality
-    - path: /test-glob-preserve
+    - path: /etc/test-glob-preserve
       source_glob: "test-data/**/*"
       preserve_path: true
       max_files: 100
@@ -37,8 +37,8 @@ content:
 qm:
   content:
     make_dirs:
-      - path: /dir
+      - path: /etc/qm-custom
     add_files:
-      - path: /dir/file4.txt
+      - path: /etc/qm-custom/file4.txt
         text: |
           This is the qm file content

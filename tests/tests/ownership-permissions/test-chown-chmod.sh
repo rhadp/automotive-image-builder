@@ -3,17 +3,17 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
-build --export tar --extend-define tar_paths=['test-files','usr/lib/qm/rootfs/test-files'] test.aib.yml out.tar
+build --export tar --extend-define tar_paths=['etc/test-files','usr/lib/qm/rootfs/etc/test-files'] test.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
 tar xvf out.tar
 
 # Define extracted file paths (content)
-EXTRACTED_DIR="./test-files"
+EXTRACTED_DIR="./etc/test-files"
 FILE1="$EXTRACTED_DIR/file1.txt"
 FILE2="$EXTRACTED_DIR/file2.txt"
 
 # Define extracted file paths (QM)
-QM_EXTRACTED_DIR="./usr/lib/qm/rootfs/test-files"
+QM_EXTRACTED_DIR="./usr/lib/qm/rootfs/etc/test-files"
 QM_FILE1="$QM_EXTRACTED_DIR/file1.txt"
 QM_FILE2="$QM_EXTRACTED_DIR/file2.txt"
 

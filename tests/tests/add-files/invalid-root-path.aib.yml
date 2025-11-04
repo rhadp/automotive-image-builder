@@ -1,0 +1,5 @@
+name: test_invalid_root_path
+content:
+  add_files:
+    - path: /test.txt
+      source_path: test-data/file1.txt

@@ -10,6 +10,23 @@ import jsonschema
 from . import exceptions, log
 
 
+# Allowed top-level directories (based on org.osbuild.ostree.preptree)
+ALLOWED_TOP_LEVEL_DIRS = [
+    "/etc/",
+    "/usr/",
+    "/bin/",
+    "/lib/",
+    "/lib32/",
+    "/lib64/",
+    "/sbin/",
+]
+
+# Disallowed paths (take precedence over allowed directories)
+DISALLOWED_PATHS = [
+    "/usr/local/",
+]
+
+
 # Duplicate a dict and drop one key
 def without(d, key):
     new_d = d.copy()
@@ -318,6 +335,28 @@ class Contents:
         self.file_content_copy = []
         self.systemd = data.get("systemd", {})
         self.sbom = data.get("sbom", {})
+
+        self.validate_paths()
+
+    def _validate_path(self, path):
+        """Check if a single path is under allowed top-level directories."""
+        # First check if path is explicitly disallowed
+        if any(path.startswith(prefix) for prefix in DISALLOWED_PATHS):
+            raise exceptions.InvalidTopLevelPath(path, ALLOWED_TOP_LEVEL_DIRS)
+
+        # Then check if path is under allowed directories
+        if not any(path.startswith(prefix) for prefix in ALLOWED_TOP_LEVEL_DIRS):
+            raise exceptions.InvalidTopLevelPath(path, ALLOWED_TOP_LEVEL_DIRS)
+
+    def validate_paths(self):
+        """Validate that all paths are under allowed top-level directories."""
+        # Validate make_dirs
+        for dir_entry in self.make_dirs:
+            self._validate_path(dir_entry.get("path"))
+
+        # Validate add_files destination paths
+        for file_entry in self.add_files:
+            self._validate_path(file_entry.get("path", ""))
 
     # Gets key to use for target partition (rootfs/qm)
     def get_key(self, key):

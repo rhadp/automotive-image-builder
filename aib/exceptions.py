@@ -97,3 +97,15 @@ class TooManyFilesError(AIBException):
 class MissingLogFile(AIBException):
     def __str__(self):
         return "Log file must be specified when progress monitoring is enabled"
+
+
+class InvalidTopLevelPath(AIBException):
+    def __init__(self, path, allowed_dirs):
+        self.path = path
+        self.allowed_dirs = allowed_dirs
+
+    def __str__(self):
+        return (
+            f"Path '{self.path}' is not allowed. "
+            f"Files and directories must be under one of: {', '.join(self.allowed_dirs)}"
+        )
