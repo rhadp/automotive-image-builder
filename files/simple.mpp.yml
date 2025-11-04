@@ -119,6 +119,9 @@ pipelines:
   - name: rootfs
     build: name:build
     stages:
+
+      - type: org.osbuild.systemd-sysusers
+
       - type: org.osbuild.rpm
         options:
           gpgkeys:
