@@ -40,6 +40,11 @@ test-compose:
 test-unit:
 	pytest aib/tests
 
+# To run single test, for example "make test-integration-selinux-config"
+test-integration-%:
+	cd tests && \
+	tmt --feeling-safe run -v -ePROJECT_DIR=$$PWD/.. plan --name local test --name $*
+
 .PHONY: test-integration
 test-integration:
 	cd tests && \
