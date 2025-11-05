@@ -60,11 +60,7 @@ pipelines:
                       else: name:image-tree
               options:
                 from:
-                  mpp-if: use_ostree
-                  then:
-                    mpp-format-string: "input://tree/{ _kernel_dir()}/aboot.img"
-                  else:
-                    mpp-format-string: "input://tree/boot/{_aboot_img()}"
+                  mpp-format-string: "input://tree{ _boot_aboot_img()}"
           - mpp-if: use_efipart
             then:
               type: org.osbuild.mkfs.fat
@@ -431,6 +427,13 @@ pipelines:
               origin: org.osbuild.pipeline
               references:
                 - name:image-tree
+            aboottree:
+              type: org.osbuild.tree
+              origin: org.osbuild.pipeline
+              references:
+                - mpp-if: use_ostree
+                  then: name:ostree-tree
+                  else: name:image-tree
           options:
             paths:
               mpp-join:
@@ -441,7 +444,7 @@ pipelines:
                     - from: input://ext4-qm-var/qm_var.ext4
                       to: tree:///images/qm_var.ext4
                 - - from:
-                      mpp-format-string: "input://tree/boot/{_aboot_img()}"
+                      mpp-format-string: "input://aboottree{_boot_aboot_img()}"
                     to: tree:///images/aboot.img
 
   # This is essentially rootfs with no image-specific stuff like boot, etc, but with

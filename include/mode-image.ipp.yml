@@ -405,12 +405,6 @@ pipelines:
             osname:
               mpp-eval: osname
             ref: ostree/1/1/0
-      - mpp-if: use_aboot
-        then:
-          type: org.osbuild-auto.aboot.update
-          options:
-            kernel:
-              mpp-eval: _kernel_subdir()
       - mpp-if: use_grub2
         then:
           type: org.osbuild.grub2
