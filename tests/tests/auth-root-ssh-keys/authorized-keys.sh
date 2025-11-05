@@ -4,7 +4,7 @@ source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build for root_ssh_keys test..."
 build \
-    --export tar \
+    --export bootc-tar \
     --extend-define tar_paths=['etc/ssh/sshd_config','etc/ssh/authorized_keys/root','etc/ssh/sshd_config.d/99-custom-authorized-keys.conf'] \
     test-authorized-keys.aib.yml \
     out.tar

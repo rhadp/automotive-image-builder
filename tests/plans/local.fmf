@@ -35,11 +35,6 @@ prepare:
       script: |
          ${AIB} --version
 
-    - name: Report a-i-b version
-      how: shell
-      script: |
-          rpm -qi automotive-image-builder
-
     - name: Populate build cache directory
       how: shell
       script: |

@@ -2,7 +2,7 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
-build --export tar --extend-define "tar_paths=['etc','usr/lib']" test-network-dynamic.aib.yml out.tar
+build --export bootc-tar --extend-define "tar_paths=['etc','usr/lib']" test-network-dynamic.aib.yml out.tar
 tar xf out.tar
 
 # 1. Ensure no static network config files exist

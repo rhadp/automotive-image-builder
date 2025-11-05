@@ -3,12 +3,13 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build for auth users and groups test..."
-build --export tar --extend-define "tar_paths=['etc/passwd','etc/group','etc/shadow']" test-users-and-groups.aib.yml out.tar
+build --export bootc-tar --extend-define "tar_paths=['usr/lib/passwd','usr/lib/group','etc/shadow']" test-users-and-groups.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
-tar xvf out.tar
 
-PASSWD_PATH="./etc/passwd"
-GROUP_PATH="./etc/group"
+tar xvf out.tar --no-same-owner --no-same-permissions
+
+PASSWD_PATH="./usr/lib/passwd"
+GROUP_PATH="./usr/lib/group"
 SHADOW_PATH="./etc/shadow"
 EXPECTED_HASH='$6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.'
 
@@ -25,6 +26,7 @@ assert_file_has_content "$GROUP_PATH" "devs:x:2050:guest"
 
 # Validate presence of /etc/shadow and expected password hash entry
 assert_has_file "$SHADOW_PATH"
+chmod a+r "$SHADOW_PATH"
 assert_file_has_content "$SHADOW_PATH" "guest:$EXPECTED_HASH"
 
 echo_pass "users and groups validated successfully."

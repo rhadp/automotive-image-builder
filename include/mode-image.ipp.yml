@@ -275,6 +275,27 @@ pipelines:
           cmd:
             mpp-eval: container_cmd
 
+  - name: bootc-tar
+    build: name:build
+    stages:
+      - type: org.osbuild.tar
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:ostree-tree
+        options:
+          filename: rootfs.tar
+          transform: 's,^usr/etc,etc,'
+          root-node:
+            mpp-if: not tar_paths
+            then: omit
+          paths:
+            mpp-if: tar_paths
+            then:
+              mpp-eval: '[_re.sub(r"^etc(?=$|/)", "usr/etc", p) for p in tar_paths]'
+
   - name: image-tree
     build: name:build
     stages:
