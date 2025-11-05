@@ -11,6 +11,8 @@ mpp-vars:
     mpp-eval: "__import__('yaml')"
   _datetime:
     mpp-eval: "__import__('datetime')"
+  _re:
+    mpp-eval: "__import__('re')"
   _printerr:
     mpp-eval: "lambda errstr: print('Error: ' + errstr, file=_sys.stderr)"
   _error:

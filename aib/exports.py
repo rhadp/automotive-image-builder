@@ -29,6 +29,10 @@ EXPORT_DATAS = {
         "filename": "image.oci-archive",
         "convert": "podman-import-user",
     },
+    "bootc-tar": {
+        "desc": "The file content of the bootc container, in a tar file",
+        "filename": "rootfs.tar",
+    },
     "rootfs": {
         "desc": "Directory with image rootfs files",
         "filename": None,
