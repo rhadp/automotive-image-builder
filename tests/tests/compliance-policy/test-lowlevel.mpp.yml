@@ -1,0 +1,50 @@
+# This is an example of a lowlevel manifest, directly
+# using osbuild-mpp. Normally you would want to use
+# the more high-level simpler manifest format such
+# as simple.aib.yml
+
+version: '2'
+mpp-vars:
+  name: lowlevel
+  # In case use_qm is enabled
+  qm_pipeline: qm_rootfs_base
+
+pipelines:
+  - name: rootfs
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        options:
+          gpgkeys:
+            - mpp-eval: distro_gpg_keys
+          disable_dracut: true
+          exclude:
+            docs: true
+          ostree_booted:
+            mpp-eval: use_ostree
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              ignore-weak-deps: true
+              module-platform-id: $distro_module_id
+              baseurl: $distro_baseurl_repo
+              repos:
+                mpp-join:
+                  - mpp-eval: image_repos
+                  - mpp-eval: extra_repos
+              packages:
+                mpp-join:
+                  - mpp-eval: image_rpms
+                  - - emacs
+                    - git
+
+      - type: org.osbuild.users
+        options:
+          users:
+            guest:
+              password: "$6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU."
+              gid: 999
+              uid: 999

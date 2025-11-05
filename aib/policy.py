@@ -140,6 +140,10 @@ class Policy:
     def _process_restrictions(self, restrictions: Dict[str, Any]) -> Dict[str, Any]:
         """Process restrictions to merge target-specific entries and remove @target keys."""
         for restriction_data in restrictions.values():
+            # Skip non-dict restrictions (e.g., boolean flags like require_simple_manifest)
+            if not isinstance(restriction_data, dict):
+                continue
+
             keys_to_remove = []
 
             # Find and merge target-specific keys
@@ -218,6 +222,11 @@ class Policy:
         """Get sysctl parameters to force to specific values."""
         return self.restrictions.get("sysctl", {}).get("force", {})
 
+    @property
+    def require_simple_manifest(self) -> bool:
+        """Check if policy requires simple manifest usage only."""
+        return self.restrictions.get("require_simple_manifest", False)
+
     def validate_build_args(
         self,
         mode: str,
@@ -271,6 +280,15 @@ class Policy:
                 )
 
         return errors
+
+    def validate_manifest_type(self, is_simple_manifest: bool) -> List[str]:
+        """Validate manifest type against policy restrictions."""
+        if self.require_simple_manifest and not is_simple_manifest:
+            return [
+                f"Policy '{self.name}' requires using a simple manifest (.aib.yml), "
+                f"but a low-level manifest (.mpp.yml) was provided"
+            ]
+        return []
 
     def validate_manifest(self, manifest: Dict[str, Any]) -> List[str]:
         """Validate manifest content against policy restrictions."""

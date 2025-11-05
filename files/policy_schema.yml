@@ -235,6 +235,10 @@ properties:
           - $ref: "#/definitions/force_objects"
           - description: "Sysctl parameter enforcement"
 
+      require_simple_manifest:
+        type: boolean
+        description: "When true, only allow simple manifest (.aib.yml) usage, disallow low-level (.mpp.yml) manifests"
+        default: false
 
     additionalProperties: false
 
