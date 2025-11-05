@@ -80,55 +80,77 @@ def test_json_bool(value, expected):
 @pytest.mark.parametrize(
     "path,should_be_valid",
     [
-        # Valid paths under allowed directories
+        # Valid paths for add_files (only /etc and /usr)
         ("/etc/custom-files/file.txt", True),
+        ("/etc/config.conf", True),
         ("/usr/bin/script.sh", True),
         ("/usr/lib/app.so", True),
-        ("/bin/custom-binary", True),
-        ("/lib/custom.so", True),
-        ("/lib32/custom32.so", True),
-        ("/lib64/custom64.so", True),
-        ("/sbin/custom-service", True),
-        # Invalid paths - disallowed even though under /usr/
+        ("/usr/share/data.txt", True),
+        # Invalid paths for add_files
+        ("/var/log/app.log", False),  # /var not allowed for add_files
+        ("/opt/aib/aib.txt", False),
         ("/usr/local/bin/script.sh", False),
-        ("/usr/local/lib/app.so", False),
-        # Invalid paths not under allowed directories
         ("/custom-dir/file.txt", False),
         ("/test.txt", False),
-        ("/myapp/config.txt", False),
-        ("/data/file.txt", False),
-        ("/opt/app/bin", False),
-        ("/var/log/app.log", False),
         ("/boot/grub/grub.cfg", False),
         ("/home/user/.bashrc", False),
         ("/root/.ssh/authorized_keys", False),
     ],
 )
-def test_validate_paths(path, should_be_valid):
-    """Test path validation for both allowed and disallowed directories"""
+def test_validate_add_files_paths(path, should_be_valid):
+    """Test path validation for add_files (only /etc and /usr allowed)"""
     mock_loader = Mock()
     extra_include = ExtraInclude("/tmp/test-basedir")
 
     if should_be_valid:
-        # Test with add_files - should not raise exception
+        # Should not raise exception
         data = {"add_files": [{"path": path, "text": "content"}]}
         Contents(mock_loader, data, extra_include)
+    else:
+        # Should raise InvalidTopLevelPath
+        data = {"add_files": [{"path": path, "text": "content"}]}
+        with pytest.raises(exceptions.InvalidTopLevelPath) as exc_info:
+            Contents(mock_loader, data, extra_include)
+        assert path in str(exc_info.value)
+        assert "add_files" in str(exc_info.value)
 
-        # Test with make_dirs - should not raise exception
+
+@pytest.mark.parametrize(
+    "path,should_be_valid",
+    [
+        # Valid paths for make_dirs (/etc, /usr, and /var)
+        ("/etc/custom-dir", True),
+        ("/usr/local-app", True),  # doesn't start with /usr/local/
+        ("/usr/lib/myapp", True),
+        ("/var/log", True),  # /var IS allowed for make_dirs
+        ("/var/lib/app", True),
+        ("/var/cache", True),
+        # Invalid paths for make_dirs
+        ("/usr/local/bin", False),  # /usr/local explicitly disallowed
+        ("/opt/aib", False),
+        ("/custom-dir", False),
+        ("/test", False),
+        ("/boot/grub", False),
+        ("/home/user", False),
+        ("/root/.ssh", False),
+    ],
+)
+def test_validate_make_dirs_paths(path, should_be_valid):
+    """Test path validation for make_dirs (/etc, /usr, and /var allowed)"""
+    mock_loader = Mock()
+    extra_include = ExtraInclude("/tmp/test-basedir")
+
+    if should_be_valid:
+        # Should not raise exception
         data = {"make_dirs": [{"path": path}]}
         Contents(mock_loader, data, extra_include)
     else:
-        # Test with add_files - should raise InvalidTopLevelPath
-        data = {"add_files": [{"path": path, "text": "content"}]}
-        with pytest.raises(exceptions.InvalidTopLevelPath) as exc_info:
-            Contents(mock_loader, data, extra_include)
-        assert path in str(exc_info.value)
-
-        # Test with make_dirs - should raise InvalidTopLevelPath
+        # Should raise InvalidTopLevelPath
         data = {"make_dirs": [{"path": path}]}
         with pytest.raises(exceptions.InvalidTopLevelPath) as exc_info:
             Contents(mock_loader, data, extra_include)
         assert path in str(exc_info.value)
+        assert "make_dirs" in str(exc_info.value)
 
 
 class TestExtraInclude(unittest.TestCase):
