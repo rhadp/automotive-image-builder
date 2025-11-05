@@ -3,7 +3,7 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
-build --export tar --extend-define tar_paths=['usr/sbin','usr/lib/qm/rootfs/usr/sbin'] test-remove-files.aib.yml out.tar
+build --export bootc-tar --extend-define tar_paths=['usr/sbin','usr/lib/qm/rootfs/usr/sbin'] test-remove-files.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
 tar xvf out.tar
 
