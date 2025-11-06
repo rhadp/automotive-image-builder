@@ -306,4 +306,26 @@ assert_kernel_module_not_removed qemu_out.json "rcar_dmac"
 
 echo_log "Target-specific policy configuration working correctly"
 
+# Test 14: Test require_simple_manifest restriction
+echo_log "Test 14: Testing require_simple_manifest restriction..."
+
+# Test that compliance policy blocks low-level manifests
+echo_log "  Testing compliance policy blocks low-level manifests..."
+if trycompose --policy compliance.aibp.yml test-lowlevel.mpp.yml out.json 2> manifest_type_error.txt; then
+    echo_fail "Compliance policy should deny low-level manifests"
+    fatal "Compliance policy should have blocked low-level manifest"
+else
+    echo_log "Compliance policy correctly blocked low-level manifest"
+fi
+assert_file_has_content manifest_type_error.txt "simple manifest (.aib.yml)"
+assert_file_has_content manifest_type_error.txt "low-level manifest (.mpp.yml)"
+
+# Test that minimal policy (without require_simple_manifest) allows low-level manifests
+echo_log "  Testing minimal policy allows low-level manifests..."
+compose --policy minimal.aibp.yml test-lowlevel.mpp.yml lowlevel_allowed_out.json
+assert_has_file lowlevel_allowed_out.json
+echo_log "Minimal policy correctly allows low-level manifest"
+
+echo_log "require_simple_manifest restriction working correctly"
+
 echo_pass "All Compliance policy tests passed successfully"

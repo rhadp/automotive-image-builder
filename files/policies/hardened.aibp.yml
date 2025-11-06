@@ -2,6 +2,8 @@ name: hardened
 description: Hardened security and safety policy
 
 restrictions:
+  require_simple_manifest: true
+
   modes:
     allow:
       - image

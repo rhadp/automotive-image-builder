@@ -840,3 +840,39 @@ restrictions:
         {"key": "test.setting", "value": "1"}
     ]
     assert defines["policy_selinux_booleans"] == ["test_boolean=false"]
+
+
+def test_require_simple_manifest(tmp_path):
+    """Test require_simple_manifest restriction."""
+    # Policy with restriction enabled
+    policy_content = """
+name: test-simple-only
+description: Policy requiring simple manifests
+restrictions:
+  require_simple_manifest: true
+"""
+    loader, policy_file = create_policy_test_setup(tmp_path, policy_content)
+    policy = loader.load_policy(policy_file, "qemu")
+
+    assert policy.require_simple_manifest is True
+    assert policy.validate_manifest_type(is_simple_manifest=True) == []
+    errors = policy.validate_manifest_type(is_simple_manifest=False)
+    assert len(errors) == 1
+    assert "simple manifest (.aib.yml)" in errors[0]
+    assert "low-level manifest (.mpp.yml)" in errors[0]
+
+    # Policy without restriction (default behavior)
+    policy_content_default = """
+name: test-no-restriction
+description: Policy without manifest type restriction
+restrictions:
+  modes:
+    allow:
+      - image
+"""
+    policy_file_default = tmp_path / "policy_default.aibp.yml"
+    policy_file_default.write_text(policy_content_default)
+    policy_default = loader.load_policy(policy_file_default, "qemu")
+
+    assert policy_default.require_simple_manifest is False
+    assert policy_default.validate_manifest_type(is_simple_manifest=False) == []

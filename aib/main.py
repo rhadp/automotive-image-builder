@@ -145,10 +145,20 @@ def strip_ext(path):
 def validate_policy_args(args):
     """Validate build arguments against policy restrictions."""
     if args.policy:
-        # Validate build arguments
-        errors = args.policy.validate_build_args(
-            args.mode, args.target, args.distro, args.arch
+        errors = []
+
+        # Validate manifest type
+        errors.extend(
+            args.policy.validate_manifest_type(args.simple_manifest is not None)
         )
+
+        # Validate build arguments
+        errors.extend(
+            args.policy.validate_build_args(
+                args.mode, args.target, args.distro, args.arch
+            )
+        )
+
         if errors:
             raise exceptions.AIBException(
                 "Policy validation failed:\n" + "\n".join(errors)
