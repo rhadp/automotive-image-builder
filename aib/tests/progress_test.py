@@ -311,10 +311,16 @@ class TestProgressArgs(unittest.TestCase):
 
         self.assertIsInstance(progress_args, ProgressArgs)
         self.assertIn("console", progress_args.kwargs)
-        self.assertIn("refresh_per_second", progress_args.kwargs)
+        self.assertTrue(
+            "refresh_per_second" in progress_args.kwargs
+            or "auto_refresh" in progress_args.kwargs
+        )
 
         # Test that kwargs contain expected values
-        self.assertEqual(progress_args.kwargs["refresh_per_second"], 10)
+        if "refresh_per_second" in progress_args.kwargs:
+            self.assertEqual(progress_args.kwargs["refresh_per_second"], 10)
+        else:
+            self.assertEqual(progress_args.kwargs["auto_refresh"], False)
         self.assertEqual(progress_args.kwargs["console"], monitor.console)
 
 

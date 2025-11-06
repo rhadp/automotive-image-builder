@@ -14,16 +14,14 @@ from aib.main import parse_args
             ["--export", "qcow2", "test.mpp.yml", "output"],
             True,
         ),
-        ("build", "--vm", [], ["--export", "qcow2", "test.mpp.yml", "output"], True),
-        ("compose", "--container", [], ["test.mpp.yml", "output.json"], True),
         (
-            "compose",
+            "build",
             "--include",
             ["/some/path"],
-            ["test.mpp.yml", "output.json"],
+            ["--export", "qcow2", "test.mpp.yml", "output.json"],
             "/some/path",
         ),
-        ("list-dist", "--include", ["/some/path"], [], "/some/path"),
+        ("list-distro", "--include", ["/some/path"], [], "/some/path"),
     ],
 )
 def test_args_work_before_and_after_subcommands(

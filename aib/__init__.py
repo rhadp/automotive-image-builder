@@ -106,21 +106,11 @@ class AIBParameters:
     def func(self, tmpdir, runner):
         return self.args.func(self, tmpdir, runner)
 
-    @property
-    def log_file(self):
+    def log_file(self, tmpdir):
         if self.args.progress or self.args.logfile:
-            try:
-                return (
-                    self.args.logfile
-                    if self.args.logfile
-                    else os.path.join(
-                        self.args.build_dir,
-                        f"automotive-image-builder-{time.strftime('%Y%m%d-%H%M%S')}.log",
-                    )
-                )
-            except TypeError:
-                # In case build_dir is not set, pass silently and return None
-                pass
+            build_dir = self.args.build_dir or tmpdir
+            filename = f"automotive-image-builder-{time.strftime('%Y%m%d-%H%M%S')}.log"
+            return self.args.logfile or os.path.join(build_dir, filename)
         return None
 
     def __getattr__(self, name: str) -> Any:
