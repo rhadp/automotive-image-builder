@@ -40,9 +40,7 @@
 │   │   ├── ostree_test.py
 │   │   ├── runner_test.py
 │   │   ├── simple_test.py
-│   │   ├── utils_test.py
-│   │   ├── vm_test.py
-│   │   └── vmhelper_test.py
+│   │   └── utils_test.py
 │   ├── __init__.py
 │   ├── exceptions.py
 │   ├── exports.py
@@ -51,9 +49,7 @@
 │   ├── runner.py
 │   ├── simple.py
 │   ├── utils.py
-│   ├── version.py
-│   ├── vm.py
-│   └── vmhelper.py
+│   └── version.py
 ├── build/
 │   └── build-rpm.sh
 ├── ci-scripts/
@@ -82,7 +78,6 @@
 │   ├── qm.aib.yml
 │   └── simple.aib.yml
 ├── files/
-│   ├── dnf-aibvm-init.conf
 │   ├── manifest_schema.yml
 │   └── simple.mpp.yml
 ├── include/
@@ -192,7 +187,7 @@
 - `aib.main`: The main entry point. It handles command-line argument parsing, discovers configuration files (`.ipp.yml`), and orchestrates the build process.
 - `aib.runner`: The core execution engine. It takes the processed configuration and likely invokes underlying build tools like `osbuild`.
 - `aib.simple.ManifestLoader`: Responsible for loading, parsing, and processing the primary user-provided YAML manifest files.
-- `aib.ostree`, `aib.vm`, `aib.exports`: Specialized modules that handle specific functionalities like OSTree repository operations, VM management, and exporting build artifacts.
+- `aib.ostree`, `aib.exports`: Specialized modules that handle specific functionalities like OSTree repository operations, VM management, and exporting build artifacts.
 **Entry Points:** The application is executed via the command line through `aib/main.py`. The primary flow involves parsing arguments, loading and merging a hierarchy of YAML files (`.ipp.yml`, `.aib.yml`), and passing the resulting configuration to the `Runner` to execute the build.
 
 ### Important Files for Review Context
@@ -303,9 +298,8 @@
 
 - **Manifest Auto-Detection**: `.aib.yml` files are automatically converted to use `files/simple.mpp.yml` as the low-level manifest, allowing seamless high-level to low-level transitions.
 - **Policy Validation Timing**: Policy restrictions are validated early in the build process (before manifest processing) to provide clear error messages and avoid wasted build time.
-- **VM vs Container Builds**: `--vm` provides better isolation but requires more setup; `--container` is default for CI. VM builds download sources on host, then build in isolated VM environment.
 - **Build Directory Persistence**: `--build-dir` enables caching of OSBuild artifacts and downloaded packages between builds for significant performance improvements.
-- **Cross-Architecture Support**: Can compose manifests for any architecture but can only build for native architecture unless using VM/container isolation.
+- **Cross-Architecture Support**: Can compose manifests for any architecture but can only build for native architecture unless using container isolation.
 
 ## Additional Context
 

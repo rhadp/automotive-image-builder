@@ -27,7 +27,7 @@ from aib.main import parse_args
 def test_args_work_before_and_after_subcommands(
     arg_before_subcommand, subcommand, arg_name, arg_value, extra_args, expected_value
 ):
-    """Test that --container, --vm, and --include work both before and after subcommands."""
+    """Test that --container, and --include work both before and after subcommands."""
     if arg_before_subcommand:
         args = [arg_name] + arg_value + [subcommand] + extra_args
     else:

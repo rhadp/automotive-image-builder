@@ -27,7 +27,6 @@ from .version import __version__
 from . import exceptions
 from . import AIBParameters
 from . import log
-from . import vmhelper
 from .podman import (
     podman_image_exists,
     podman_image_info,
@@ -183,7 +182,7 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
         "distro_name": args.distro,
         "image_mode": args.mode,
         "osbuild_major_version": get_osbuild_major_version(
-            runner, use_container=(args.vm or args.container)
+            runner, use_container=args.container
         ),
         # This is a leftover for backwards compatibilty:
         "image_type": "ostree" if args.mode == "image" else "regular",
@@ -365,82 +364,18 @@ def _run_osbuild(args, tmpdir, runner, exports):
             # Add JSONSeqMonitor for progress monitoring
             cmdline += ["--monitor", "JSONSeqMonitor"]
 
-        if args.vm:
-            # Download sources on host, using no exports
+        for exp in exports:
+            cmdline += ["--export", exp]
 
-            cmdline += [osbuild_manifest]
-            runner.run_in_container(
-                cmdline,
-                progress=args.progress,
-                verbose=args.verbose,
-                log_file=args.log_file(tmpdir),
-            )
+        cmdline += [osbuild_manifest]
 
-            # Now do the build in the vm
-
-            shutil.copyfile(osbuild_manifest, os.path.join(builddir, "manifest.json"))
-
-            with open(osbuild_manifest) as f:
-                d = json.load(f)
-                curl_items = d.get("sources", {}).get("org.osbuild.curl", {})
-                curl_files = curl_items.get("items", {}).keys()
-                with open(os.path.join(builddir, "manifest.files"), "w") as f2:
-                    f2.write("\n".join(curl_files))
-
-            kernel = f"aibvm-{args.arch}.vmlinux"
-            rootimg = f"aibvm-{args.arch}.qcow2"
-
-            # TODO: Should these be in builddir?
-            var_image = os.path.join(builddir, f"aibvm-var-{args.arch}.qcow2")
-            escaped_image = args.container_image_name.replace("/", "_")
-            container_file = os.path.join(
-                builddir, f"aibvm-{escaped_image}-{args.arch}.tar"
-            )
-
-            if not os.path.isfile(var_image):
-                vmhelper.mk_var(var_image)
-
-            if not os.path.isfile(container_file):
-                vmhelper.get_container(
-                    container_file, args.arch, args.container_image_name
-                )
-
-            output_tar = os.path.join(builddir, "output.tar")
-            try:
-                # Ensure no leftover from earlier build
-                os.remove(output_tar)
-            except OSError:
-                pass
-
-            res = vmhelper.run_vm(
-                args.arch,
-                kernel,
-                rootimg,
-                var_image,
-                container_file,
-                builddir,
-                os.path.join(args.base_dir, "files/aibvm-run"),
-                "4G",
-                args.container_image_name,
-                f"EXPORTS={','.join(exports)}",
-            )
-            if res != 0:
-                sys.exit(1)  # vm will have printed the error
-
-            runner.run_as_root(["tar", "xvf", output_tar, "-C", outputdir.name])
-        else:
-            for exp in exports:
-                cmdline += ["--export", exp]
-
-            cmdline += [osbuild_manifest]
-
-            runner.run_in_container(
-                cmdline,
-                need_osbuild_privs=True,
-                progress=args.progress,
-                verbose=args.verbose,
-                log_file=args.log_file(tmpdir),
-            )
+        runner.run_in_container(
+            cmdline,
+            need_osbuild_privs=True,
+            progress=args.progress,
+            verbose=args.verbose,
+            log_file=args.log_file(tmpdir),
+        )
 
         return outputdir.detach()
 
@@ -1014,9 +949,6 @@ SHAREABLE_ARGS = {
             "help": "Add include directory to extend available distros and targets",
         },
     },
-    "vm": {
-        "--vm": {"help": "Build in a virtual machine"},
-    },
 }
 
 LIST_ARGS = {"--quiet": {"help": "Only print the names, no descriptive text"}}
@@ -1133,7 +1065,7 @@ build_subcommands = [
         "`bootc update` or `bootc switch`. Or, alternatively it can be converted to a\n"
         "disk-image which can be flashed to a board using `bootc-to-disk-image`.\n",
         build_bootc,
-        ["container", "include", "vm"],
+        ["container", "include"],
         {
             "--user": {
                 "help": "Export container to per-user container storage (default: system storage)",
@@ -1165,7 +1097,7 @@ build_subcommands = [
         "root filesystem an immutable image. However, the later is a legacy option and\n"
         "it is recommended that new users use build-bootc instead.\n",
         build_traditional,
-        ["container", "include", "vm"],
+        ["container", "include"],
         DISK_FORMAT_ARGS,
         {
             "--ostree": {
@@ -1201,7 +1133,7 @@ build_subcommands = [
         "but normally the default name of 'localhost/aib-build:$DISTRO' is used, and if\n"
         "the out argument is not specified this will be used.\n",
         build_bootc_builder,
-        ["container", "include", "vm"],
+        ["container", "include"],
         BUILD_ARGS,
         {"out": {"help": "Name of container image to build", "required": False}},
     ],
@@ -1216,7 +1148,7 @@ build_subcommands = [
         "or 'build-traditional' instead, as these are easier to use, and\n"
         "avoid accidentally using problematic combination of image options\n",
         build,
-        ["container", "include", "vm"],
+        ["container", "include"],
         {
             "--mode": {
                 "type": "str",
