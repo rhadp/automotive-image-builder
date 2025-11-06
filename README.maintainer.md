@@ -1,5 +1,7 @@
 # Automotive Image Builder – Maintainer Documentation
 
+This document describes the process for maintaining Automotive Image Builder, including release creation and synchronization of upstream utility files.
+
 ## Release Process
 
 Follow these steps to create a new release:
@@ -18,7 +20,7 @@ Follow these steps to create a new release:
     - Ensure the build completes successfully.
 
 4. **Bump the version number**
-    - Open a Merge Request, incrementing th **patch version** in [`version.py`](./aib/version.py) (e.g. `0.8.0`->`0.8.1`).
+    - Open a Merge Request, incrementing the **patch version** in [`version.py`](./aib/version.py) (e.g. `0.8.0`->`0.8.1`).
 
 ## Updating and Syncing Files
 
@@ -26,13 +28,13 @@ This project uses [git-crossref](https://github.com/aesteve-rh/git-crossref) to 
 
 ### Syncing Files
 
-You need to `git-crossref` installed locally:
+You need to have `git-crossref` installed locally:
 
 ```bash
 pip install git-crossref
 ```
 
-To update the synchronized files from upstream repositories:
+To update synchronized files from upstream repositories:
 
 ```bash
 git-crossref sync
@@ -42,7 +44,7 @@ This command will fetch the latest versions of files specified in the configurat
 
 ### Updating the Configuration
 
-To modify which files are synchronized or update upstream versions:
+To modify which files are synchronized or to update upstream versions:
 
 1. Edit the [`.gitcrossref`](./.gitcrossref) file
 2. Update the `version` field to point to a specific commit hash or branch
