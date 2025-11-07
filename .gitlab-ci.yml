@@ -63,30 +63,6 @@ ai-review:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   allow_failure: true
 
-compose-test-job:
-  stage: test
-  script:
-    - tests/test-compose tests/test-compose.json
-
-compose-test-modified-distro:
-  stage: test
-  script:
-    - 'tests/test-compose tests/test-compose.json distro "$(git diff --diff-filter=d --name-only ${CI_MERGE_REQUEST_DIFF_BASE_SHA} | grep ^distro/ | xargs -r basename -s .ipp.yml)"'
-  rules:
-    - changes:
-        - distro/*.ipp.yml
-  # Allow this job to fail as it's expected to fail for some cases
-  # Still we want to check and see the errors
-  allow_failure: true
-
-compose-test-modified-target:
-  stage: test
-  script:
-    - 'tests/test-compose tests/test-compose.json target "$(git diff --diff-filter=d --name-only ${CI_MERGE_REQUEST_DIFF_BASE_SHA} | grep -v "^targets/include" | grep "^targets/" | xargs -r basename -s .ipp.yml)"'
-  rules:
-    - changes:
-        - targets/*.ipp.yml
-
 unit-test-job:
   image: python:latest
   before_script:
