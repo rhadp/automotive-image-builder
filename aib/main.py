@@ -158,7 +158,7 @@ def validate_policy_args(args):
             )
 
 
-def create_osbuild_manifest(args, tmpdir, out, runner, exports):
+def create_osbuild_manifest(args, tmpdir, out, runner):
     validate_policy_args(args)
 
     with open(args.manifest) as f:
@@ -191,8 +191,6 @@ def create_osbuild_manifest(args, tmpdir, out, runner, exports):
 
     if args.dump_variables:
         defines["print_variables"] = True
-
-    defines["exports"] = exports
 
     # Add policy-derived variables
     if args.policy:
@@ -313,7 +311,7 @@ def extract_rpmlist_json(osbuild_manifest):
 def listrpms(args, tmpdir, runner):
     osbuild_manifest = os.path.join(tmpdir, "osbuild.json")
 
-    create_osbuild_manifest(args, tmpdir, osbuild_manifest, runner, args.exports)
+    create_osbuild_manifest(args, tmpdir, osbuild_manifest, runner)
 
     data = extract_rpmlist_json(osbuild_manifest)
 
@@ -328,7 +326,7 @@ def _run_osbuild(args, tmpdir, runner, exports):
     if args.osbuild_manifest:
         osbuild_manifest = args.osbuild_manifest
 
-    create_osbuild_manifest(args, tmpdir, osbuild_manifest, runner, exports)
+    create_osbuild_manifest(args, tmpdir, osbuild_manifest, runner)
 
     builddir = tmpdir
     if args.build_dir:
@@ -450,13 +448,23 @@ def _run_osbuild(args, tmpdir, runner, exports):
 def build(args, tmpdir, runner):
     has_repo = False
     exports = []
+
+    is_bootc = False
     # Rewrite exports according to export_data
     for exp in args.export:
+        if "bootc" in exp:
+            is_bootc = True
         data = get_export_data(exp)
         exp = data.get("export_arg", exp)
         exports.append(exp)
         if exp == "ostree-commit":
             has_repo = True
+
+    # Rewrite --mode image and --export bootc... to mode=bootc
+    if is_bootc:
+        if args.mode != "image":
+            raise exceptions.AIBException(f"mode {args.mode} not compabible with bootc")
+        args.mode = "bootc"
 
     # If ostree repo was specified, also export it if needed
     if not has_repo and args.ostree_repo:
@@ -498,7 +506,7 @@ def bootc_archive_to_store(runner, archive_file, container_name, user=False):
 
 
 def build_bootc(args, tmpdir, runner):
-    args.mode = "image"
+    args.mode = "bootc"
 
     exports = []
     if not args.dry_run:
@@ -585,7 +593,7 @@ def build_bootc_builder(args, tmpdir, runner):
     args.simple_manifest = os.path.join(args.base_dir, "files/bootc-builder.aib.yml")
     args.manifest = os.path.join(args.base_dir, "files/simple.mpp.yml")
     args.target = "qemu"
-    args.mode = "image"
+    args.mode = "bootc"
 
     dest_image = args.out or aib_build_container_name(args.distro)
 

@@ -8,7 +8,7 @@ definitions:
   # Central enum definitions
   build_modes:
     type: string
-    enum: ["image", "package"]
+    enum: ["image", "package", "bootc"]
 
   architectures:
     type: string
