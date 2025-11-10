@@ -322,6 +322,28 @@ class SudoTemporaryDirectory:
         return self._path
 
 
+def extract_part_of_file(
+    src_path: str, dst_path: str, start: int, size: int, chunk_size=1024 * 1024
+):
+    total_written = 0
+    with open(src_path, "rb") as src, open(dst_path, "wb") as dst:
+        src.seek(start)
+        remaining = size
+        while remaining > 0:
+            to_read = min(chunk_size, remaining)
+
+            data = src.read(to_read)
+            if not data:  # EOF
+                break
+
+            dst.write(data)
+            total_written += len(data)
+
+            remaining -= len(data)
+
+    return total_written
+
+
 class DiskFormat(Enum):
     def __new__(cls, value: str, ext: str, convert: List[str]):
         obj = object.__new__(cls)
