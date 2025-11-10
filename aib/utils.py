@@ -1,10 +1,13 @@
+import argparse
 import base64
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from enum import Enum
 from pathlib import Path
+from typing import List, Optional
 
 
 def extract_comment_header(file):
@@ -317,3 +320,35 @@ class SudoTemporaryDirectory:
 
     def path(self):
         return self._path
+
+
+class DiskFormat(Enum):
+    def __new__(cls, value: str, ext: str, convert: List[str]):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        obj.ext = ext
+        obj.convert = convert
+        return obj
+
+    RAW = ("raw", ".img", ["mv"])
+    QCOW2 = ("qcow2", ".qcow2", ["qemu-img", "convert", "-O", "qcow2"])
+    SING = ("simg", ".simg", ["img2simg"])
+
+    @classmethod
+    def from_string(cls, s: str) -> "Optional[DiskFormat]":
+        if s is None:
+            return None
+        s = s.lower()
+        for member in cls:
+            if s == member.value or s == member.name.lower():
+                return member
+        valid = ", ".join(m.value for m in cls)
+        raise argparse.ArgumentTypeError(f"invalid format {s!r}; choose from: {valid}")
+
+    @classmethod
+    def from_filename(cls, filename: str) -> "DiskFormat":
+        ext = os.path.splitext(filename.lower())[1]
+        for member in cls:
+            if ext == member.ext:
+                return member
+        return cls.RAW
