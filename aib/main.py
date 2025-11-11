@@ -350,11 +350,15 @@ def _run_osbuild(args, tmpdir, runner, exports):
                 "--checkpoint",
                 "build",
                 "--checkpoint",
+                "extra-tree-content",
+                "--checkpoint",
                 "qm_rootfs_base",
                 "--checkpoint",
                 "qm_rootfs",
                 "--checkpoint",
                 "data",
+                "--checkpoint",
+                "rootfs",
             ]
 
         if args.cache_max_size:
@@ -990,8 +994,8 @@ BUILD_ARGS = {
     "--cache-max-size": {
         "type": "str",
         "metavar": "SIZE",
-        # We set the default size to 2GB, which allows about two copies of the build pipeline.
-        "default": "2GB",
+        # We set the default size to 4GB, which allows about four copies of the build pipeline.
+        "default": "4GB",
         "help": "Max cache size inside build-dir, e.g. '8GB', or 'unlimited'",
     },
     "--cache": {
