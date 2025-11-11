@@ -25,7 +25,6 @@ environment:
     AIR: automotive-image-runner
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
-    BUILDCACHEDIR: $OUTDIR/build-cache
     RUNDIR: $OUTDIR/run
 
 provision:

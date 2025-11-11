@@ -260,33 +260,13 @@ save_to_tmt_test_data () {
 # Some default options that make builds faster, override if problematic
 FAST_OPTIONS="--define sign_kernel_modules=false"
 
-populate_builddir() {
-    local build_dir="$1"
-
-    if [ -d "$build_dir" ]; then
-        echo "Build directory '$build_dir' exist, skipping populating in from the cache"
-    else
-        if [ -d "$BUILDCACHEDIR" ]; then
-            echo "Populating build directory '$build_dir' from cache '$BUILDCACHEDIR'"
-            mkdir -p $build_dir
-            cp -r "$BUILDCACHEDIR/." "$build_dir/"
-        else
-            echo "Cache directory '$BUILDCACHEDIR' doesn't exist, build directory will not be prepopulated"
-        fi
-    fi
-}
-
 trybuild() {
-    local build_dir
-    build_dir="$BUILDDIR/$(basename $TMT_TEST_NAME)"
     local result=0
-
-    populate_builddir $build_dir
 
     $AIB build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
-        --build-dir $build_dir $FAST_OPTIONS \
+        --build-dir "$BUILDDIR" $FAST_OPTIONS \
         --define reproducible_image=true \
         "$@" > build.log
     result=$?
@@ -307,16 +287,12 @@ build() {
 }
 
 trybuild_bootc() {
-    local build_dir
-    build_dir="$BUILDDIR/$(basename $TMT_TEST_NAME)"
     local result=0
-
-    populate_builddir $build_dir
 
     $AIB build-bootc \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
-        --build-dir $build_dir $FAST_OPTIONS \
+        --build-dir "$BUILDDIR" $FAST_OPTIONS \
         --define reproducible_image=true \
         "$@" > build.log
     result=$?
@@ -337,16 +313,12 @@ build_bootc() {
 }
 
 trybuild_traditional() {
-    local build_dir
-    build_dir="$BUILDDIR/$(basename $TMT_TEST_NAME)"
     local result=0
-
-    populate_builddir $build_dir
 
     $AIB build-traditional \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
-        --build-dir $build_dir $FAST_OPTIONS \
+        --build-dir "$BUILDDIR" $FAST_OPTIONS \
         --define reproducible_image=true \
         "$@" > build.log
     result=$?
