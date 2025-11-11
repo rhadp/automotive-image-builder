@@ -260,33 +260,36 @@ save_to_tmt_test_data () {
 # Some default options that make builds faster, override if problematic
 FAST_OPTIONS="--define sign_kernel_modules=false"
 
-trybuild() {
-    local build_dir="$BUILDDIR/$TMT_TEST_NAME"
-    local result=0
+populate_builddir() {
+    local build_dir="$1"
 
     if [ -d "$build_dir" ]; then
         echo "Build directory '$build_dir' exist, skipping populating in from the cache"
     else
         if [ -d "$BUILDCACHEDIR" ]; then
             echo "Populating build directory '$build_dir' from cache '$BUILDCACHEDIR'"
-            cp -r "$BUILDCACHEDIR" "$build_dir"
+            mkdir -p $build_dir
+            cp -r "$BUILDCACHEDIR/." "$build_dir/"
         else
             echo "Cache directory '$BUILDCACHEDIR' doesn't exist, build directory will not be prepopulated"
         fi
     fi
+}
+
+trybuild() {
+    local build_dir
+    build_dir="$BUILDDIR/$(basename $TMT_TEST_NAME)"
+    local result=0
+
+    populate_builddir $build_dir
 
     $AIB build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
-        --build-dir $BUILDDIR/$TMT_TEST_NAME $FAST_OPTIONS \
+        --build-dir $build_dir $FAST_OPTIONS \
         --define reproducible_image=true \
         "$@" > build.log
     result=$?
-
-    if [ -d "$build_dir" ]; then
-        echo "Removing build directory '$build_dir'"
-        rm -rf "$build_dir"
-    fi
 
     return $result
 }
@@ -303,23 +306,64 @@ build() {
    save_to_tmt_test_data build.log
 }
 
-trycompose() {
-    $AIB compose \
+trybuild_bootc() {
+    local build_dir
+    build_dir="$BUILDDIR/$(basename $TMT_TEST_NAME)"
+    local result=0
+
+    populate_builddir $build_dir
+
+    $AIB build-bootc \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
-        $FAST_OPTIONS \
+        --build-dir $build_dir $FAST_OPTIONS \
         --define reproducible_image=true \
-        "$@" > compose.log
+        "$@" > build.log
+    result=$?
+
+    return $result
 }
 
-compose() {
-   if ! trycompose "$@"; then
-      echo FAILED to compose manifest
-      tail -n 50 compose.log
-      save_to_tmt_test_data compose.log
+build_bootc() {
+   if ! trybuild_bootc "$@"; then
+      echo FAILED to build image
+      # only show last 50 lines in
+      tail -n 50 build.log
+      # save build log to tmt test data
+      save_to_tmt_test_data build.log
       exit 1
    fi
-   save_to_tmt_test_data compose.log
+   save_to_tmt_test_data build.log
+}
+
+trybuild_traditional() {
+    local build_dir
+    build_dir="$BUILDDIR/$(basename $TMT_TEST_NAME)"
+    local result=0
+
+    populate_builddir $build_dir
+
+    $AIB build-traditional \
+        --distro=$AIB_DISTRO \
+        --cache $OUTDIR/dnf-cache \
+        --build-dir $build_dir $FAST_OPTIONS \
+        --define reproducible_image=true \
+        "$@" > build.log
+    result=$?
+
+    return $result
+}
+
+build_traditional() {
+   if ! trybuild_traditional "$@"; then
+      echo FAILED to build image
+      # only show last 50 lines in
+      tail -n 50 build.log
+      # save build log to tmt test data
+      save_to_tmt_test_data build.log
+      exit 1
+   fi
+   save_to_tmt_test_data build.log
 }
 
 # Check if the image was created
