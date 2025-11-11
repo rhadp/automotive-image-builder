@@ -2,6 +2,12 @@
 
 # It can passed as a parameter
 MAX_CONCURRENT_TESTS=${1:-5}
+PLAN=${2:-connect}
+
+FEELING_SAFE=
+if [ "$PLAN" == "local" ]; then
+    FEELING_SAFE=--feeling-safe
+fi
 
 # TMT_RUN_OPTIONS need to contain all important options for tmt execution
 if [ -n "$TMT_RUN_OPTIONS" ]; then
@@ -9,7 +15,7 @@ if [ -n "$TMT_RUN_OPTIONS" ]; then
     read -a TMT_RUN_OPTIONS <<< "$TMT_RUN_OPTIONS"
 else
     # By default run tests against locally provisioned VM
-    TMT_RUN_OPTIONS=( -eNODE=aib-tests-10 plan --name connect )
+    TMT_RUN_OPTIONS=( -eNODE=aib-tests-10 plan --name "$PLAN" )
 fi
 
 format_time() {
@@ -34,7 +40,7 @@ execute_test() {
     echo "Starting test '$test_name'"
     start_time=$(date +%s)
     # TODO: simplify when https://github.com/teemtee/tmt/issues/2757 is fixed
-    tmt -q run \
+    tmt -q $FEELING_SAFE run \
         -i "$(format_test_id "$test_run_idx" "$test_name")" \
         "${TMT_RUN_OPTIONS[@]}" test --name "$test_name" \
         discover prepare provision execute -h tmt --no-progress-bar report &
@@ -47,10 +53,10 @@ START_TIME=$(date +%s)
 
 echo "Preparing tests execution"
 # Execute phases up to prepare
-tmt -q run -i "$(format_test_id "-1" "prepare-tests")" -B execute "${TMT_RUN_OPTIONS[@]}"
+tmt -q $FEELING_SAFE  run -i "$(format_test_id "-1" "prepare-tests")" -B execute "${TMT_RUN_OPTIONS[@]}"
 
 # Gather discovered tests
-mapfile -t TEST_NAMES< <(grep "name:" < ~/.config/tmt/last-run/plans/connect/discover/tests.yaml | sed 's/.*tests\///')
+mapfile -t TEST_NAMES< <(grep "name:" < ~/.config/tmt/last-run/plans/$PLAN/discover/tests.yaml | sed 's/.*tests\///')
 TEST_COUNT=${#TEST_NAMES[@]}
 
 
@@ -98,7 +104,7 @@ done
 
 # Execute cleanup
 echo "Cleaning up tests execution"
-tmt -q run --last -A execute "${TMT_RUN_OPTIONS[@]}"
+tmt -q $FEELING_SAFE run --last -A execute "${TMT_RUN_OPTIONS[@]}"
 
 END_TIME=$(date +%s)
 
