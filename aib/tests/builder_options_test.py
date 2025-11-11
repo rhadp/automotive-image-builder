@@ -40,7 +40,7 @@ def test_build_required_positional(capsys):
         parse_args(["build"], base_dir="")
     assert e.value.code == 2
     assert (
-        "error: the following arguments are required: --export, manifest, out"
+        "error: the following arguments are required: manifest, out"
         in capsys.readouterr().err
     )
 

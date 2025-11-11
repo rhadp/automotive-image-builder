@@ -1230,7 +1230,6 @@ build_subcommands = [
             "--export": {
                 "type": "append",
                 "help": "Export this image type",
-                "required": True,
             },
             "manifest": "Source manifest file",
             "out": "Output path",
