@@ -11,9 +11,9 @@ BASEDIR = "/tmp/automotive-image-builder"
 @pytest.mark.parametrize(
     "subcmd",
     [
-        "list-dist",
+        "list-distro",
         "list-targets",
-        "compose",
+        "build-bootc",
         "build",
     ],
 )
@@ -40,47 +40,9 @@ def test_build_required_positional(capsys):
         parse_args(["build"], base_dir="")
     assert e.value.code == 2
     assert (
-        "error: the following arguments are required: --export, manifest, out"
+        "error: the following arguments are required: manifest, out"
         in capsys.readouterr().err
     )
-
-
-@pytest.mark.parametrize(
-    "mpp_args,expected",
-    [
-        (
-            ["--mpp-arg=--cache", "--mpp-arg", "/path/to/cache"],
-            ["--cache", "/path/to/cache"],
-        ),
-        (
-            ["--mpp-arg=--cache", "--mpp-arg=/path/to/cache"],
-            ["--cache", "/path/to/cache"],
-        ),
-    ],
-)
-def test_build_mpp_arg(mpp_args, expected):
-    args = parse_args(
-        ["build"] + mpp_args + ["--export", "qcow2"] + ["manifest", "out"],
-        base_dir="",
-    )
-    assert args.mpp_arg == expected
-
-
-def test_build_cache_arg():
-    cache_path = "/path/to/cache"
-    args = parse_args(
-        [
-            "build",
-            "--cache",
-            cache_path,
-            "--export",
-            "qcow2",
-            "manifest",
-            "out",
-        ],
-        base_dir="",
-    )
-    assert args.cache == cache_path
 
 
 @pytest.mark.parametrize(
@@ -133,18 +95,19 @@ def test_aib_parameters_log_file_property(
     params = AIBParameters(args=args, base_dir="")
 
     if expected_contains is None:
-        assert params.log_file is None
+        assert params.log_file("/tmp") is None
     else:
-        assert params.log_file is not None
-        assert expected_contains in params.log_file
+        log_file = params.log_file("/tmp")
+        assert log_file is not None
+        assert expected_contains in log_file
 
         # If it's a generated path, verify it has the timestamp format
         if "automotive-image-builder-" in expected_contains and logfile is None:
             # Should match pattern: automotive-image-builder-YYYYMMDD-HHMMSS.log
             pattern = r"automotive-image-builder-\d{8}-\d{6}\.log"
             assert re.search(
-                pattern, params.log_file
-            ), f"Log file path {params.log_file} doesn't match expected format"
+                pattern, log_file
+            ), f"Log file path {log_file} doesn't match expected format"
 
 
 def test_aib_parameters_log_file_property_no_build_dir():
@@ -154,5 +117,5 @@ def test_aib_parameters_log_file_property_no_build_dir():
     args = parse_args(argv, base_dir="")
     params = AIBParameters(args=args, base_dir="")
 
-    # Should return None when build_dir is not set (caught TypeError internally)
-    assert params.log_file is None
+    # Should return a path n tmpdir when build_dir is not set and progress is passed
+    assert "/tmp" in params.log_file("/tmp")

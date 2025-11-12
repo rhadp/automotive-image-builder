@@ -171,12 +171,12 @@ pipelines:
                 references:
                   - name:build
               extra-tree:
-                mpp-if: "'extra_image_source_' + image_mode in locals()"
+                mpp-if: "'extra_image_source_' + _image_mode in locals()"
                 then:
                   type: org.osbuild.tree
                   origin: org.osbuild.pipeline
                   references:
-                    - mpp-format-string: "name:{locals().get('extra_image_source_' + image_mode)}"
+                    - mpp-format-string: "name:{locals().get('extra_image_source_' + _image_mode)}"
             options:
               paths:
                 mpp-join:
@@ -341,7 +341,7 @@ pipelines:
             mpp-join:
               - - from: input://tree/
                   to: mount://root/
-              - mpp-eval: locals().get('extra_image_copy_' + image_mode, [])
+              - mpp-eval: locals().get('extra_image_copy_' + _image_mode, [])
         devices:
           root:
             type: org.osbuild.loopback

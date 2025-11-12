@@ -196,8 +196,8 @@ pipelines:
                   mpp-format-string: /usr/etc/selinux/{selinux_policy}/contexts/files/file_contexts.subs_dist
                 version: '"/usr/etc/systemd/system /usr/lib/systemd/system"'
           # TODO-BOOTC: For now we only do this for bootc targets, but its is not ideal
-          # to depend on export targets like this. This should be fixed.
-          - mpp-if: is_bootc_export
+          # to differ vs regular ostree like this. This should be fixed.
+          - mpp-if: use_bootc
             then:
               type: org.osbuild.bootupd.gen-metadata
           # Call aboot-update after prep-tree, because that is where the initrd is built

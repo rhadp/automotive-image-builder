@@ -7,6 +7,7 @@ restrictions:
   modes:
     allow:
       - image
+      - bootc
 
   manifest_restrictions:
     disallow:
@@ -30,10 +31,8 @@ restrictions:
     disallow:
       - bluetooth
       - btusb
-    disallow@rcar_s4:
-      - rcar_can
-      - rcar_thermal
-      - rcar_dmac
+    disallow@ebbr:
+      - soundcore
 
   selinux_booleans:
     force:

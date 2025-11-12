@@ -18,9 +18,18 @@ qm_rootfs:
 def test_create_manifest(tmp_path):
     manifest_file = tmp_path / "manifest.yml"
     manifest_file.write_text(INVALID_YAML)
+    tar_file = tmp_path / "foo.tar"
     args = AIBParameters(
         args=parse_args(
-            ["compose", manifest_file.as_posix(), "output"], base_dir=BASE_DIR
+            [
+                "build-bootc",
+                "--tar",
+                "--osbuild-manifest",
+                "output",
+                manifest_file.as_posix(),
+                tar_file.as_posix(),
+            ],
+            base_dir=BASE_DIR,
         ),
         base_dir=BASE_DIR,
     )

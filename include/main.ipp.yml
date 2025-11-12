@@ -103,6 +103,6 @@ pipelines:
   - mpp-import-pipelines:
       path: content.ipp.yml
   - mpp-import-pipelines:
-      path: mode-$image_mode.ipp.yml
+      path: mode-$_image_mode.ipp.yml
   - mpp-import-pipelines:
       path: image.ipp.yml

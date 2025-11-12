@@ -5,3 +5,4 @@ restrictions:
   modes:
     allow:
       - image
+      - bootc

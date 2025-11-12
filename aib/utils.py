@@ -1,9 +1,13 @@
+import argparse
 import base64
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from enum import Enum
+from pathlib import Path
+from typing import List, Optional
 
 
 def extract_comment_header(file):
@@ -225,3 +229,148 @@ def generate_keys():
         ]
         subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, input=None, check=True)
         return read_keys(keypath)
+
+
+# This is compatible with tempdir.TemporaryDirectory, but falls back to sudo rm -rf on permission errors
+class SudoTemporaryDirectory:
+    def __init__(self, suffix=None, prefix=None, dir=None, use_sudo_fallback=True):
+        self._path = Path(tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir))
+        self.name = str(self._path)
+        self._keep_once = False
+        self._use_sudo = use_sudo_fallback
+        # Remember the base directory for safety checks
+        self._base = (
+            Path(dir).resolve() if dir else Path(tempfile.gettempdir()).resolve()
+        )
+        self._closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if self._keep_once:
+            self._keep_once = False
+            return
+        self.cleanup()
+
+    def detach(self):
+        """Skip cleanup at the end of the *current* with-block only."""
+        self._keep_once = True
+        return self
+
+    # Some safety checks:
+    def _is_safe_to_delete(self, path):
+        try:
+            rp = path.resolve()
+        except FileNotFoundError:
+            return True
+
+        if rp == Path("/") or str(rp) == "":
+            return False
+
+        if not rp.is_dir():
+            return False
+
+        try:
+            rp.relative_to(self._base)
+        except ValueError:
+            # Not under base dir
+            return False
+
+        # Require minimum length to avoid deleting very short critical paths
+        return len(str(rp)) > len(str(self._base)) + 3
+
+    def cleanup(self):
+        if self._closed:
+            return
+        self._closed = True
+
+        p = self._path
+        if not p.exists():
+            return
+
+        # Try normal deletion first
+        try:
+            shutil.rmtree(p)
+            return
+        except Exception as e:
+            last_err = e
+
+        # Optionally try sudo fallback
+        if self._use_sudo and self._is_safe_to_delete(p):
+            try:
+                subprocess.run(
+                    ["sudo", "rm", "-rf", "--", str(p)],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                return
+            except subprocess.CalledProcessError as e:
+                last_err = e
+
+        # If we reach here, cleanup failed
+        raise RuntimeError(f"Failed to cleanup temp directory {p!s}") from last_err
+
+    def __str__(self):
+        return self.name
+
+    def __fspath__(self):
+        return self.name
+
+    def path(self):
+        return self._path
+
+
+def extract_part_of_file(
+    src_path: str, dst_path: str, start: int, size: int, chunk_size=1024 * 1024
+):
+    total_written = 0
+    with open(src_path, "rb") as src, open(dst_path, "wb") as dst:
+        src.seek(start)
+        remaining = size
+        while remaining > 0:
+            to_read = min(chunk_size, remaining)
+
+            data = src.read(to_read)
+            if not data:  # EOF
+                break
+
+            dst.write(data)
+            total_written += len(data)
+
+            remaining -= len(data)
+
+    return total_written
+
+
+class DiskFormat(Enum):
+    def __new__(cls, value: str, ext: str, convert: List[str]):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        obj.ext = ext
+        obj.convert = convert
+        return obj
+
+    RAW = ("raw", ".img", ["mv"])
+    QCOW2 = ("qcow2", ".qcow2", ["qemu-img", "convert", "-O", "qcow2"])
+    SING = ("simg", ".simg", ["img2simg"])
+
+    @classmethod
+    def from_string(cls, s: str) -> "Optional[DiskFormat]":
+        if s is None:
+            return None
+        s = s.lower()
+        for member in cls:
+            if s == member.value or s == member.name.lower():
+                return member
+        valid = ", ".join(m.value for m in cls)
+        raise argparse.ArgumentTypeError(f"invalid format {s!r}; choose from: {valid}")
+
+    @classmethod
+    def from_filename(cls, filename: str) -> "DiskFormat":
+        ext = os.path.splitext(filename.lower())[1]
+        for member in cls:
+            if ext == member.ext:
+                return member
+        return cls.RAW

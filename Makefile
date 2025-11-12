@@ -15,7 +15,6 @@ install:
 	mkdir -p $(DESTDIR)$(BINDIR)
 	install automotive-image-builder.installed $(DESTDIR)$(BINDIR)/automotive-image-builder
 	install -t $(DESTDIR)$(BINDIR) automotive-image-runner
-	install -t $(DESTDIR)$(BINDIR) automotive-image-vm
 	for subdir in distro include targets targets/include ; do \
 		mkdir -p $(DESTDIR)$(DATADIR)/$$subdir ; \
 		install -m 0644 -t $(DESTDIR)$(DATADIR)/$$subdir $$subdir/*.yml ; \
@@ -32,10 +31,6 @@ install:
 	install  -t $(DESTDIR)$(DATADIR)/mpp mpp/aib-osbuild-mpp
 	install  -t $(DESTDIR)$(DATADIR)/mpp/aibosbuild/util mpp/aibosbuild/util/*.py
 
-.PHONY: test-compose
-test-compose:
-	tests/test-compose tests/test-compose.json
-
 .PHONY: test-unit
 test-unit:
 	pytest aib/tests
@@ -51,7 +46,7 @@ test-integration:
 	tmt --feeling-safe run -v -ePROJECT_DIR=$$PWD/.. plan --name local
 
 .PHONY: test
-test: test-compose test-unit test-integration yamllint
+test: test-unit test-integration yamllint
 
 rpm:
 	./build/build-rpm.sh -bb --release

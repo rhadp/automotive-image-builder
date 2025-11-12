@@ -14,22 +14,20 @@ from aib.main import parse_args
             ["--export", "qcow2", "test.mpp.yml", "output"],
             True,
         ),
-        ("build", "--vm", [], ["--export", "qcow2", "test.mpp.yml", "output"], True),
-        ("compose", "--container", [], ["test.mpp.yml", "output.json"], True),
         (
-            "compose",
+            "build",
             "--include",
             ["/some/path"],
-            ["test.mpp.yml", "output.json"],
+            ["--export", "qcow2", "test.mpp.yml", "output.json"],
             "/some/path",
         ),
-        ("list-dist", "--include", ["/some/path"], [], "/some/path"),
+        ("list-distro", "--include", ["/some/path"], [], "/some/path"),
     ],
 )
 def test_args_work_before_and_after_subcommands(
     arg_before_subcommand, subcommand, arg_name, arg_value, extra_args, expected_value
 ):
-    """Test that --container, --vm, and --include work both before and after subcommands."""
+    """Test that --container, and --include work both before and after subcommands."""
     if arg_before_subcommand:
         args = [arg_name] + arg_value + [subcommand] + extra_args
     else:

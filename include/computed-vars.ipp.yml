@@ -121,7 +121,7 @@ mpp-vars:
     # TODO-BOOTC: bootupd fails if there is no bios boot partition
     mpp-if: not "use_biospart" in locals()
     then:
-      mpp-eval: is_bootc_export
+      mpp-eval: use_bootc
 
   image_repos:
     mpp-join:
@@ -167,14 +167,12 @@ mpp-vars:
   sign_kernel_modules:
     mpp-if: kernel_package.startswith('kernel-automotive')
     then:
-      mpp-eval: locals().get('sign_kernel_modules', image_mode == 'image')
+      mpp-eval: locals().get('sign_kernel_modules', use_ostree)
     else:
       mpp-eval: locals().get('sign_kernel_modules', False)
   use_kernel_debug_package:
     mpp-if: "'debug' in locals().get('kernel_package')"
     then: true
-  use_ostree:
-    mpp-eval: use_ostree or image_mode == 'image'
   _kernel_subdir:
     mpp-eval: _kernel_evra + ("+debug" if use_kernel_debug_package else "")
   _kernel_dir:
@@ -253,7 +251,7 @@ mpp-vars:
   extra_image_copy:
     mpp-join:
       - mpp-eval: extra_image_copy
-      - mpp-eval: locals().get('extra_image_copy_' + image_mode, [])
+      - mpp-eval: locals().get('extra_image_copy_' + _image_mode, [])
       - - mpp-if: use_ostree and _use_separate_var
           then:
             from: input://tree/ostree/deploy/$osname/var/
@@ -886,10 +884,10 @@ mpp-vars:
         - mpp-if: use_qm
           then: qm
         # TODO-BOOTC: bootupd needs this for generate-update-metadata
-        - mpp-if: is_bootc_export
+        - mpp-if: use_bootc
           then: shim
         # TODO-BOOTC: bootupd needs this for generate-update-metadata
-        - mpp-if: is_bootc_export
+        - mpp-if: use_bootc
           then: grub2-tools
 
   _debug_output:
