@@ -203,9 +203,6 @@ mpp-vars:
       ip {static_ip} {static_ip_prefixlen}
       default_gw {static_gw}
       nameserver {static_dns}
-  qm_bootcheck:
-    mpp-format-string: |
-      container_checksum qm {_boot_check_qm_digest}
   bootcheck_dropin:
     mpp-format-string: |
       [Unit]
@@ -613,7 +610,9 @@ pipelines:
             origin: org.osbuild.source
             mpp-embed:
               id: qm.bootcheck
-              text: $qm_bootcheck
+              text:
+                mpp-format-string: |
+                  container_checksum qm {_materialize(_boot_check_qm_digest)}
         options:
           paths:
             - from:
