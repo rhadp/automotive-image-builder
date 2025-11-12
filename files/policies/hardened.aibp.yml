@@ -15,6 +15,7 @@ restrictions:
         "content.container_images[].containers-transport": ["containers-storage"]
       properties:
         - "experimental"
+        - "image.partitions.root.grow"
 
   variables:
     force:

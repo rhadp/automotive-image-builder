@@ -66,6 +66,21 @@ mpp-vars:
 
       [Install]
       RequiredBy=local-fs.target
+  repart_conf:
+    mpp-format-string: |
+      [Partition]
+      Type=$partition_type_rootfs
+      GrowFileSystem=True
+  systemd_repart_dropin:
+    mpp-format-string: |
+      [Unit]
+      After=mount-sysroot.service
+      Before=ostree-prepare-root.service
+
+      [Service]
+      ExecStart=
+      ExecStart=systemd-repart --dry-run=no --definitions=/usr/lib/repart.d
+      ExecStart=/usr/lib/systemd/systemd-growfs /sysroot
   containers_conf:
     mpp-format-string: |
       [containers]
@@ -486,6 +501,32 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile/{embedded['etc-ld.so.cache.mount']}
               to: tree:///etc-ld.so.cache.mount
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: repart.conf
+              text: $repart_conf
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['repart.conf']}
+              to: tree:///repart.conf
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: repart.dropin
+              text: $systemd_repart_dropin
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['repart.dropin']}
+              to: tree:///repart.dropin
       - type: org.osbuild.copy
         inputs:
           inlinefile:
