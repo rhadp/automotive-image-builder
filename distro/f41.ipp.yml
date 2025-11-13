@@ -12,7 +12,6 @@ mpp-vars:
   uefi_vendor: fedora
   kernel_package: kernel
   release_rpm: fedora-release
-  containers_configdir: /usr/share/containers
   distro_repos:
     - id: fedora
       baseurl: $distro_baseurl/releases/$distro_version/Everything/$arch/os/

@@ -58,7 +58,7 @@ mpp-vars:
   use_containers_extra_store: false
   container_subuid: 2500000000:1500000000
   container_subgid: 2500000000:1500000000
-  containers_configdir: /etc/containers
+  containers_configdir: /usr/share/containers
 
   use_qm: false   # Set to true to add QM container
   use_qm_containers_extra_store: false

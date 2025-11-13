@@ -10,6 +10,7 @@ mpp-vars:
   release_rpm: centos-release-autosd
   selinux_policy: automotive   # Available in nightly repo
   linux_firmware_rpm: linux-firmware-automotive   # Available in sig repo
+  containers_configdir: /etc/containers
   distro_repos:
     - id: autosd
       baseurl: $distro_baseurl/AutoSD/$arch/os/

@@ -9,6 +9,7 @@ mpp-vars:
   uefi_vendor: centos
   release_rpm: centos-release-autosd
   selinux_policy: automotive   # Available in nightly repo
+  containers_configdir: /etc/containers
   distro_repos:
     - id: autosd
       baseurl: $distro_baseurl_repo
