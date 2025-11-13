@@ -3,7 +3,7 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
-build --export bootc-tar custom-services.aib.yml out.tar
+build --export bootc-tar systemd-services.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
 
 echo_log "Extracting out.tar..."

@@ -12,7 +12,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./users-and-groups.sh
 duration: 60m
 id: ec4ea821-ac5f-4b46-a3c2-e4d1bef1cb54

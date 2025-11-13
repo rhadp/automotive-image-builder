@@ -12,7 +12,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-systemd-services.sh
 duration: 60m
 id: 496f93d9-d74c-4d9e-adf6-b07e570e7e89

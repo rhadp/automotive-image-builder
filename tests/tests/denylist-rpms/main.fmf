@@ -12,7 +12,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-denylist-rpms.sh
 duration: 60m
 id: bc1d8fee-5d01-498b-982f-6dd3c29f0a57

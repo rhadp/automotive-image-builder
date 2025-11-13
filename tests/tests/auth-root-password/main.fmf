@@ -12,7 +12,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./root-password.sh
 duration: 60m
 id: 468f4f07-8504-4dad-9944-8e0c25d1e363

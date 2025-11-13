@@ -14,7 +14,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-partition-absolute-size.sh
 duration: 60m
 id: af48c2ba-9022-4ef3-8ddd-0a1ba9197c28

@@ -13,8 +13,6 @@ description: |
     output.txt
 
 
-test: |
-    ./test-custom-kernel.sh
 require:
   - qemu-kvm
   - sshpass

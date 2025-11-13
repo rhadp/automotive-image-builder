@@ -1,4 +1,16 @@
 summary: Verify compliance policy enforcement and restrictions
+description: |
+  Builds AIB images using the compliance policy to ensure that all enforcement mechanisms function as expected.
+  
+  Test inputs:
+    Custom AIB manifests (test.aib.yml, test-containers-storage.aib.yml, test-experimental.aib.yml)
+    compliance.aibp.yml policy file
+  
+  Expected results:
+    - PASS: Compliance policy applied and enforced successfully.
+    
+  Results location:
+    output.txt
+
 duration: 60m
-test: ./test-compliance-policy.sh
 id: d00ff6f4-699d-4f3d-a694-1e5d96ecf44a

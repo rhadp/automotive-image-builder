@@ -3,7 +3,7 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build..."
-build --export rpmlist test.aib.yml out.json
+build --export rpmlist install-rpms.aib.yml out.json
 echo_log "Build completed, output: out.json"
 
 # Check if rootfs contains 'strace'

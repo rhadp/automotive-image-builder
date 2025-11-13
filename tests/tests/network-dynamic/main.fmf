@@ -12,6 +12,5 @@ description: |
   Results location:
     output.txt
 
-test: ./dynamic-network.sh
 duration: 60m
 id: a4dcbfdd-5474-45a1-9678-0eddaf88a1c8

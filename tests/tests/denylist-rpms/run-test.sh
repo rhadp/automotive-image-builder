@@ -3,7 +3,7 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting trybuild with denied RPM..."
-if trybuild --export rpmlist --extend-define denylist_rpms=strace test.aib.yml out.json 2> error.txt; then
+if trybuild --export rpmlist --extend-define denylist_rpms=strace denylist-rpms.aib.yml out.json 2> error.txt; then
     echo_log "ERROR: Build should not have succeeded with denied RPM."
     fatal should not have succeeded build with denied rpm
 else

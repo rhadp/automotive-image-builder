@@ -12,7 +12,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./static-network.sh
 duration: 60m
 id: 9e47c797-265f-4b69-bfcf-19c504e1c54d

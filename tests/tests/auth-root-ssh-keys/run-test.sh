@@ -6,9 +6,11 @@ echo_log "Starting build for root_ssh_keys test..."
 build \
     --export bootc-tar \
     --extend-define tar_paths=['etc/ssh/sshd_config','etc/ssh/authorized_keys/root','etc/ssh/sshd_config.d/99-custom-authorized-keys.conf'] \
-    test-authorized-keys.aib.yml \
+    authorized-keys.aib.yml \
     out.tar
 echo_log "Build completed, output: out.tar"
+
+echo_log "Extracting out.tar..."
 tar xvf out.tar
 
 KEY_FILE_PATH="./etc/ssh/authorized_keys/root"

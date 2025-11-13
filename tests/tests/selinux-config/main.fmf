@@ -13,8 +13,6 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./selinux-config.sh
 require:
   - qemu-kvm
   - expect

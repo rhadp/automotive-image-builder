@@ -12,7 +12,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-denylist-modules.sh
 duration: 60m
 id: 7b448665-cd10-48c4-a668-ffebafb0e7e3

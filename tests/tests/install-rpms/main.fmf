@@ -16,7 +16,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-install-rpms.sh
 duration: 60m
 id: fd5e4968-ed6e-4a74-9df6-7ba1356aea62

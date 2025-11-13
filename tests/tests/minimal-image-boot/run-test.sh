@@ -4,7 +4,7 @@ source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 # Define connection and VM parameters
 IMG_NAME="test.img"
-MANIFEST=minimal-boot.aib.yml
+MANIFEST=minimal-image-boot.aib.yml
 LOGFILE=serial-console.log
 
 # Build the image
