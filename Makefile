@@ -38,12 +38,17 @@ test-unit:
 # To run single test, for example "make test-integration-selinux-config"
 test-integration-%:
 	cd tests && \
-	tmt --feeling-safe run -v -ePROJECT_DIR=$$PWD/.. plan --name local test --name $*
+	tmt --feeling-safe run -vvvv -ePROJECT_DIR=$$PWD/.. plan --name local test --name $*
 
 .PHONY: test-integration
 test-integration:
 	cd tests && \
 	tmt --feeling-safe run -v -ePROJECT_DIR=$$PWD/.. plan --name local
+
+.PHONY: test-integration
+test-integration-parallel:
+	cd tests && \
+	TMT_RUN_OPTIONS="-ePROJECT_DIR=$$PWD/.. plan --name local" ../ci-scripts/parallel-test-runner.sh 5 local
 
 .PHONY: test
 test: test-unit test-integration yamllint

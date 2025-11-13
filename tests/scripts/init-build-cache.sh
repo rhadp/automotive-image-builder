@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
-if [ -d "$BUILDCACHEDIR" ]; then
-    echo "Build cache directory '$BUILDCACHEDIR' already exists, skipping"
+if [ -d "$BUILDDIR" ]; then
+    echo "Build cache directory '$BUILDDIR' already exists, skipping"
     exit 0
 fi
 
@@ -21,5 +21,5 @@ echo "Populating build cache directory '$BUILDCACHEDIR' started"
 $AIB download \
     --distro=$AIB_DISTRO \
     --cache $OUTDIR/dnf-cache \
-    --build-dir $BUILDCACHEDIR \
+    --build-dir $BUILDDIR \
     "$MIN_IMAGE_MFT"
