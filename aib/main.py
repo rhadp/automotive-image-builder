@@ -488,7 +488,7 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
             name = p.get("name", f"part{idx}")
 
             part_tmp_file = os.path.join(tmpdir, "part.img")
-            part_file = os.path.join(args.out, name + "." + fmt)
+            part_file = os.path.join(args.out, name + fmt.ext)
             extract_part_of_file(image_file, part_tmp_file, start, size)
             convert_image_file(runner, part_tmp_file, part_file, fmt)
     else:
