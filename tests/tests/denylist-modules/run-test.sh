@@ -12,9 +12,10 @@ echo_final_test_result() {
 }
 
 echo_log "Starting build..."
-build --export bootc-tar --extend-define tar_paths='usr/lib/modules' test.aib.yml out.tar
+build --export bootc-tar --extend-define tar_paths='usr/lib/modules' denylist-modules.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
 
+echo_log "Extracting modules list from out.tar..."  
 list_tar_modules out.tar > modules.list
 
 # Checking modules

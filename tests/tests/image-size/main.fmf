@@ -13,6 +13,5 @@ description: |
   Results location:
     output.txt
 
-test: ./image-size.sh
 duration: 60m
 id: 0275d829-4e1b-415a-8bd7-6c68d4273377

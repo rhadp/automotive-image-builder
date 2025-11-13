@@ -9,8 +9,10 @@ EXPECTED_MEMORY_HIGH="MemoryHigh=80M"
 EXPECTED_CPU_WEIGHT="CPUWeight=50"
 
 echo_log "Starting build..."
-build --export bootc-tar --extend-define tar_paths="$RESOURCE_CONF_PATH" test.aib.yml out.tar
+build --export bootc-tar --extend-define tar_paths="$RESOURCE_CONF_PATH" memory-limit-cpu-weight.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
+
+echo_log "Extracting out.tar..."
 tar xvf out.tar > /dev/null
 
 assert_has_file "$RESOURCE_CONF_PATH"

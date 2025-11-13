@@ -13,7 +13,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-remove-files.sh
 duration: 60m
 id: ef4d9682-7522-4cdb-a091-68d812ebcd0c

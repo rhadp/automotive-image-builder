@@ -17,7 +17,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-add-files.sh
 duration: 60m
 id: 37533dc0-8491-4ee0-bf26-8aebb674ed3e

@@ -3,9 +3,10 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build for auth users and groups test..."
-build --export bootc-tar --extend-define "tar_paths=['usr/lib/passwd','usr/lib/group','etc/shadow']" test-users-and-groups.aib.yml out.tar
+build --export bootc-tar --extend-define "tar_paths=['usr/lib/passwd','usr/lib/group','etc/shadow']" users-and-groups.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
 
+echo_log "Extracting out.tar..."
 tar xvf out.tar --no-same-owner --no-same-permissions
 
 PASSWD_PATH="./usr/lib/passwd"

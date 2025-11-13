@@ -19,7 +19,5 @@ require:
   - expect
   - socat
 tag: [special]
-test: |
-  ./test-qm-container-checksum.sh
 duration: 60m
 id: e74f0852-4f66-4116-9cf8-563db2873aef

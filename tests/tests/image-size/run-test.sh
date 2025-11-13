@@ -2,7 +2,7 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
-for YML_NAME in test-image-size-*.aib.yml; do
+for YML_NAME in image-size-*.aib.yml; do
     IMAGE_NAME="test-image.qcow2"
 
     # Extract image_size value

@@ -3,4 +3,6 @@ contact:
   - nsimsolo@redhat.com
 component: aib
 framework: shell
+test: |
+    ./run-test.sh
 

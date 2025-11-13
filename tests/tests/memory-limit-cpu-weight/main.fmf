@@ -13,7 +13,5 @@ description: |
   Results location:
     output.txt
 
-test: |
-    ./test-memory-limit-cpu-weight.sh
 duration: 60m
 id: 3a0874e8-5194-44e5-a02e-ab57827cbd98

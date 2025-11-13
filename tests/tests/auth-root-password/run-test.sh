@@ -3,8 +3,10 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 echo_log "Starting build for root password test..."
-build --export bootc-tar --extend-define tar_paths=['etc/shadow'] test-root-password.aib.yml out.tar
+build --export bootc-tar --extend-define tar_paths=['etc/shadow'] root-password.aib.yml out.tar
 echo_log "Build completed, output: out.tar"
+
+echo_log "Extracting out.tar..."
 tar xvf out.tar
 
 SHADOW_FILE_PATH="./etc/shadow"

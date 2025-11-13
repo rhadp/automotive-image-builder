@@ -1,12 +1,22 @@
-summary: This test builds a minimal QM image, injects and runs three boot tests
-    (systemd, dmesg, selinux) at boot via a systemd service, and verifies 
-    success through serial console output
-id: 91f50931-f916-4445-9c2e-aedb4b6766d4
+summary: Verify that a minimal AIB image boots successfully and passes basic runtime checks
+description: |
+  Builds a minimal Automotive Image Builder (AIB) image and verifies that it boots correctly in a QEMU virtual machine.
+  The test monitors the serial console output to ensure the system reaches the expected boot target and that basic
+  post-boot checks (dmesg, SELinux, and systemd) all pass successfully.
+  
+  Test inputs:
+    Custom AIB manifest defining a minimal bootable image
+  
+  Expected results:
+    - PASS: All tests PASSED.
+
+  Results location:
+    output.txt
+
 require:
   - qemu-kvm
   - expect
   - socat
 duration: 60m
 tag: [special]
-test: |
-    ./run-boot-tests.sh
+id: 91f50931-f916-4445-9c2e-aedb4b6766d4

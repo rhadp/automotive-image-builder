@@ -13,7 +13,5 @@ description: |
   Results location:
     output.txt
 
-test:
-    ./test-chown-chmod.sh
 duration: 30m
 id: d28407e4-a2b9-446c-80c1-e64579759e54
