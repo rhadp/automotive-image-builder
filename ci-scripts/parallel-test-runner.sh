@@ -46,7 +46,7 @@ execute_test() {
         discover prepare provision execute -h tmt --no-progress-bar report &
     local pid=$!
     TEST_START_TIME[$pid]=$start_time
-    TEST_PIDS[$pid]=$test_name
+    TEST_NAMES[$pid]=$test_name
 }
 
 START_TIME=$(date +%s)
@@ -61,35 +61,35 @@ mapfile -t DISCOVERED_TESTS< <(grep "name:" < "/var/tmp/tmt/$PREPARE_TESTS_ID/pl
 TEST_COUNT=${#DISCOVERED_TESTS[@]}
 
 
-declare -A TEST_PIDS
+declare -A TEST_NAMES
 declare -A TEST_START_TIME
 INDEX=0
 SUCCESSFUL_TESTS=0
 
 # Start max allowed test executed at the beginning
-while [[ $INDEX -lt $TEST_COUNT && ${#TEST_PIDS[@]} -lt $MAX_CONCURRENT_TESTS ]]; do
+while [[ $INDEX -lt $TEST_COUNT && ${#TEST_NAMES[@]} -lt $MAX_CONCURRENT_TESTS ]]; do
     execute_test "$INDEX"
     INDEX=$(( INDEX + 1 ))
     sleep 0.1  # Small stagger
 done
 
 # Monitor and execute new tests when previous finished
-while [[ ${#TEST_PIDS[@]} -gt 0 ]]; do
+while [[ ${#TEST_NAMES[@]} -gt 0 ]]; do
     # Check for completed builds
-    for pid in "${!TEST_PIDS[@]}"; do
+    for pid in "${!TEST_NAMES[@]}"; do
         if ! kill -0 "$pid" 2>/dev/null; then
             # Test finished
             wait "$pid"
             exit_code=$?
             exec_time="$(format_time $(($(date +%s) - ${TEST_START_TIME[$pid]})))"
             if [[ $exit_code -ne 0 ]]; then
-                echo "Test '${TEST_PIDS[$pid]}' failed in $exec_time"
+                echo "Test '${TEST_NAMES[$pid]}' failed in $exec_time"
             else
-                echo "Test '${TEST_PIDS[$pid]}' successful in $exec_time"
+                echo "Test '${TEST_NAMES[$pid]}' successful in $exec_time"
                 SUCCESSFUL_TESTS=$((SUCCESSFUL_TESTS + 1))
             fi
             unset "TEST_START_TIME[$pid]"
-            unset "TEST_PIDS[$pid]"
+            unset "TEST_NAMES[$pid]"
 
             # Start next test if available
             if [[ $INDEX -lt $TEST_COUNT ]]; then
