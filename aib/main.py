@@ -473,6 +473,16 @@ def convert_image_file(runner, src, dest, fmt):
     runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", dest])
 
 
+def partition_is_safe_to_truncate(p):
+    name = p.get("name")
+    if name:
+        prefixes = ["boot_", "vbmeta_", "ukiboot"]
+        for p in prefixes:
+            if name.startswith(p):
+                return True
+    return False
+
+
 def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
     if args.separate_partitions:
         runner.run_as_root(["rm", "-rf", args.out])
@@ -489,7 +499,13 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
 
             part_tmp_file = os.path.join(tmpdir, "part.img")
             part_file = os.path.join(args.out, name + fmt.ext)
-            extract_part_of_file(image_file, part_tmp_file, start, size)
+            extract_part_of_file(
+                image_file,
+                part_tmp_file,
+                start,
+                size,
+                skip_zero_tail=partition_is_safe_to_truncate(p),
+            )
             convert_image_file(runner, part_tmp_file, part_file, fmt)
     else:
         convert_image_file(runner, image_file, args.out, fmt)
