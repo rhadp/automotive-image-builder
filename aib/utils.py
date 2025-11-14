@@ -322,9 +322,67 @@ class SudoTemporaryDirectory:
         return self._path
 
 
+def count_trailing_zeros(b: bytes) -> int:
+    mv = memoryview(b)
+    i = len(mv) - 1
+    while i >= 0 and mv[i] == 0:
+        i -= 1
+    return len(mv) - 1 - i
+
+
+def zero_tail_size(src_path: str, start: int, size: int, chunk_size=1024 * 1024):
+    """
+    Count the number of trailing zeros in a range of a file. Bytes
+    in the range that are past the end of file are considered zero.
+    """
+    tail_size = 0
+
+    with open(src_path, "rb") as src:
+        read_end = size
+        while read_end > 0:
+            read_start = max(read_end - chunk_size, 0)
+            read_size = read_end - read_start
+
+            src.seek(start + read_start)
+            data = src.read(read_size)
+
+            n_zeros = count_trailing_zeros(data) + (read_size - len(data))
+            tail_size += n_zeros
+
+            if n_zeros < read_size:
+                return tail_size  # Found a non-zero
+
+            read_end = read_start
+        return tail_size
+
+
+def roundup(n: int, block: int) -> int:
+    return ((n + block - 1) // block) * block
+
+
+# This extracts part of a file, typically used
+# to exctract partitions from a complete image file.
 def extract_part_of_file(
-    src_path: str, dst_path: str, start: int, size: int, chunk_size=1024 * 1024
+    src_path: str,
+    dst_path: str,
+    start: int,
+    size: int,
+    chunk_size=1024 * 1024,
+    skip_zero_tail: bool = False,
+    skip_zero_block_size=512,
 ):
+    # If skip_zero_tail, then we don't copy out any trailing zero bytes (up to
+    # block alignement of default 512 bytes).
+    # For example for partitions such as boot_a which only contain a smaller file
+    # and are sized larger in preparation for later updates.
+    # Note: We assume here that short reads are due to EOF, and
+    # we consider read past-eof as zero
+    if skip_zero_tail:
+        tail_size = zero_tail_size(src_path, start, size, chunk_size)
+        # We skip zeros so we end up with a multiple of a block size
+        # (typically 512, which is a block sector)
+        size = min(roundup(size - tail_size, skip_zero_block_size), size)
+
     total_written = 0
     with open(src_path, "rb") as src, open(dst_path, "wb") as dst:
         src.seek(start)
