@@ -8,7 +8,6 @@ mpp-vars:
   distro_chroot: centos-stream-$distro_version-$arch
   uefi_vendor: centos
   release_rpm: centos-release-autosd
-  containers_configdir: /usr/share/containers
   selinux_policy: automotive
   # linux-firmware-automotive is not yet available
   linux_firmware_rpm: linux-firmware

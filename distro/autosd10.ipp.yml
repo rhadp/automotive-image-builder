@@ -8,7 +8,6 @@ mpp-vars:
   distro_chroot: centos-stream-$distro_version-$arch
   uefi_vendor: centos
   release_rpm: centos-release-autosd
-  containers_configdir: /usr/share/containers
   selinux_policy: automotive
   rpmdb_in_usr: true
   distro_repos:

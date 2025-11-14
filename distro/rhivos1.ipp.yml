@@ -10,6 +10,7 @@ mpp-vars:
   uefi_vendor: redhat
   release_rpm: redhat-release
   selinux_policy: automotive
+  containers_configdir: /etc/containers
   distro_repos:
     - id: rhivos
       baseurl: $distro_baseurl_repo

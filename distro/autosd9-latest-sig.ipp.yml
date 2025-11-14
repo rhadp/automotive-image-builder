@@ -7,6 +7,7 @@ mpp-vars:
   distro_baseurl_repo: $distro_baseurl/BaseOS/$arch/os/
   distro_chroot: centos-stream-$distro_version-$arch
   linux_firmware_rpm: linux-firmware-automotive
+  containers_configdir: /etc/containers
   distro_repos:
     - id: baseos
       baseurl: $distro_baseurl/BaseOS/$arch/os/
