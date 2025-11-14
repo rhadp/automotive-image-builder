@@ -513,8 +513,7 @@ class ManifestLoader:
                 self.set("static_ip_modules", [static["load_module"]])
 
     def handle_auth(self, auth):
-        # Always override to disable by default
-        self.set_from("root_password", auth, "root_password", "")
+        self.set_from("root_password", auth, "root_password")
         self.set_from("root_ssh_keys", auth, "root_ssh_keys")
         self.set_from("simple_sshd_config", auth, "sshd_config")
         self.set_from("simple_groups", auth, "groups")
