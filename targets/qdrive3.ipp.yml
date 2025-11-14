@@ -20,6 +20,8 @@ mpp-vars:
       priority: 1
   target_rpms:
     - aquantia-mac-generator
+  target_supported_arches:
+    - aarch64
   image_enabled_services:
     mpp-join:
       - mpp-eval: image_enabled_services

@@ -9,6 +9,8 @@ mpp-vars:
     - id: rawhide
       baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/nxp-board-support/fedora-rawhide-$arch/
       priority: 1
+  target_supported_arches:
+    - aarch64
   kernel_package: 'kernel'
   consoles: "ttyLP0,115200"
   use_boot: grub2-sbl

@@ -620,6 +620,9 @@ properties:
   version:
     description: The version of the manifest. If set, this is used as the "os version" in the ostree commit and will be available as IMAGE_VERSION in /etc/build-info.
     type: string
+  target:
+    description: The (default) hardware target to build for
+    type: string
   content:
     description: The content to add to the rootfs, such as packages, files and container images, and systemd services.
     $ref: "#/$defs/partition"

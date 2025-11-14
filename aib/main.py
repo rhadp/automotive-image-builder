@@ -35,6 +35,7 @@ from .podman import (
     PodmanImageMount,
 )
 
+default_target = "qemu"
 default_distro = "autosd10-sig"
 default_container_image_name = "quay.io/centos-sig-automotive/automotive-image-builder"
 base_dir = os.path.realpath(sys.argv[1])
@@ -134,7 +135,7 @@ def strip_ext(path):
     return os.path.splitext(os.path.splitext(path)[0])[0]
 
 
-def validate_policy_args(args):
+def validate_policy_args(args, target):
     """Validate build arguments against policy restrictions."""
     if args.policy:
         errors = []
@@ -146,9 +147,7 @@ def validate_policy_args(args):
 
         # Validate build arguments
         errors.extend(
-            args.policy.validate_build_args(
-                args.mode, args.target, args.distro, args.arch
-            )
+            args.policy.validate_build_args(args.mode, target, args.distro, args.arch)
         )
 
         if errors:
@@ -158,8 +157,6 @@ def validate_policy_args(args):
 
 
 def create_osbuild_manifest(args, tmpdir, out, runner):
-    validate_policy_args(args)
-
     with open(args.manifest) as f:
         try:
             manifest = yaml.safe_load(f)
@@ -178,7 +175,6 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
             "name", strip_ext(os.path.basename(args.manifest))
         ),
         "arch": args.arch,
-        "target": args.target,
         "distro_name": args.distro,
         "image_mode": args.mode,
         "osbuild_major_version": get_osbuild_major_version(
@@ -216,10 +212,16 @@ def create_osbuild_manifest(args, tmpdir, out, runner):
             selinux_booleans.append(f"{key}={bool_str}")
         defines["policy_selinux_booleans"] = selinux_booleans
 
+    defines["target"] = default_target
     if args.simple_manifest:
         loader = ManifestLoader(defines, args.policy)
 
+        # Note: This may override the 'target' define
         loader.load(args.simple_manifest, os.path.dirname(args.simple_manifest))
+    if args.target:
+        defines["target"] = args.target
+
+    validate_policy_args(args, defines["target"])
 
     if args.ostree_repo:
         runner.add_volume_for(args.ostree_repo)
@@ -987,7 +989,6 @@ POLICY_ARGS = {
 TARGET_ARGS = {
     "--target": {
         "type": "str",
-        "default": "qemu",
         "help": "Build for this target hardware board (see list-targets for options)",
     },
 }

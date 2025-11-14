@@ -24,6 +24,8 @@
 
 version: '2'
 mpp-vars:
+  target_supported_arches:
+    - aarch64
   use_autoinit: true
   # We're listing here all possible consoles for the supported boards. That
   # may be overkill for some boards, but it doesn't hurt either. We need to

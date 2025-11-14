@@ -31,8 +31,10 @@ restrictions:
     disallow:
       - bluetooth
       - btusb
-    disallow@ebbr:
-      - soundcore
+    disallow@rcar_s4:
+      - rcar_can
+      - rcar_thermal
+      - rcar_dmac
 
   selinux_booleans:
     force:

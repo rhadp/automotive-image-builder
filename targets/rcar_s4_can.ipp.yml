@@ -14,6 +14,8 @@ mpp-vars:
     - can-utils
     # Requires for the vcan module to be available
     - kernel-automotive-modules-extra
+  target_supported_arches:
+    - aarch64
   consoles: "ttySC0,1843200"
   use_efi_runtime: false
   dracut_drivers:

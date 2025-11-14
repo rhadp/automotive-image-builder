@@ -609,6 +609,7 @@ class ManifestLoader:
 
         self.set_from("name", manifest, "name")
         self.set_from("version", manifest, "version")
+        self.set_from("target", manifest, "target")
 
         content = Contents(self, manifest.get("content", {}), extra_include)
         content.set_defines()

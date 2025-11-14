@@ -13,6 +13,8 @@ mpp-vars:
   kernel_version: '6.8.0-1000.acrn.el9'
   linux_firmware_rpm: 'linux-firmware'
   consoles: 'ttyS0,115200n81'
+  target_supported_arches:
+    - x86_64
   target_rpms:
     - python3-acrn-board-inspector
   dracut_add_drivers:

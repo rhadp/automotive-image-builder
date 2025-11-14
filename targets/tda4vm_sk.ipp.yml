@@ -1,6 +1,8 @@
 # Target for the TI SK-TDA4VM Evaluation Board (https://www.ti.com/tool/SK-TDA4VM)
 version: '2'
 mpp-vars:
+  target_supported_arches:
+    - aarch64
   target_repos:
     - id: ti-board-support
       baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/ti-board-support/$distro_chroot/

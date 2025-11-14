@@ -1,6 +1,8 @@
 # Target for the NXP S32G3 Vehicle Networking Reference Design Board
 version: '2'
 mpp-vars:
+  target_supported_arches:
+    - aarch64
   target_repos:
     # The Automotive S32 Linux Kernel (https://github.com/nxp-auto-linux/linux/) is the vendor
     # kernel provided by NXP.

@@ -6,6 +6,8 @@ mpp-vars:
     - from: input://extra-tree/lib/ostree-boot/efi/
       to: mount://root/boot/efi/
   rpi4_use_uefi: false
+  target_supported_arches:
+    - aarch64
   target_repos:
     - id: rpi-board-support
       baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/rpi-board-support/$distro_chroot/
