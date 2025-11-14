@@ -53,10 +53,11 @@ START_TIME=$(date +%s)
 
 echo "Preparing tests execution"
 # Execute phases up to prepare
-tmt -q $FEELING_SAFE  run -i "$(format_test_id "-1" "prepare-tests")" -B execute "${TMT_RUN_OPTIONS[@]}"
+PREPARE_TESTS_ID="$(format_test_id "-1" "prepare-tests")"
+tmt -q $FEELING_SAFE  run -i "$PREPARE_TESTS_ID" -B execute "${TMT_RUN_OPTIONS[@]}"
 
 # Gather discovered tests
-mapfile -t TEST_NAMES< <(grep "name:" < ~/.config/tmt/last-run/plans/$PLAN/discover/tests.yaml | sed 's/.*tests\///')
+mapfile -t TEST_NAMES< <(grep "name:" < "/var/tmp/tmt/$PREPARE_TESTS_ID/plans/$PLAN/discover/tests.yaml" | sed 's/.*tests\///')
 TEST_COUNT=${#TEST_NAMES[@]}
 
 
