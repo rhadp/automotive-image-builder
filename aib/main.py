@@ -994,8 +994,6 @@ BUILD_ARGS = {
     "--cache-max-size": {
         "type": "str",
         "metavar": "SIZE",
-        # We set the default size to 4GB, which allows about four copies of the build pipeline.
-        "default": "4GB",
         "help": "Max cache size inside build-dir, e.g. '8GB', or 'unlimited'",
     },
     "--cache": {
