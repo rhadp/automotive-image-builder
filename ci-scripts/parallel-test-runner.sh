@@ -32,6 +32,14 @@ format_test_id() {
     echo "$(printf "%02d" $(( test_run_idx + 1)))-$test_name"
 }
 
+print_list() {
+    local items=("$@")
+
+    for item in "${items[@]}"; do
+        echo "    ${item}"
+    done
+}
+
 execute_test() {
     local test_run_idx=$1
     local test_name=${DISCOVERED_TESTS[$test_run_idx]}
@@ -69,6 +77,7 @@ declare -A TEST_IDS
 declare -A TEST_START_TIME
 INDEX=0
 SUCCESSFUL_TESTS=0
+FAILED_TESTS=()
 
 # Start max allowed test executed at the beginning
 while [[ $INDEX -lt $TEST_COUNT && ${#TEST_NAMES[@]} -lt $MAX_CONCURRENT_TESTS ]]; do
@@ -88,6 +97,7 @@ while [[ ${#TEST_NAMES[@]} -gt 0 ]]; do
             exec_time="$(format_time $(($(date +%s) - ${TEST_START_TIME[$pid]})))"
             if [[ $exit_code -ne 0 ]]; then
                 echo "Test '${TEST_NAMES[$pid]}' failed in $exec_time"
+                FAILED_TESTS+=("${TEST_NAMES[$pid]}")
             else
                 echo "Test '${TEST_NAMES[$pid]}' successful in $exec_time"
                 SUCCESSFUL_TESTS=$((SUCCESSFUL_TESTS + 1))
@@ -117,5 +127,13 @@ tmt -q $FEELING_SAFE run --last -A execute "${TMT_RUN_OPTIONS[@]}"
 
 END_TIME=$(date +%s)
 
-echo "Successfully finished $SUCCESSFUL_TESTS/$TEST_COUNT, overall execution time: $(format_time $((END_TIME - START_TIME)))"
-exit $(( TEST_COUNT - SUCCESSFUL_TESTS ))
+echo "Tests execution finished, overall execution time: $(format_time $((END_TIME - START_TIME)))"
+
+if [[ $TEST_COUNT -ne $SUCCESSFUL_TESTS ]]; then
+    echo "Only $SUCCESSFUL_TESTS/$TEST_COUNT finished successfully, following tests FAILED:"
+    print_list "${FAILED_TESTS[@]}"
+    exit 1
+fi
+
+echo "All $TEST_COUNT tests finished successfully."
+exit 0
