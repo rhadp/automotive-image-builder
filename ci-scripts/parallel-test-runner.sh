@@ -34,7 +34,7 @@ format_test_id() {
 
 execute_test() {
     local test_run_idx=$1
-    local test_name=${TEST_NAMES[$test_run_idx]}
+    local test_name=${DISCOVERED_TESTS[$test_run_idx]}
     local start_time
 
     echo "Starting test '$test_name'"
@@ -57,8 +57,8 @@ PREPARE_TESTS_ID="$(format_test_id "-1" "prepare-tests")"
 tmt -q $FEELING_SAFE  run -i "$PREPARE_TESTS_ID" -B execute "${TMT_RUN_OPTIONS[@]}"
 
 # Gather discovered tests
-mapfile -t TEST_NAMES< <(grep "name:" < "/var/tmp/tmt/$PREPARE_TESTS_ID/plans/$PLAN/discover/tests.yaml" | sed 's/.*tests\///')
-TEST_COUNT=${#TEST_NAMES[@]}
+mapfile -t DISCOVERED_TESTS< <(grep "name:" < "/var/tmp/tmt/$PREPARE_TESTS_ID/plans/$PLAN/discover/tests.yaml" | sed 's/.*tests\///')
+TEST_COUNT=${#DISCOVERED_TESTS[@]}
 
 
 declare -A TEST_PIDS
