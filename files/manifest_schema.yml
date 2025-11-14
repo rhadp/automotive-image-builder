@@ -354,6 +354,13 @@ $defs:
         type: object
         additionalProperties: false
         patternProperties:
+          root:
+            type: object
+            additionalProperties: false
+            properties:
+              grow:
+                description: "Support for growing root filesystem to match physical image size."
+                type: boolean
           "(aboot|ukiboot|boot|efi|vbmeta|sbl)":
             type: object
             additionalProperties: false

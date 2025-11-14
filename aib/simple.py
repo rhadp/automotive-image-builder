@@ -561,7 +561,10 @@ class ManifestLoader:
                 if "uuid" in part:
                     self.set(prefix + "varpart_uuid", part.get("uuid"))
 
-            else:  # Non /var
+            elif k == "root":
+                self.set_from("grow_rootfs", part, "grow")
+
+            else:  # Non /var or root
                 if "size" in part:
                     part_size = parse_size(part["size"])
                     self.set(k + "part_size", int(part_size / 512))

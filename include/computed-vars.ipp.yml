@@ -123,6 +123,15 @@ mpp-vars:
     then:
       mpp-eval: use_bootc
 
+  use_gpt:
+    mpp-eval: partition_label == 'gpt'
+  use_repart:
+    mpp-eval: grow_rootfs
+  _use_repart_check:
+    mpp-if: use_repart and not use_gpt
+    then:
+      mpp-eval: _error('filesystem resize only supported with GPT partitions')
+
   image_repos:
     mpp-join:
       - mpp-eval: distro_repos
@@ -208,6 +217,10 @@ mpp-vars:
           - systemd-initrd-automotive
           - mpp-if: use_debug or use_kernel_debug_package
             then: systemd-journald
+      - mpp-if: use_repart
+        then:
+          - systemd-repart
+
   dracut_add_drivers:
     mpp-join:
       - mpp-eval: dracut_add_drivers
@@ -268,6 +281,10 @@ mpp-vars:
       - mpp-if: use_debug
         then:
           - /usr/bin/bash
+      - mpp-if: use_repart
+        then:
+          - /usr/lib/systemd/system/systemd-repart.service.d/10-automotive.conf
+          - /usr/lib/systemd/systemd-growfs
   kernel_opts:
     mpp-join:
       - - rw
@@ -439,6 +456,11 @@ mpp-vars:
           then: selinux-bools.service
         - mpp-if: ld_so_cache_protected
           then: etc-ld.so.cache.mount
+  image_masked_services:
+    mpp-join:
+      - mpp-eval: image_masked_services
+      - - mpp-if: use_repart
+          then: systemd-repart.service # We only run this in the initrd
   image_extra_stages:
     mpp-join:
       - mpp-eval: target_extra_image_stages
@@ -696,8 +718,26 @@ mpp-vars:
         path: /etc/ssh/authorized_keys
         parents: true
         exist_ok: true
+    - mpp-if: use_repart
+      then:
+        path: /usr/lib/repart.d
+        parents: true
+        exist_ok: true
+    - mpp-if: use_repart
+      then:
+        path: /usr/lib/systemd/system/systemd-repart.service.d
+        parents: true
+        exist_ok: true
   # Extra content that will be copied from from extra-tree to the image, list amended by moode-*.ipp
   extra_tree_content:
+    - mpp-if: use_repart
+      then:
+        from: input://extra-tree/repart.dropin
+        to: tree:///usr/lib/systemd/system/systemd-repart.service.d/10-automotive.conf
+    - mpp-if: grow_rootfs
+      then:
+        from: input://extra-tree/repart.conf
+        to: tree:///usr/lib/repart.d/10-root.conf
     - from: input://extra-tree/systemd-system.conf
       to: tree:///usr/lib/systemd/system.conf.d/10-automotive.conf
     - from: input://extra-tree/coredump.conf
