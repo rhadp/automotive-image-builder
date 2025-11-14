@@ -36,17 +36,20 @@ execute_test() {
     local test_run_idx=$1
     local test_name=${DISCOVERED_TESTS[$test_run_idx]}
     local start_time
+    local test_id
 
     echo "Starting test '$test_name'"
     start_time=$(date +%s)
+    test_id="$(format_test_id "$test_run_idx" "$test_name")"
     # TODO: simplify when https://github.com/teemtee/tmt/issues/2757 is fixed
     tmt -q $FEELING_SAFE run \
-        -i "$(format_test_id "$test_run_idx" "$test_name")" \
+        -i "$test_id" \
         "${TMT_RUN_OPTIONS[@]}" test --name "$test_name" \
         discover prepare provision execute -h tmt --no-progress-bar report &
     local pid=$!
     TEST_START_TIME[$pid]=$start_time
     TEST_NAMES[$pid]=$test_name
+    TEST_IDS[$pid]=$test_id
 }
 
 START_TIME=$(date +%s)
@@ -62,6 +65,7 @@ TEST_COUNT=${#DISCOVERED_TESTS[@]}
 
 
 declare -A TEST_NAMES
+declare -A TEST_IDS
 declare -A TEST_START_TIME
 INDEX=0
 SUCCESSFUL_TESTS=0
@@ -88,8 +92,12 @@ while [[ ${#TEST_NAMES[@]} -gt 0 ]]; do
                 echo "Test '${TEST_NAMES[$pid]}' successful in $exec_time"
                 SUCCESSFUL_TESTS=$((SUCCESSFUL_TESTS + 1))
             fi
+            # Create link for easier results access
+            ( cd "/var/tmp/tmt/${TEST_IDS[$pid]}" && ln -s "plans/${PLAN}/execute/data/guest/default-0/tests/${TEST_NAMES[$pid]}-1" test-results )
+
             unset "TEST_START_TIME[$pid]"
             unset "TEST_NAMES[$pid]"
+            unset "TEST_IDS[$pid]"
 
             # Start next test if available
             if [[ $INDEX -lt $TEST_COUNT ]]; then
