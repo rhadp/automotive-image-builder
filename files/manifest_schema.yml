@@ -482,7 +482,7 @@ $defs:
         type:
           - string
           - "null"
-        description: Roots's encrypted password, as returned by crypt(3), or nothing to disable
+        description: Roots's encrypted password, as returned by crypt(3), or empty for no password. Use null to disallow login, which is the default.
       root_ssh_keys:
         description: Roots's ssh keys, or nothing to disable
         type:

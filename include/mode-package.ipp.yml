@@ -43,9 +43,7 @@ pipelines:
               users:
                 root:
                   password:
-                    mpp-if: root_password
-                    then:
-                      mpp-eval: root_password
+                    mpp-eval: "'*' if root_password is None else root_password"
                   keys:
                     mpp-if: root_ssh_keys
                     then:
