@@ -328,6 +328,10 @@ mpp-vars:
               mpp-format-string: '{abootpart_size * 512}'
             attrs:
               mpp-eval: active_gpt_attrs
+            payload_type: raw
+            payload:
+              source_path:
+                mpp-eval: _kernel_dir + "/aboot.img"
         - mpp-if: use_abootpart
           then:
             label: boot_b
