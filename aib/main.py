@@ -638,8 +638,10 @@ def bootc_extract_for_signing(args, tmpdir, runner):
 
                 if _type == "efi":
                     destdir = os.path.join(args.out, "efi")
+                elif _type in ["aboot", "vbmeta"]:
+                    destdir = os.path.join(args.out, "aboot")
                 else:
-                    log.error("Unknown signature type {_type}")
+                    log.error(f"Unknown signature type {_type}")
                     sys.exit(1)
 
                 os.makedirs(destdir, exist_ok=True)
@@ -672,8 +674,10 @@ def bootc_inject_signed(args, tmpdir, runner):
 
                 if _type == "efi":
                     srcdir = os.path.join(args.srcdir, "efi")
+                elif _type in ["aboot", "vbmeta"]:
+                    srcdir = os.path.join(args.srcdir, "aboot")
                 else:
-                    log.error("Unknown signature type {_type}")
+                    log.error(f"Unknown signature type {_type}")
                     sys.exit(1)
 
                 src = os.path.join(srcdir, filename)

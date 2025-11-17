@@ -253,6 +253,18 @@ mpp-vars:
               filename: slot_b.addon.efi
               paths:
                 - mpp-format-string: /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_b.efi.extra.d/slot_b.addon.efi
+        - mpp-if: use_aboot
+          then:
+            - type: aboot
+              filename: aboot.img
+              paths:
+                - mpp-eval: _kernel_dir + "/aboot.img"
+              partition_size:
+                mpp-eval: abootpart_size * 512
+            - type: vbmeta
+              filename: vbmeta.img
+              paths:
+                - mpp-eval: _kernel_dir + "/vbmeta.img"
 
   bootc_install_options:
     mpp-format-string: |
