@@ -628,7 +628,7 @@ def bootc_extract_for_signing(args, tmpdir, runner):
             content = mount.read_file("/etc/signing_info.json")
             info = json.loads(content)
 
-            with open(os.path.join(args.out, "signing_info.json"), "a") as f:
+            with open(os.path.join(args.out, "signing_info.json"), "w") as f:
                 f.write(content)
             for f in info.get("signed_files", []):
                 _type = f["type"]
