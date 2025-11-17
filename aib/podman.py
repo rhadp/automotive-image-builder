@@ -27,9 +27,12 @@ def run_cmd(
         "CONTAINERS_STORAGE_CONF",
     ]
 
-    if with_sudo:
+    if with_sudo and os.getuid() != 0:
+        sudo_path = shutil.which("sudo")
+        if sudo_path is None:
+            raise FileNotFoundError("sudo command not found in PATH")
         cmdline = [
-            "sudo",
+            sudo_path,
             "--preserve-env={}".format(",".join(allowed_env_vars)),
         ] + args
     else:
