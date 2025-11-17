@@ -348,6 +348,10 @@ mpp-vars:
             uuid: $vbmetapart_a_uuid
             size:
               mpp-format-string: '{abootpart_size * 512}'
+            payload_type: raw
+            payload:
+              source_path:
+                mpp-eval: _kernel_dir + "/vbmeta.img"
         - mpp-if: use_vbmetapart
           then:
             label: vbmeta_b
@@ -440,6 +444,19 @@ pipelines:
   - name: extra-tree-content
     build: name:build
     stages:
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: empty
+              text: "\0"
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['empty']}
+              to: tree:///empty_vbmeta
       - type: org.osbuild.copy
         inputs:
           inlinefile:
