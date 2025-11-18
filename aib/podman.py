@@ -19,6 +19,7 @@ def run_cmd(
     return_pipe=False,
     stdin_pipe=None,
     stdout_pipe=None,
+    check=False,
 ):
     allowed_env_vars = [
         "REGISTRY_AUTH_FILE",
@@ -46,12 +47,13 @@ def run_cmd(
         r = subprocess.run(cmdline, capture_output=True, stdin=stdin_pipe)
     else:
         r = subprocess.run(cmdline, stdin=stdin_pipe, stdout=stdout_pipe)
-    if capture_output:
+    if capture_output or check:
         if r.returncode != 0:
             raise Exception(
                 f"Failed to run '{shlex.join(args)}': "
-                + r.stderr.decode("utf-8").rstrip()
+                + (r.stderr or b"").decode("utf-8").rstrip()
             )
+    if capture_output:
         return r.stdout.decode("utf-8").rstrip()
     return r.returncode
 
@@ -357,6 +359,7 @@ def podman_bootc_inject_pubkey(
                         "/sysroot",
                         kdir,
                     ],
+                    check=True,
                     **kwargs,
                 )
         return mount.image_id
