@@ -98,18 +98,25 @@ def find_qemu(arch):
     exit_error(f"Can't find {binary_name}")
 
 
-def download_aboot_u_boot(arch, dest_path):
+def aboot_bios_name(arch, use_avb):
+    if use_avb:
+        return f"qemu-u-boot-{arch}-avb.bin"
+    return f"qemu-u-boot-{arch}.bin"
+
+
+def download_aboot_u_boot(arch):
     with tempfile.TemporaryDirectory(prefix="runvm-uboot") as tmpdir:
         autosigrepo = "https://mirror.stream.centos.org/SIGs/9-stream/automotive"
         subprocess.run(["dnf", "download", "-q",
-                        "--downloaddir", tmpdir,
+                        "--destdir", tmpdir,
                         "--disablerepo", "*",
                         "--repofrompath", f"autosig,{autosigrepo}/{arch}/packages-main/",
                         "autosig-u-boot"], check=True)
         rpm_file = os.listdir(tmpdir)[0]
         p1 = subprocess.Popen(["rpm2cpio", os.path.join(tmpdir, rpm_file)], stdout=subprocess.PIPE)
         subprocess.run(["cpio", "-id", "--quiet", "-D", tmpdir], stdin=p1.stdout, check=True)
-        subprocess.run(["cp", os.path.join(tmpdir, "boot/u-boot.bin"), dest_path], check=True)
+        subprocess.run(["cp", os.path.join(tmpdir, "boot/u-boot.bin"), aboot_bios_name(arch, False)], check=True)
+        subprocess.run(["cp", os.path.join(tmpdir, "boot/u-boot-avb.bin"), aboot_bios_name(arch, True)], check=True)
 
 
 def qemu_available_accels(qemu):
@@ -374,6 +381,8 @@ def main():
                         help="Use a single core")
     parser.add_argument("--aboot", default=False, action="store_true",
                         help="Boot with aboot")
+    parser.add_argument("--avb", default=False, action="store_true",
+                        help="Boot with android verified boot (implies --aboot)")
     parser.add_argument("--watchdog", default=False, action="store_true",
                         help="Enable watchdog")
     parser.add_argument("--tpm2", default=False, action="store_true",
@@ -418,13 +427,15 @@ def main():
     if args.arch == "arm64":
         args.arch = "aarch64"
 
+    if args.avb:
+        args.aboot = True
     if args.aboot:
         if args.arch != "aarch64":
             exit_error("--aboot only supported with --arch=aarch64")
-        aboot_bios = f"qemu-u-boot-{args.arch}.bin"
+        aboot_bios = aboot_bios_name(args.arch, args.avb)
         if not os.path.exists(aboot_bios):
             print(f"Missing file '{aboot_bios}'. Downloading")
-            download_aboot_u_boot(args.arch, aboot_bios)
+            download_aboot_u_boot(args.arch)
 
     qemu = find_qemu(args.arch)
     accel_list = qemu_available_accels(qemu)
