@@ -26,9 +26,7 @@ mpp-vars:
   osname: default
   ostree_repo_url: http://10.0.2.100/
   ostree_remote_name: auto-sig
-  use_composefs_signed:
-    # TODO-BOOTC: bootc doesn't currently work with our mode of signed commits
-    mpp-eval: not use_bootc
+  use_composefs_signed: true
   use_transient_etc: true
 
   # Kernel options
