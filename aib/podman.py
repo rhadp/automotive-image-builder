@@ -381,7 +381,8 @@ def podman_bootc_inject_pubkey(
         with PodmanImageMount(
             src_container, writable=True, commit_image=dest_container
         ) as mount:
-            # Copy in the modified initrd
+            # Copy in the new pubkey and modified initrd
+            mount.copy_in_file(pub_key, "etc/ostree/initramfs-root-binding.key")
             mount.copy_in_file(extracted_initrd, ostree_initrd_path)
 
             # Update aboot.img if aboot is used
