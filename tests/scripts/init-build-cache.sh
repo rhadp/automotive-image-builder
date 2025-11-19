@@ -17,9 +17,13 @@ qm:
     rpms: []
 EOF
 
-echo "Populating build cache directory '$BUILDCACHEDIR' started"
+echo "Populating build directory '$BUILDDIR' started"
 $AIB download \
     --distro=$AIB_DISTRO \
     --cache $OUTDIR/dnf-cache \
     --build-dir $BUILDDIR \
     "$MIN_IMAGE_MFT"
+
+rm -f "$MIN_IMAGE_MFT"
+
+echo "Populating build directory '$BUILDDIR' finished"

@@ -65,7 +65,7 @@ There are two main approaches to running integration tests:
 - **Local machine**: You run `tmt` directly on your machine and it executes each test on this same machine.
 - **Manually provisioned machine**: You run `tmt` directly on your machine and it connects to a remote machine (physical or VM) using SSH and runs the tests there.
 
-### Using local machine 
+### Using local machine
 
 All **automotive-image-builder** dependencies and **tmt** infrastructure must be installed on your local machine to use this testing method.
 
@@ -139,6 +139,40 @@ tmt run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes \
     --filter 'tag:special'
 ```
 
+### Using parallel test runner
+
+Most of the integration test suite execution time is consumed during the build of the tar archive or image and even
+though osbuild supports parallel execution using the same build directory to reuse downloaded artifacts, tmt itself
+doesn't provide the ability to run tests parallelly on the same machine. So here comes the
+[parallel-test-runner.sh](https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/blob/main/ci-scripts/parallel-test-runner.sh?ref_type=heads),
+which decreases the total integration test suite execution by 60%.
+
+To run tests using 5 parallel execution processes and `local` plan you can use:
+
+```shell
+cd tests
+../ci-scripts/parallel-test-runner.sh 5 local
+```
+
+If you need to pass additional custom parameters, then you can use `TMT_RUN_OPTIONS` environment variable (here are
+concrete settings for
+[gitlab CI execution](https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/blob/main/ci-scripts/run_tmt_tests.sh?ref_type=heads#L69)).
+For example if you would like to use the manually provisioned machine you can use following command:
+
+```shell
+cd tests
+export TMT_RUN_OPTIONS='-v -eNODE="IP or hostname" plan --name connect'
+../ci-scripts/ci-scripts/parallel-test-runner.sh
+```
+
+Please be aware that `parallel-test-runner.sh` is using TMT run predefined directories names under `/var/tmp/tmt` and
+if a run directory for a test exists, it will skip this test execution. If you would like to remove any existing TMT
+run directories you need to run following command before executing `parallel-test-runner.sh`:
+
+```shell
+tmt clean -v
+```
+
 ### Customizing test execution
 
 The following environment variables exist to customize test execution:
@@ -147,7 +181,7 @@ The following environment variables exist to customize test execution:
    - Contains the URL of the base repository to install `automotive-image-builder` and its dependencies from
    - Default value: `https://autosd.sig.centos.org/AutoSD-10/nightly/repos/AutoSD/compose/AutoSD/\$arch/os/`
 - **`AIB_CUSTOM_REPO`**
-   - Contains the URL of the custom repository to install `automotive-image-builder` and its dependencies, 
+   - Contains the URL of the custom repository to install `automotive-image-builder` and its dependencies,
      for example, to test the custom `automotive-image-builder` package
    - Default value: _empty_
 - **`AIB_DISTRO`**
