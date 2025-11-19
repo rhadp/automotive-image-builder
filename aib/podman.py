@@ -364,6 +364,7 @@ def podman_bootc_inject_pubkey(
                     [
                         "podman",
                         "run",
+                        "--rm",
                         "-ti",
                         "-v",
                         f"{mount.mount_path}:/sysroot",
