@@ -192,6 +192,18 @@ class PodmanImageMount:
                 check=True,
             )
 
+    def link_file(self, source_path, dest_path):
+        """Copy a file from the host filesystem into the mounted image."""
+        self._ensure_mounted()
+
+        source_file_path = self._get_full_path(source_path)
+        dest_file_path = self._get_full_path(dest_path)
+
+        self.run(
+            ["ln", "-f", source_file_path, dest_file_path],
+            check=True,
+        )
+
 
 def podman_image_exists(image):
     return run_cmd(["podman", "image", "exists", image]) == 0
