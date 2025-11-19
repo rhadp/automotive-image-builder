@@ -22,7 +22,7 @@ from .exports import export, get_export_data
 from .runner import Runner
 from .ostree import OSTree
 from .simple import ManifestLoader
-from .utils import SudoTemporaryDirectory, extract_part_of_file
+from .utils import SudoTemporaryDirectory, extract_part_of_file, rm_rf
 from .version import __version__
 from . import exceptions
 from . import AIBParameters
@@ -622,7 +622,8 @@ def bootc_extract_for_signing(args, tmpdir, runner):
             "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
-    os.makedirs(args.out, exist_ok=True)
+    rm_rf(args.out)
+    os.makedirs(args.out)
     with PodmanImageMount(args.src_container) as mount:
         if mount.has_file("/etc/signing_info.json"):
             content = mount.read_file("/etc/signing_info.json")
