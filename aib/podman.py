@@ -111,13 +111,14 @@ class PodmanImageMount:
         """Convert a path to a full path within the mounted image."""
         return os.path.join(self.mount_path, os.path.splitroot(path)[2])
 
-    def run(self, cmd, stdin_pipe=None, stdout_pipe=None):
+    def run(self, cmd, stdin_pipe=None, stdout_pipe=None, check=False):
         return run_cmd(
             cmd,
             False,
             with_sudo=self.with_sudo,
             stdin_pipe=stdin_pipe,
             stdout_pipe=stdout_pipe,
+            check=check,
         )
 
     def capture(self, cmd):
@@ -188,6 +189,7 @@ class PodmanImageMount:
                 ["tee", dest_file_path],
                 stdin_pipe=source_file,
                 stdout_pipe=subprocess.DEVNULL,
+                check=True,
             )
 
 
