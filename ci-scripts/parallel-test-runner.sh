@@ -9,6 +9,8 @@ if [ "$PLAN" == "local" ]; then
     FEELING_SAFE=--feeling-safe
 fi
 
+TMT_WORKDIR_ROOT=${TMT_WORKDIR_ROOT:-"/var/tmp/tmt"}
+
 # TMT_RUN_OPTIONS need to contain all important options for tmt execution
 if [ -n "$TMT_RUN_OPTIONS" ]; then
     # It's not possible to pass array type variable through environment, so conversion needed
@@ -46,9 +48,16 @@ execute_test() {
     local start_time
     local test_id
 
+    test_id="$(format_test_id "$test_run_idx" "$test_name")"
+    if [ -d "${TMT_WORKDIR_ROOT}/${test_id}" ]; then
+        echo "Skipping test '$test_name', test run directory '${TMT_WORKDIR_ROOT}/${test_id}' exists!"
+        SKIPPED_TESTS+=("$test_name")
+        SUCCESSFUL_TESTS=$((SUCCESSFUL_TESTS + 1))
+        return 0
+    fi
+
     echo "Starting test '$test_name'"
     start_time=$(date +%s)
-    test_id="$(format_test_id "$test_run_idx" "$test_name")"
     # TODO: simplify when https://github.com/teemtee/tmt/issues/2757 is fixed
     tmt -q $FEELING_SAFE run \
         -i "$test_id" \
@@ -68,7 +77,8 @@ PREPARE_TESTS_ID="$(format_test_id "-1" "prepare-tests")"
 tmt -q $FEELING_SAFE  run -i "$PREPARE_TESTS_ID" -B execute "${TMT_RUN_OPTIONS[@]}"
 
 # Gather discovered tests
-mapfile -t DISCOVERED_TESTS< <(grep "name:" < "/var/tmp/tmt/$PREPARE_TESTS_ID/plans/$PLAN/discover/tests.yaml" | sed 's/.*tests\///')
+mapfile -t DISCOVERED_TESTS< \
+    <(grep "name:" < "$TMT_WORKDIR_ROOT/$PREPARE_TESTS_ID/plans/$PLAN/discover/tests.yaml" | sed 's/.*tests\///')
 TEST_COUNT=${#DISCOVERED_TESTS[@]}
 
 
@@ -78,6 +88,7 @@ declare -A TEST_START_TIME
 INDEX=0
 SUCCESSFUL_TESTS=0
 FAILED_TESTS=()
+SKIPPED_TESTS=()
 
 # Start max allowed test executed at the beginning
 while [[ $INDEX -lt $TEST_COUNT && ${#TEST_NAMES[@]} -lt $MAX_CONCURRENT_TESTS ]]; do
@@ -103,7 +114,8 @@ while [[ ${#TEST_NAMES[@]} -gt 0 ]]; do
                 SUCCESSFUL_TESTS=$((SUCCESSFUL_TESTS + 1))
             fi
             # Create link for easier results access
-            ( cd "/var/tmp/tmt/${TEST_IDS[$pid]}" && ln -s "plans/${PLAN}/execute/data/guest/default-0/tests/${TEST_NAMES[$pid]}-1" test-results )
+            ( cd "${TMT_WORKDIR_ROOT}/${TEST_IDS[$pid]}" && \
+                ln -s "plans/${PLAN}/execute/data/guest/default-0/tests/${TEST_NAMES[$pid]}-1" test-results )
 
             unset "TEST_START_TIME[$pid]"
             unset "TEST_NAMES[$pid]"
@@ -133,6 +145,12 @@ if [[ $TEST_COUNT -ne $SUCCESSFUL_TESTS ]]; then
     echo "Only $SUCCESSFUL_TESTS/$TEST_COUNT finished successfully, following tests FAILED:"
     print_list "${FAILED_TESTS[@]}"
     exit 1
+fi
+
+if [[ "${#SKIPPED_TESTS[@]}" -gt 0 ]]; then
+    echo "Following tests were SKIPPED:"
+    print_list "${SKIPPED_TESTS[@]}"
+    exit 2
 fi
 
 echo "All $TEST_COUNT tests finished successfully."
