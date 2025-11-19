@@ -355,6 +355,7 @@ def podman_bootc_inject_pubkey(
 
             kdir = mount.get_kernel_subdir()
 
+            # Update aboot.img if aboot is used
             if mount.has_file(f"/usr/lib/modules/{kdir}/aboot.img"):
                 kwargs = {}
                 if not verbose:
@@ -376,4 +377,13 @@ def podman_bootc_inject_pubkey(
                     check=True,
                     **kwargs,
                 )
+
+            # Hardlink updated initramfs in /usr/lib/ostree-boot to the copy
+            # in /usr/lib/modules.
+            # NOTE: This must run after the above aboot-update, because it can
+            # change the initramfs file.
+            mount.link_file(
+                ostree_initrd_path, f"/usr/lib/modules/{kdir}/initramfs.img"
+            )
+
         return mount.image_id
