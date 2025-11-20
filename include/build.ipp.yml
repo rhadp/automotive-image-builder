@@ -242,6 +242,20 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile/{embedded['append']}
               to: tree:///usr/share/lorax/templates.d/auto/append
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: runcmd
+              text:
+                runcmd ${product.name}
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['runcmd']}
+              to: tree:///usr/share/lorax/templates.d/auto/runcmd
       - type: org.osbuild.selinux
         options:
           file_contexts:
