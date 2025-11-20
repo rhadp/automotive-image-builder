@@ -10,7 +10,6 @@ mpp-vars:
   linux_firmware_rpm: linux-firmware
   # No centos-release-autosd/automotive yet
   release_rpm: centos-release
-  rpmdb_in_usr: true
   distro_repos:
     - id: baseos
       baseurl: $distro_baseurl/BaseOS/$arch/os/
