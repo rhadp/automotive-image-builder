@@ -173,6 +173,11 @@ pipelines:
                   name:
                     mpp-format-string: /etc/selinux/{selinux_policy}/contexts/files/file_contexts.subs_dist
                   version: '"/usr/etc /etc"'
+          - type: org.osbuild.lorax-script
+            options:
+              path: auto/runcmd
+              product:
+                name: "/usr/bin/ostree_postprocess /run/osbuild/tree"
           - type: org.osbuild.ostree.preptree
             options:
               etc_group_members:
