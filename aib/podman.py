@@ -114,13 +114,14 @@ class PodmanImageMount:
         """Convert a path to a full path within the mounted image."""
         return os.path.join(self.mount_path, os.path.splitroot(path)[2])
 
-    def run(self, cmd, stdin_pipe=None, stdout_pipe=None):
+    def run(self, cmd, stdin_pipe=None, stdout_pipe=None, check=False):
         return run_cmd(
             cmd,
             False,
             with_sudo=self.with_sudo,
             stdin_pipe=stdin_pipe,
             stdout_pipe=stdout_pipe,
+            check=check,
         )
 
     def capture(self, cmd):
@@ -191,7 +192,20 @@ class PodmanImageMount:
                 ["tee", dest_file_path],
                 stdin_pipe=source_file,
                 stdout_pipe=subprocess.DEVNULL,
+                check=True,
             )
+
+    def link_file(self, source_path, dest_path):
+        """Copy a file from the host filesystem into the mounted image."""
+        self._ensure_mounted()
+
+        source_file_path = self._get_full_path(source_path)
+        dest_file_path = self._get_full_path(dest_path)
+
+        self.run(
+            ["ln", "-f", source_file_path, dest_file_path],
+            check=True,
+        )
 
 
 def podman_image_exists(image):
@@ -293,6 +307,10 @@ def podman_run_bootc_image_builder(
 def podman_bootc_inject_pubkey(
     src_container, dest_container, pub_key, build_container, verbose
 ):
+    verbose_kwargs = {}
+    if not verbose:
+        verbose_kwargs["stdout_pipe"] = subprocess.DEVNULL
+
     with tempfile.TemporaryDirectory(prefix="initrd-append-") as td:
         td = Path(td)
 
@@ -300,12 +318,39 @@ def podman_bootc_inject_pubkey(
         extracted_initrd = td / "initrd"
 
         with PodmanImageMount(src_container) as mount:
+            # Collect info on src_container
+            kdir = mount.get_kernel_subdir()
+            src_is_aboot = mount.has_file(f"/usr/lib/modules/{kdir}/aboot.img")
+
+            # Extract initrd
             ostree_initrd_path = mount.get_ostree_initrd()
             if not ostree_initrd_path:
                 raise Exception(
                     f"Can't find initramfs in bootc image '{src_container}'"
                 )
             mount.copy_out_file(ostree_initrd_path, extracted_initrd)
+
+        if src_is_aboot:
+            # In some case aboot-update adds a bootconfig to the initramfs.
+            # This will be re-added when we re-run aboot-update below, but
+            # we have to remove the old first to make sure that extending
+            # the initramfs with files works.
+            run_cmd(
+                [
+                    "podman",
+                    "run",
+                    "--rm",
+                    "-ti",
+                    "-v",
+                    f"{td}:/sysroot",
+                    build_container,
+                    "bootconfig",
+                    "-d",
+                    "/sysroot/initrd",
+                ],
+                check=True,
+                **verbose_kwargs,
+            )
 
         compression = detect_initrd_compression(extracted_initrd)
 
@@ -339,19 +384,17 @@ def podman_bootc_inject_pubkey(
         with PodmanImageMount(
             src_container, writable=True, commit_image=dest_container
         ) as mount:
-            # Copy in the modified initrd
+            # Copy in the new pubkey and modified initrd
+            mount.copy_in_file(pub_key, "etc/ostree/initramfs-root-binding.key")
             mount.copy_in_file(extracted_initrd, ostree_initrd_path)
 
-            kdir = mount.get_kernel_subdir()
-
-            if mount.has_file(f"/usr/lib/modules/{kdir}/aboot.img"):
-                kwargs = {}
-                if not verbose:
-                    kwargs["stdout_pipe"] = subprocess.DEVNULL
+            # Update aboot.img if aboot is used
+            if src_is_aboot:
                 run_cmd(
                     [
                         "podman",
                         "run",
+                        "--rm",
                         "-ti",
                         "-v",
                         f"{mount.mount_path}:/sysroot",
@@ -363,6 +406,15 @@ def podman_bootc_inject_pubkey(
                         kdir,
                     ],
                     check=True,
-                    **kwargs,
+                    **verbose_kwargs,
                 )
+
+            # Hardlink updated initramfs in /usr/lib/ostree-boot to the copy
+            # in /usr/lib/modules.
+            # NOTE: This must run after the above aboot-update, because it can
+            # change the initramfs file.
+            mount.link_file(
+                ostree_initrd_path, f"/usr/lib/modules/{kdir}/initramfs.img"
+            )
+
         return mount.image_id

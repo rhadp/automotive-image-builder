@@ -253,6 +253,18 @@ mpp-vars:
               filename: slot_b.addon.efi
               paths:
                 - mpp-format-string: /usr/lib/bootupd/updates/EFI/{uefi_vendor}/ukiboot_b.efi.extra.d/slot_b.addon.efi
+        - mpp-if: use_aboot
+          then:
+            - type: aboot
+              filename: aboot.img
+              paths:
+                - mpp-eval: _kernel_dir + "/aboot.img"
+              partition_size:
+                mpp-eval: abootpart_size * 512
+            - type: vbmeta
+              filename: vbmeta.img
+              paths:
+                - mpp-eval: _kernel_dir + "/vbmeta.img"
 
   bootc_install_options:
     mpp-format-string: |
@@ -328,6 +340,10 @@ mpp-vars:
               mpp-format-string: '{abootpart_size * 512}'
             attrs:
               mpp-eval: active_gpt_attrs
+            payload_type: raw
+            payload:
+              source_path:
+                mpp-eval: _kernel_dir + "/aboot.img"
         - mpp-if: use_abootpart
           then:
             label: boot_b
@@ -344,6 +360,10 @@ mpp-vars:
             uuid: $vbmetapart_a_uuid
             size:
               mpp-format-string: '{abootpart_size * 512}'
+            payload_type: raw
+            payload:
+              source_path:
+                mpp-eval: _kernel_dir + "/vbmeta.img"
         - mpp-if: use_vbmetapart
           then:
             label: vbmeta_b
@@ -436,6 +456,19 @@ pipelines:
   - name: extra-tree-content
     build: name:build
     stages:
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: empty
+              text: "\0"
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['empty']}
+              to: tree:///empty_vbmeta
       - type: org.osbuild.copy
         inputs:
           inlinefile:

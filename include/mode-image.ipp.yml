@@ -208,7 +208,22 @@ pipelines:
                 preptree: true
                 kernel:
                   mpp-eval: _kernel_subdir()
-
+          # Create an empty vbmeta.img so that we have something to replace which is
+          # written to vbmeta_a partition in bootc-to-image-builder
+          - mpp-if: use_aboot
+            then:
+              type: org.osbuild.copy
+              inputs:
+                extra-tree:
+                  type: org.osbuild.tree
+                  origin: org.osbuild.pipeline
+                  references:
+                    - name:extra-tree-content
+              options:
+                paths:
+                  - from: input://extra-tree/empty_vbmeta
+                    to:
+                      mpp-format-string: tree://{_kernel_dir()}/vbmeta.img
   - name: ostree-commit
     build: name:build
     stages:

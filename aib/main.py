@@ -22,7 +22,7 @@ from .exports import export, get_export_data
 from .runner import Runner
 from .ostree import OSTree
 from .simple import ManifestLoader
-from .utils import SudoTemporaryDirectory, extract_part_of_file
+from .utils import SudoTemporaryDirectory, extract_part_of_file, rm_rf
 from .version import __version__
 from . import exceptions
 from . import AIBParameters
@@ -622,13 +622,14 @@ def bootc_extract_for_signing(args, tmpdir, runner):
             "Source bootc image '%s' isn't in local container store", args.src_container
         )
         sys.exit(1)
-    os.makedirs(args.out, exist_ok=True)
+    rm_rf(args.out)
+    os.makedirs(args.out)
     with PodmanImageMount(args.src_container) as mount:
         if mount.has_file("/etc/signing_info.json"):
             content = mount.read_file("/etc/signing_info.json")
             info = json.loads(content)
 
-            with open(os.path.join(args.out, "signing_info.json"), "a") as f:
+            with open(os.path.join(args.out, "signing_info.json"), "w") as f:
                 f.write(content)
             for f in info.get("signed_files", []):
                 _type = f["type"]
@@ -637,8 +638,10 @@ def bootc_extract_for_signing(args, tmpdir, runner):
 
                 if _type == "efi":
                     destdir = os.path.join(args.out, "efi")
+                elif _type in ["aboot", "vbmeta"]:
+                    destdir = os.path.join(args.out, "aboot")
                 else:
-                    log.error("Unknown signature type {_type}")
+                    log.error(f"Unknown signature type {_type}")
                     sys.exit(1)
 
                 os.makedirs(destdir, exist_ok=True)
@@ -671,8 +674,10 @@ def bootc_inject_signed(args, tmpdir, runner):
 
                 if _type == "efi":
                     srcdir = os.path.join(args.srcdir, "efi")
+                elif _type in ["aboot", "vbmeta"]:
+                    srcdir = os.path.join(args.srcdir, "aboot")
                 else:
-                    log.error("Unknown signature type {_type}")
+                    log.error(f"Unknown signature type {_type}")
                     sys.exit(1)
 
                 src = os.path.join(srcdir, filename)

@@ -108,7 +108,8 @@ mpp-vars:
   use_efipart:
     mpp-if: not "use_efipart" in locals()
     then:
-      mpp-eval: use_grub2 or use_ukiboot
+      # TODO-BOOTC: aboot doesn't need a /boot/efi, but bc-t-i currently fails in bootcupd stage if this is missing
+      mpp-eval: use_grub2 or use_ukiboot or (use_aboot and use_bootc)
   use_bootpart:
     mpp-if: not "use_bootpart" in locals()
     then:

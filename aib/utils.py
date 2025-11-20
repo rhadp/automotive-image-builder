@@ -231,6 +231,18 @@ def generate_keys():
         return read_keys(keypath)
 
 
+def rm_rf(path):
+    try:
+        if os.path.isfile(path) or os.path.islink(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        raise e
+
+
 # This is compatible with tempdir.TemporaryDirectory, but falls back to sudo rm -rf on permission errors
 class SudoTemporaryDirectory:
     def __init__(self, suffix=None, prefix=None, dir=None, use_sudo_fallback=True):
