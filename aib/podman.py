@@ -61,6 +61,39 @@ def run_cmd(
     return r.returncode
 
 
+def run_podman_cmd(
+    container,
+    volumes,
+    args,
+    podman_args=None,
+    stdout_pipe=None,
+    check=False,
+):
+    cmd = [
+        "podman",
+        "run",
+        "--rm",
+        "--security-opt",
+        "label=type:unconfined_t",
+        "-ti",
+    ]
+    if podman_args:
+        cmd += podman_args
+
+    for k, v in sorted(volumes.items()):
+        cmd.append("-v")
+        cmd.append(f"{str(v)}:{k}")
+
+    cmd.append(container)
+    cmd += args
+
+    return run_cmd(
+        cmd,
+        stdout_pipe=stdout_pipe,
+        check=check,
+    )
+
+
 class PodmanImageMount:
     """Context manager for mounting and unmounting podman images."""
 
@@ -267,19 +300,7 @@ def podman_run_bootc_image_builder(
         prefix="automotive-image-builder-", dir="/var/tmp"
     ) as tmpdir:
         try:
-            cmdline = [
-                "podman",
-                "run",
-                "--rm",
-                "-it",
-                "--privileged",
-                "--security-opt",
-                "label=type:unconfined_t",
-                "-v",
-                tmpdir + ":/output",
-                "-v",
-                "/var/lib/containers/storage:/var/lib/containers/storage",
-                bib_container,
+            args = [
                 "--build-container",
                 build_container,
                 "--progress",
@@ -288,10 +309,17 @@ def podman_run_bootc_image_builder(
                 build_type,
                 bootc_container,
             ]
-            if verbose:
-                res = run_cmd(cmdline)
-            else:
-                res = run_cmd(cmdline, stdout_pipe=subprocess.DEVNULL)
+            volumes = {
+                "/output": tmpdir,
+                "/var/lib/containers/storage": "/var/lib/containers/storage",
+            }
+            res = run_podman_cmd(
+                bib_container,
+                volumes,
+                args,
+                podman_args=["--privileged"],
+                stdout_pipe=None if verbose else subprocess.DEVNULL,
+            )
 
             if res == 0:
                 src = os.path.join(tmpdir, src_path)
@@ -307,10 +335,6 @@ def podman_run_bootc_image_builder(
 def podman_bootc_inject_pubkey(
     src_container, dest_container, pub_key, build_container, verbose
 ):
-    verbose_kwargs = {}
-    if not verbose:
-        verbose_kwargs["stdout_pipe"] = subprocess.DEVNULL
-
     with tempfile.TemporaryDirectory(prefix="initrd-append-") as td:
         td = Path(td)
 
@@ -335,21 +359,16 @@ def podman_bootc_inject_pubkey(
             # This will be re-added when we re-run aboot-update below, but
             # we have to remove the old first to make sure that extending
             # the initramfs with files works.
-            run_cmd(
+            run_podman_cmd(
+                build_container,
+                {"/sysroot": td},
                 [
-                    "podman",
-                    "run",
-                    "--rm",
-                    "-ti",
-                    "-v",
-                    f"{td}:/sysroot",
-                    build_container,
                     "bootconfig",
                     "-d",
                     "/sysroot/initrd",
                 ],
                 check=True,
-                **verbose_kwargs,
+                stdout_pipe=None if verbose else subprocess.DEVNULL,
             )
 
         compression = detect_initrd_compression(extracted_initrd)
@@ -390,15 +409,10 @@ def podman_bootc_inject_pubkey(
 
             # Update aboot.img if aboot is used
             if src_is_aboot:
-                run_cmd(
+                run_podman_cmd(
+                    build_container,
+                    {"/sysroot": mount.mount_path},
                     [
-                        "podman",
-                        "run",
-                        "--rm",
-                        "-ti",
-                        "-v",
-                        f"{mount.mount_path}:/sysroot",
-                        build_container,
                         "aboot-update",
                         "-p",
                         "-r",
@@ -406,7 +420,7 @@ def podman_bootc_inject_pubkey(
                         kdir,
                     ],
                     check=True,
-                    **verbose_kwargs,
+                    stdout_pipe=None if verbose else subprocess.DEVNULL,
                 )
 
             # Hardlink updated initramfs in /usr/lib/ostree-boot to the copy
