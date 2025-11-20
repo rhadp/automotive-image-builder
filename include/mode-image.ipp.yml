@@ -163,29 +163,16 @@ pipelines:
                   mpp-if: dracut_install
                   then:
                     mpp-eval: dracut_install
-          # Work around https://github.com/coreos/rpm-ostree/pull/5382 not yet being available
-          - mpp-if: selinux_policy != "targeted"
-            then:
-              type: org.osbuild.lorax-script
-              options:
-                path: auto/append
-                product:
-                  name:
-                    mpp-format-string: /etc/selinux/{selinux_policy}/contexts/files/file_contexts.subs_dist
-                  version: '"/usr/etc /etc"'
+          - type: org.osbuild.lorax-script
+            options:
+              path: auto/runcmd
+              product:
+                name: "/usr/bin/ostree_postprocess /run/osbuild/tree"
           - type: org.osbuild.ostree.preptree
             options:
               etc_group_members:
                 - wheel
                 - docker
-          # Temporary Work around the lack of https://github.com/coreos/rpm-ostree/pull/5485
-          - type: org.osbuild.lorax-script
-            options:
-              path: auto/append
-              product:
-                name:
-                  mpp-format-string: /usr/etc/selinux/{selinux_policy}/contexts/files/file_contexts.subs_dist
-                version: '"/usr/etc/systemd/system /usr/lib/systemd/system"'
           # TODO-BOOTC: For now we only do this for bootc targets, but its is not ideal
           # to differ vs regular ostree like this. This should be fixed.
           - mpp-if: use_bootc
