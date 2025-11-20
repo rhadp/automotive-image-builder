@@ -554,6 +554,12 @@ def build_bootc_builder(args, tmpdir, runner):
 
     dest_image = args.out or aib_build_container_name(args.distro)
 
+    if args.if_needed:
+        info = podman_image_info(dest_image)
+        if info:
+            print(f"Image {dest_image} already exists, doing nothing.")
+            return
+
     with _run_osbuild(args, tmpdir, runner, ["bootc-archive"]) as outputdir:
         output_file = os.path.join(outputdir.name, "bootc-archive/image.oci-archive")
 
@@ -1159,7 +1165,12 @@ build_subcommands = [
         build_bootc_builder,
         ["container", "include"],
         BUILD_ARGS,
-        {"out": {"help": "Name of container image to build", "required": False}},
+        {
+            "--if-needed": {
+                "help": "Only build the image if its not already built.",
+            },
+            "out": {"help": "Name of container image to build", "required": False},
+        },
     ],
     [
         "build",
