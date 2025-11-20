@@ -11,7 +11,6 @@ mpp-vars:
   selinux_policy: automotive
   # linux-firmware-automotive is not yet available
   linux_firmware_rpm: linux-firmware
-  rpmdb_in_usr: true
   distro_repos:
     - id: autosd
       baseurl: $distro_baseurl/AutoSD/$arch/os/
