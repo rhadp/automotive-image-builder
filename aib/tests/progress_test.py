@@ -144,6 +144,90 @@ class TestOSBuildProgressMonitor(unittest.TestCase):
         self.assertTrue(result.stage_event)
         self.assertEqual(result.context["stage"], "rpm")
 
+    def test_extract_progress_info_logs_messages_to_file(self):
+        """Test that messages are logged to file."""
+        with tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".log", delete=True
+        ) as log_file:
+            data = {
+                "message": "Finished pipeline build",
+                "context": {
+                    "pipeline": {
+                        "name": "build",
+                        "id": "97314ba66b3d36501ef8de1a5a3829d3ecd8857ec1e1e37bbfb29144b3506f79",
+                    }
+                },
+            }
+
+            result = self.monitor.extract_progress_info(data, log_file)
+            log_file.flush()
+            log_file.seek(0)
+            log_content = log_file.read()
+
+            # Messages are logged as-is
+            self.assertIn("Finished pipeline build", log_content)
+            # Should return None for message-only data
+            self.assertIsNone(result)
+
+    def test_extract_progress_info_logs_stage_result_with_options(self):
+        """Test that stage result with options and duration is logged to file.
+
+        Note: The stage output is NOT logged here because it's already been logged
+        line-by-line through separate log() messages. We only log the header (name, id, options)
+        and the duration.
+        """
+        with tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".log", delete=True
+        ) as log_file:
+            data = {
+                "message": "Finished module org.osbuild.copy",
+                "context": {
+                    "pipeline": {
+                        "stage": {
+                            "name": "org.osbuild.copy",
+                            "id": "5570b0d72f74f611d5802179bce07e11a8a4eb421f59229821d7102a7f19e0c7",
+                        }
+                    }
+                },
+                "result": {
+                    "name": "org.osbuild.copy",
+                    "id": "5570b0d72f74f611d5802179bce07e11a8a4eb421f59229821d7102a7f19e0c7",
+                    "output": "copying '/run/osbuild/inputs/inlinefile/sha256:9768aa935f7b067b70101f1922abad1e99f2cf8ca79ea36ed1953da3b5d7253f' -> '/run/osbuild/tree/disk.yaml'\n",
+                },
+                "options": {
+                    "paths": [
+                        {
+                            "from": "input://inlinefile/sha256:9768aa935f7b067b70101f1922abad1e99f2cf8ca79ea36ed1953da3b5d7253f",
+                            "to": "tree:///disk.yaml",
+                        }
+                    ]
+                },
+                "duration": 0.50,
+            }
+
+            result = self.monitor.extract_progress_info(data, log_file)
+            log_file.flush()
+            log_file.seek(0)
+            log_content = log_file.read()
+
+            # Check that stage header, options, and duration are logged
+            self.assertIn(
+                "org.osbuild.copy: 5570b0d72f74f611d5802179bce07e11a8a4eb421f59229821d7102a7f19e0c7",
+                log_content,
+            )
+            self.assertIn('"paths"', log_content)
+            self.assertIn('"from"', log_content)
+            self.assertIn(
+                "input://inlinefile/sha256:9768aa935f7b067b70101f1922abad1e99f2cf8ca79ea36ed1953da3b5d7253f",
+                log_content,
+            )
+            self.assertIn("tree:///disk.yaml", log_content)
+            self.assertIn("⏱  Duration: 0.50s", log_content)
+            # The output should NOT be in the log because it's logged separately through log() messages
+            self.assertNotIn("copying '/run/osbuild/inputs/inlinefile", log_content)
+            # Should return None for result data (no progress info)
+            self.assertIsNone(result)
+
     def test_extract_progress_info_no_progress(self):
         """Test extracting from data with no progress information."""
         data = {"some": "other", "data": "here"}
@@ -219,10 +303,12 @@ class TestOSBuildProgressMonitor(unittest.TestCase):
 
         mock_process.stdout.readline.side_effect = json_lines
 
-        with patch.object(self.monitor.console, "print") as mock_console_print:
-            self.monitor.monitor_subprocess_output(mock_process, mock_progress, task_id)
+        with patch.object(self.verbose_monitor.console, "print") as mock_console_print:
+            self.verbose_monitor.monitor_subprocess_output(
+                mock_process, mock_progress, task_id
+            )
 
-            # Should print the non-JSON line
+            # Should print the non-JSON line when verbose is enabled
             mock_console_print.assert_called_with("Non-JSON line")
 
     def test_monitor_subprocess_output_io_error(self):
