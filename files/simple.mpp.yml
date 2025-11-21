@@ -9,6 +9,8 @@ mpp-vars:
   qm_simple_copy: []
   simple_mkdir: []
   qm_simple_mkdir: []
+  simple_symlinks: []
+  qm_simple_symlinks: []
   simple_remove: []
   qm_simple_remove: []
   simple_chmod: {}
@@ -92,6 +94,12 @@ pipelines:
           options:
             paths:
               mpp-eval: qm_simple_copy
+      - mpp-if: qm_simple_symlinks
+        then:
+          type: org.osbuild.ln
+          options:
+            paths:
+              mpp-eval: qm_simple_symlinks
       - mpp-if: qm_simple_chown
         then:
           type: org.osbuild.chown
@@ -197,6 +205,12 @@ pipelines:
           options:
             paths:
               mpp-eval: simple_copy
+      - mpp-if: simple_symlinks
+        then:
+          type: org.osbuild.ln
+          options:
+            paths:
+              mpp-eval: simple_symlinks
       - mpp-if: simple_chown
         then:
           type: org.osbuild.chown

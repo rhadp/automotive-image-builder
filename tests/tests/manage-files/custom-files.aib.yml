@@ -34,6 +34,12 @@ content:
       preserve_path: true
       max_files: 100
 
+  add_symlinks:
+    - target: /etc/custom-files/file1.txt
+      link: /etc/custom-files/link-absolute
+    - target: file2.txt
+      link: /etc/custom-files/link-relative
+
   chmod_files:
     - path: /etc/custom-files/file1.txt
       mode: "777"
@@ -58,6 +64,11 @@ qm:
       - path: /etc/qm-custom/file5.txt
         text: |
           This is another qm file content
+    add_symlinks:
+      - target: /etc/qm-custom/file4.txt
+        link: /etc/qm-custom/qm-link-absolute
+      - target: file5.txt
+        link: /etc/qm-custom/qm-link-relative
     chmod_files:
       - path: /etc/qm-custom/file4.txt
         mode: "777"

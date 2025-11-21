@@ -126,6 +126,27 @@ assert_file_has_permission() {
     fi
 }
 
+assert_symlink_exists() {
+    local symlink=$1
+    if [ ! -L "$symlink" ]; then
+        ls -la "$(dirname "$symlink")/" >&2
+        fatal "Symlink '$symlink' does not exist"
+    fi
+}
+
+assert_symlink_target() {
+    local symlink=$1
+    local expected_target=$2
+
+    assert_symlink_exists "$symlink"
+
+    if [[ "$(readlink "$symlink")" == "$expected_target" ]]; then
+        echo_pass "Symlink '$symlink' points to '$expected_target'"
+    else
+        fatal "Symlink '$symlink' points to '$(readlink "$symlink")', expected '$expected_target'"
+    fi
+}
+
 resolve_systemd_wants_path() {
     local service_name="$1"
     local section="$2"

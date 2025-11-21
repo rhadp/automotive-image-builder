@@ -209,6 +209,21 @@ $defs:
         description: If true, don't fail if directory exists
         type: boolean
 
+  symlink_file:
+    description: Create a symbolic link
+    type: object
+    additionalProperties: false
+    required:
+      - link
+      - target
+    properties:
+      link:
+        description: The absolute pathname of the symlink to create
+        $ref: "#/$defs/abs_path"
+      target:
+        description: The target path the symlink points to (absolute or relative)
+        type: string
+
   partition:
     type: object
     additionalProperties: false
@@ -260,6 +275,11 @@ $defs:
         type: array
         items:
           $ref: "#/$defs/make_dir"
+      add_symlinks:
+        description: Create symbolic links in the image
+        type: array
+        items:
+          $ref: "#/$defs/symlink_file"
       systemd:
         description: Configure what systemd services are to be running other than the default ones.
         type: object
