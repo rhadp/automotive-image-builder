@@ -30,7 +30,12 @@ from .podman import (
     podman_bootc_inject_pubkey,
     PodmanImageMount,
 )
-from .arguments import parse_args, default_distro, aib_build_container_name
+from .arguments import (
+    parse_args,
+    default_distro,
+    aib_build_container_name,
+    command,
+)
 
 base_dir = os.path.realpath(sys.argv[1])
 default_target = "qemu"
@@ -63,10 +68,12 @@ def list_ipp_items(args, item_type):
             print(f"{d} - {desc}")
 
 
+@command()
 def list_distro(args, _tmpdir, _runner):
     list_ipp_items(args, "distro")
 
 
+@command()
 def list_targets(args, _tmpdir, _runner):
     list_ipp_items(args, "targets")
 
@@ -299,6 +306,7 @@ def extract_rpmlist_json(osbuild_manifest):
     return base64.b64decode(data_b64).decode("utf8")
 
 
+@command()
 def listrpms(args, tmpdir, runner):
     osbuild_manifest = os.path.join(tmpdir, "osbuild.json")
 
@@ -376,6 +384,7 @@ def _run_osbuild(args, tmpdir, runner, exports):
         return outputdir.detach()
 
 
+@command()
 def build(args, tmpdir, runner):
     has_repo = False
     exports = []
@@ -436,6 +445,7 @@ def bootc_archive_to_store(runner, archive_file, container_name, user=False):
         runner.run_as_root(cmdline)
 
 
+@command()
 def build_bootc(args, tmpdir, runner):
     args.mode = "bootc"
 
@@ -503,6 +513,7 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
         convert_image_file(runner, image_file, args.out, fmt)
 
 
+@command()
 def build_traditional(args, tmpdir, runner):
     use_ostree = args.ostree or args.ostree_repo
     args.mode = "image" if use_ostree else "package"
@@ -522,6 +533,7 @@ def build_traditional(args, tmpdir, runner):
             export_disk_image_file(runner, args, tmpdir, output_file, fmt)
 
 
+@command()
 def download(args, tmpdir, runner):
     if not args.build_dir:
         log.error("No build dir specified, refusing to download to temporary directory")
@@ -534,6 +546,7 @@ def download(args, tmpdir, runner):
     outputdir.cleanup()
 
 
+@command()
 def build_bootc_builder(args, tmpdir, runner):
     # build-bootc-builder is a special form of the "build" command with fixed values for
     # manifest/export/target/mode arguments.
@@ -583,6 +596,7 @@ def get_build_container_for(container):
     return build_container
 
 
+@command()
 def bootc_to_disk_image(args, tmpdir, runner):
     if not podman_image_exists(args.src_container):
         log.error(
@@ -612,6 +626,7 @@ def bootc_to_disk_image(args, tmpdir, runner):
         export_disk_image_file(runner, args, tmpdir, output_file, fmt)
 
 
+@command()
 def bootc_extract_for_signing(args, tmpdir, runner):
     if not podman_image_exists(args.src_container):
         log.error(
@@ -650,6 +665,7 @@ def bootc_extract_for_signing(args, tmpdir, runner):
             sys.exit(0)
 
 
+@command()
 def bootc_inject_signed(args, tmpdir, runner):
     if not podman_image_exists(args.src_container):
         log.error(
@@ -686,6 +702,7 @@ def bootc_inject_signed(args, tmpdir, runner):
             sys.exit(0)
 
 
+@command()
 def bootc_reseal(args, tmpdir, runner):
     if not podman_image_exists(args.src_container):
         log.error(
@@ -734,6 +751,7 @@ def bootc_reseal(args, tmpdir, runner):
     )
 
 
+@command()
 def bootc_prepare_reseal(args, tmpdir, runner):
     if not podman_image_exists(args.src_container):
         log.error(
@@ -760,31 +778,13 @@ def bootc_prepare_reseal(args, tmpdir, runner):
     )
 
 
+@command()
 def no_subcommand(_args, _tmpdir, _runner):
     log.info("No subcommand specified, see --help for usage")
 
 
 def main():
-    callbacks = {
-        "build_bootc": build_bootc,
-        "build_traditional": build_traditional,
-        "build_bootc_builder": build_bootc_builder,
-        "build": build,
-        "bootc_to_disk_image": bootc_to_disk_image,
-        "bootc_extract_for_signing": bootc_extract_for_signing,
-        "bootc_inject_signed": bootc_inject_signed,
-        "bootc_reseal": bootc_reseal,
-        "bootc_prepare_reseal": bootc_prepare_reseal,
-        "list_distro": list_distro,
-        "list_targets": list_targets,
-        "listrpms": listrpms,
-        "download": download,
-        "no_subcommand": no_subcommand,
-    }
-
-    args = AIBParameters(
-        args=parse_args(sys.argv[2:], base_dir, callbacks), base_dir=base_dir
-    )
+    args = AIBParameters(args=parse_args(sys.argv[2:], base_dir), base_dir=base_dir)
 
     if args.verbose:
         log.setLevel("DEBUG")

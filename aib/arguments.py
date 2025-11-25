@@ -23,6 +23,39 @@ def aib_build_container_name(distro):
     return f"localhost/aib-build:{distro}"
 
 
+# Registry for command callbacks
+callbacks = {}
+
+
+def command(name=None):
+    """
+    Decorator to register a function as a command callback.
+
+    Usage:
+        @command()  # Uses function name
+        def build_bootc(tmpdir, runner):
+            ...
+
+        @command("custom_name")  # Uses custom name
+        def some_function(tmpdir, runner):
+            ...
+
+    Args:
+        name: Optional name to register this callback under.
+              If None, uses the function's __name__
+
+    Returns:
+        The decorator function
+    """
+
+    def decorator(func):
+        callback_name = name if name is not None else func.__name__
+        callbacks[callback_name] = func
+        return func
+
+    return decorator
+
+
 class AIBHelpFormatter(argparse.RawDescriptionHelpFormatter):
     """Custom help formatter that groups subcommands."""
 
@@ -274,7 +307,7 @@ SHARED_RESEAL_ARGS = {
 }
 
 
-def _get_build_subcommands(callbacks):
+def _get_build_subcommands():
     """Get build subcommand definitions with callbacks."""
     return [
         [
@@ -401,7 +434,7 @@ def _get_build_subcommands(callbacks):
     ]
 
 
-def _get_bootc_subcommands(callbacks):
+def _get_bootc_subcommands():
     """Get bootc subcommand definitions with callbacks."""
     return [
         [
@@ -527,7 +560,7 @@ def _get_bootc_subcommands(callbacks):
     ]
 
 
-def _get_subcommands(callbacks):
+def _get_subcommands():
     """Get other subcommand definitions with callbacks."""
     return [
         [
@@ -584,20 +617,19 @@ def _get_subcommands(callbacks):
 def _get_subcommand_groups(callbacks):
     """Get all subcommand groups with callbacks."""
     return [
-        ["Basic image building", _get_build_subcommands(callbacks)],
-        ["Bootc operations", _get_bootc_subcommands(callbacks)],
-        ["Other commands", _get_subcommands(callbacks)],
+        ["Basic image building", _get_build_subcommands()],
+        ["Bootc operations", _get_bootc_subcommands()],
+        ["Other commands", _get_subcommands()],
     ]
 
 
-def parse_args(args, base_dir, callbacks):
+def parse_args(args, base_dir):
     """
     Parse command-line arguments.
 
     Args:
         args: List of command-line arguments to parse
         base_dir: Base directory for the project
-        callbacks: Dict mapping callback names to their functions
 
     Returns:
         Parsed arguments namespace
