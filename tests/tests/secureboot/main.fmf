@@ -1,0 +1,29 @@
+summary: Verify that we can build, sign and boot using EFI secureboot
+description: |
+  Builds two AIB bootc container image, one initial and one update.
+  These are signed (EFI files) with a known private key and a disk
+  image is built and booted (with secure boot). We check that boot
+  works and is Secure Boot enabled, and then we update to the update
+  container image and ensure the update boots.
+
+  NOTE: The inputs like the signing code and keys are copies from
+  the contrib/secure-boot directory.
+
+  Test inputs:
+    - Custom a-i-b manifests with some changes to make boot messages easy to see
+    - Containerfile with tools to sign EFI files
+    - Pregenerated private keys for the EFI signature and matching EFI variable
+      files to use with qemu.
+
+  Expected results:
+    - PASS: 'Built signed bootc container'
+    - PASS: 'Built signed bootc update container'
+    - PASS: 'Built signed bootc disk image'
+    - PASS: 'Booted signed bootc disk image with Secure Boot enabled'
+    - PASS: 'Booted into updated image'
+
+  Results location:
+    output.txt
+
+duration: 60m
+id: 30bf4a47-2c68-4c18-9381-de090b969108
