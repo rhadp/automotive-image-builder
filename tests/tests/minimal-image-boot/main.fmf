@@ -1,12 +1,12 @@
 summary: Verify that a minimal AIB image boots successfully and passes basic runtime checks
 description: |
-  Builds a minimal Automotive Image Builder (AIB) image and verifies that it boots correctly in a QEMU virtual machine.
-  The test monitors the serial console output to ensure the system reaches the expected boot target and that basic
-  post-boot checks (dmesg, SELinux, and systemd) all pass successfully.
-  
+  Builds a minimal Automotive Image Builder (AIB) bootc image and verifies that it boots correctly in a QEMU virtual
+  machine.   The test monitors the serial console output to ensure the system reaches the expected boot target and that
+  basic   post-boot checks (dmesg, SELinux, and systemd) all pass successfully.
+
   Test inputs:
     Custom AIB manifest defining a minimal bootable image
-  
+
   Expected results:
     - PASS: All tests PASSED.
 
@@ -18,5 +18,5 @@ require:
   - expect
   - socat
 duration: 60m
-tag: [special]
+tag: [virt-required]
 id: 91f50931-f916-4445-9c2e-aedb4b6766d4

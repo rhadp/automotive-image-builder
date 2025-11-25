@@ -3,13 +3,15 @@
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 # Define connection and VM parameters
+CTR_NAME="localhost/minimal-image"
 IMG_NAME="test.img"
 MANIFEST=minimal-image-boot.aib.yml
 LOGFILE=serial-console.log
 
 # Build the image
 echo_log "Building image from $MANIFEST..."
-build --target qemu --mode image --export image "$MANIFEST" "$IMG_NAME"
+build_bootc --target qemu "$MANIFEST" "$CTR_NAME"
+bootc_to_disk_image "$CTR_NAME" "$IMG_NAME"
 
 # Check if image was created
 assert_image_exists "$IMG_NAME"
@@ -20,8 +22,8 @@ VM_PID=$!
 echo_log "VM running at pid: $VM_PID"
 echo_log $VM_PID
 
-# Wait up to 30 retries for the test to finish
-retry=30
+# Wait for the test to finish
+retry=90
 while ! grep -q '\[RUNNER\] Boot testing finished.' "$LOGFILE" 2>/dev/null; do
     sleep 1
     retry=$((retry-1))
@@ -62,5 +64,11 @@ fi
 
 # Clean up automotive-image-runner process
 stop_vm "$VM_PID"
+
+CTR_ID=$(podman image ls --format "{{.ID}}" "$CTR_NAME" || true)
+if [ -n "$CTR_ID" ]; then
+    echo "Removing bootc build container"
+    podman image rm -f "$CTR_ID"
+fi
 
 exit $success

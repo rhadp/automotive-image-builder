@@ -64,7 +64,7 @@ echo_log "=== Testing compliance policy enforcement ==="
 # Test 1: Verify via variables dump that --policy flag enables policy correctly
 echo_log "Test 1: Verifying --policy flag enables compliance policy..."
 build_bootc --dry-run --policy compliance.aibp.yml --dump-variables simple-rpms.aib.yml out
-assert_file_has_content build.log '"disable_ipv6": true'
+assert_file_has_content build-bootc.log '"disable_ipv6": true'
 echo_log "Compliance policy variables correctly set"
 
 # Test 2: Verify compliance policy denies forbidden RPMs
@@ -92,7 +92,7 @@ echo_log "Compliance policy correctly includes forbidden kernel modules in denyl
 # Test 5: Verify --policy flag works with explicit compliance policy file
 echo_log "Test 5: Testing explicit compliance policy file..."
 build_bootc --dry-run --policy compliance.aibp.yml --dump-variables simple-rpms.aib.yml out
-assert_file_has_content build.log '"disable_ipv6": true'
+assert_file_has_content build-bootc.log '"disable_ipv6": true'
 echo_log "Explicit Compliance policy file works correctly"
 
 # Test 6: Verify Compliance policy allows image mode but denies package mode
@@ -220,7 +220,7 @@ EOF
 
 # Test that policy name resolution works (should find it in files/policies)
 build_bootc  --dry-run --policy installed-test --dump-variables simple-rpms.aib.yml out
-assert_file_has_content build.log '"from_installed_policy": true'
+assert_file_has_content build-bootc.log '"from_installed_policy": true'
 echo_log "Policy name resolution from base directory works correctly"
 
 # Test 10: Test that local file takes precedence
@@ -237,9 +237,9 @@ EOF
 
 # This should use the local file, not the one in files/policies
 build_bootc  --dry-run --policy installed-test.aibp.yml --dump-variables simple-rpms.aib.yml out
-assert_file_has_content build.log '"from_local_policy": true'
+assert_file_has_content build-bootc.log '"from_local_policy": true'
 # Should NOT contain the installed policy's variable
-if grep -q '"from_installed_policy": true' build.log; then
+if grep -q '"from_installed_policy": true' build-bootc.log; then
     echo_fail "Local policy should override installed policy"
     fatal "Local file should take precedence over installed policy"
 fi
@@ -261,7 +261,7 @@ sudo cp system-test.aibp.yml /etc/automotive-image-builder/policies/
 
 # Test that policy name resolution finds the system policy
 build_bootc  --dry-run --policy system-test --dump-variables simple-rpms.aib.yml out
-assert_file_has_content build.log '"from_system_policy": true'
+assert_file_has_content build-bootc.log '"from_system_policy": true'
 echo_log "System-wide policy location works correctly"
 
 # Test 12: Test that /etc/ takes precedence over package-provided
@@ -278,9 +278,9 @@ EOF
 
 # This should use the /etc/ policy, not the package one
 build_bootc  --dry-run --policy system-test --dump-variables simple-rpms.aib.yml --osbuild-manifest out.json out
-assert_file_has_content build.log '"from_system_policy": true'
+assert_file_has_content build-bootc.log '"from_system_policy": true'
 # Should NOT contain the package policy's variable
-if grep -q '"from_package_policy": true' build.log; then
+if grep -q '"from_package_policy": true' build-bootc.log; then
     echo_fail "System policy should override package policy"
     fatal "/etc/ policy should take precedence over package policy"
 fi
