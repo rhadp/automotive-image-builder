@@ -1,5 +1,6 @@
 import pytest
 
+import aib.main  # noqa: F401
 from aib.arguments import parse_args
 from aib.main import create_osbuild_manifest, rewrite_manifest
 from aib import AIBParameters
@@ -29,8 +30,7 @@ def test_create_manifest(tmp_path):
                 "output",
                 manifest_file.as_posix(),
                 tar_file.as_posix(),
-            ],
-            base_dir=BASE_DIR,
+            ]
         ),
         base_dir=BASE_DIR,
     )
@@ -48,7 +48,7 @@ def test_rewrite_manifest():
 def test_missing_export():
     with pytest.raises(SystemExit) as argparse_err:
         AIBParameters(
-            args=parse_args(["build", "out"], base_dir=BASE_DIR),
+            args=parse_args(["build", "out"]),
             base_dir=BASE_DIR,
         )
     assert argparse_err.value.code == 2

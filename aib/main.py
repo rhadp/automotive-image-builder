@@ -35,6 +35,14 @@ from .arguments import (
     default_distro,
     aib_build_container_name,
     command,
+    POLICY_ARGS,
+    TARGET_ARGS,
+    BUILD_ARGS,
+    DISK_FORMAT_ARGS,
+    SHARED_RESEAL_ARGS,
+    LIST_ARGS,
+    default_bib_container,
+    CommandGroup,
 )
 
 base_dir = os.path.realpath(sys.argv[1])
@@ -68,13 +76,23 @@ def list_ipp_items(args, item_type):
             print(f"{d} - {desc}")
 
 
-@command()
+@command(
+    help="list available distributions",
+    shared_args=["include"],
+    args=[LIST_ARGS],
+)
 def list_distro(args, _tmpdir, _runner):
+    """List all the available distributions available for --distro."""
     list_ipp_items(args, "distro")
 
 
-@command()
+@command(
+    help="list available targets",
+    shared_args=["include"],
+    args=[LIST_ARGS],
+)
 def list_targets(args, _tmpdir, _runner):
+    """List all the available targets available for --target."""
     list_ipp_items(args, "targets")
 
 
@@ -306,8 +324,26 @@ def extract_rpmlist_json(osbuild_manifest):
     return base64.b64decode(data_b64).decode("utf8")
 
 
-@command()
+@command(
+    name="list-rpms",
+    help="List the rpms that a manifest would use when built",
+    shared_args=["container", "include"],
+    args=[
+        TARGET_ARGS,
+        BUILD_ARGS,
+        {
+            # TODO: We should drop --mode when build command is dropped
+            "--mode": {
+                "type": "str",
+                "default": "image",
+                "help": "Build this image mode (package, image)",
+            },
+            "manifest": "Source manifest file",
+        },
+    ],
+)
 def listrpms(args, tmpdir, runner):
+    """List the rpms that a manifest would use when build"""
     osbuild_manifest = os.path.join(tmpdir, "osbuild.json")
 
     create_osbuild_manifest(args, tmpdir, osbuild_manifest, runner)
@@ -384,8 +420,43 @@ def _run_osbuild(args, tmpdir, runner, exports):
         return outputdir.detach()
 
 
-@command()
+@command(
+    group=CommandGroup.BASIC,
+    help="Backwards compatible a-i-b 1.0 build command (deprecated)",
+    shared_args=["container", "include"],
+    args=[
+        {
+            "--mode": {
+                "type": "str",
+                "default": "image",
+                "help": "Build this image mode (package, image)",
+            },
+            "--ostree-repo": {
+                "type": "path",
+                "help": "Export ostree commit to ostree repo at this path",
+            },
+            "--export": {
+                "type": "append",
+                "help": "Export this image type",
+            },
+            "manifest": "Source manifest file",
+            "out": "Output path",
+        },
+        POLICY_ARGS,
+        TARGET_ARGS,
+        BUILD_ARGS,
+    ],
+)
 def build(args, tmpdir, runner):
+    """
+    Backwards compatibility command to build various types of images.
+    This takes '--mode' and '--export' options that together define
+    what to build and how.
+
+    This command is deprecated, and we now recommend using 'build-bootc'
+    or 'build-traditional' instead, as these are easier to use, and
+    avoid accidentally using problematic combination of image options
+    """
     has_repo = False
     exports = []
 
@@ -445,8 +516,42 @@ def bootc_archive_to_store(runner, archive_file, container_name, user=False):
         runner.run_as_root(cmdline)
 
 
-@command()
+@command(
+    group=CommandGroup.BASIC,
+    help="Build a bootc container image (to container store or archive file)",
+    shared_args=["container", "include"],
+    args=[
+        {
+            "--user": {
+                "help": "Export container to per-user container storage (default: system storage)",
+            },
+            "--oci-archive": {
+                "help": "Build an oci container archive file instead of a container image",
+            },
+            "--tar": {
+                "help": "Build a tar file with the container content instead of a container image",
+            },
+            "--dry-run": {
+                "help": "Just compose the osbuild manifest, don't build it.",
+            },
+            "manifest": "Source manifest file",
+            "out": "Output container image name (or pathname)",
+        },
+        POLICY_ARGS,
+        TARGET_ARGS,
+        BUILD_ARGS,
+    ],
+)
 def build_bootc(args, tmpdir, runner):
+    """
+    This builds a bootc-style container image from a manifest describing its
+    content, and options like what board to target and what distribution version
+    to use.
+
+    The resulting container image can used to update a running bootc system, using
+    `bootc update` or `bootc switch`. Or, alternatively it can be converted to a
+    disk-image which can be flashed to a board using `bootc-to-disk-image`.
+    """
     args.mode = "bootc"
 
     exports = []
@@ -513,8 +618,41 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
         convert_image_file(runner, image_file, args.out, fmt)
 
 
-@command()
+@command(
+    group=CommandGroup.BASIC,
+    help="Build a traditional, package based, disk image file",
+    shared_args=["container", "include"],
+    args=[
+        DISK_FORMAT_ARGS,
+        {
+            "--ostree": {
+                "help": "Build a legacy osbuild image instead of package based"
+            },
+            "--ostree-repo": {
+                "type": "path",
+                "help": "Export ostree commit to ostree repo at this path",
+            },
+            "--dry-run": {
+                "help": "Just compose the osbuild manifest, don't build it.",
+            },
+            "manifest": "Source manifest file",
+            "out": "Output path",
+        },
+        POLICY_ARGS,
+        TARGET_ARGS,
+        BUILD_ARGS,
+    ],
+)
 def build_traditional(args, tmpdir, runner):
+    """
+    Builds a disk image from a manifest describing its content, and options like what
+    board to target and what distribution version to use.
+
+    By default this creates images that use rpm packages in a traditional writable
+    filesystem. However, if you specify --ostree it will use ostree to make the
+    root filesystem an immutable image. However, the later is a legacy option and
+    it is recommended that new users use build-bootc instead.
+    """
     use_ostree = args.ostree or args.ostree_repo
     args.mode = "image" if use_ostree else "package"
 
@@ -533,8 +671,23 @@ def build_traditional(args, tmpdir, runner):
             export_disk_image_file(runner, args, tmpdir, output_file, fmt)
 
 
-@command()
+@command(
+    help="Download all sources that are needed to build an image",
+    shared_args=[],
+    args=[
+        TARGET_ARGS,
+        BUILD_ARGS,
+        {
+            "manifest": "Source manifest file",
+        },
+    ],
+)
 def download(args, tmpdir, runner):
+    """
+    This downloads all the source files that would be downloaded when an image is built
+    It is a good way to pre-seed a --build-dir that is later used with multiple image
+    builds.
+    """
     if not args.build_dir:
         log.error("No build dir specified, refusing to download to temporary directory")
         sys.exit(1)
@@ -546,8 +699,38 @@ def download(args, tmpdir, runner):
     outputdir.cleanup()
 
 
-@command()
+@command(
+    group=CommandGroup.BASIC,
+    help="Build helper bootc image used by bootc-to-disk-image",
+    shared_args=["container", "include"],
+    args=[
+        BUILD_ARGS,
+        {
+            "--if-needed": {
+                "help": "Only build the image if its not already built.",
+            },
+            "out": {
+                "help": "Name of container image to build",
+                "required": False,
+            },
+        },
+    ],
+)
 def build_bootc_builder(args, tmpdir, runner):
+    """
+    This command produces a bootc image containing required tools that is used
+    in the bootc-to-disk-image (and bootc-reseal) command. This will contain tools
+    like mkfs.ext4 that are needed to build a disk image.
+
+    In non-automotive use of bootc, these tools are in the bootc image itself,
+    but since automotive images are very minimal these need to come from another
+    source. The tools need to match the version of the image, so these
+    containers are built for specific distro versions.
+
+    The container to use in bootc-to-disk-image can be specified with --build-container,
+    but normally the default name of 'localhost/aib-build:$DISTRO' is used, and if
+    the out argument is not specified this will be used.
+    """
     # build-bootc-builder is a special form of the "build" command with fixed values for
     # manifest/export/target/mode arguments.
     args.simple_manifest = os.path.join(args.base_dir, "files/bootc-builder.aib.yml")
@@ -596,8 +779,39 @@ def get_build_container_for(container):
     return build_container
 
 
-@command()
+@command(
+    group=CommandGroup.BOOTC,
+    help="Build a physical disk image based on a bootc container",
+    shared_args=[],
+    args=[
+        DISK_FORMAT_ARGS,
+        {
+            "--bib-container": {
+                "type": "str",
+                "metavar": "IMAGE",
+                "default": default_bib_container,
+                "help": f"bootc-image-builder image to use (default: {default_bib_container})",
+            },
+            "--build-container": {
+                "type": "str",
+                "metavar": "IMAGE",
+                "help": f"bootc build container image to use  (default: {aib_build_container_name('$DISTRO')})",
+            },
+            "src_container": "Bootc container name",
+            "out": "Output image name",
+        },
+    ],
+)
 def bootc_to_disk_image(args, tmpdir, runner):
+    """
+    Converts a bootc container image to a disk image that can be flashed on a board
+
+    Internally this uses the bootc-image-builder tool from a container image.
+    The --bib-container option can be used to specify a different version of this tool
+
+    Also, to build the image we need a container with tools. See the build-bootc-builder
+    command for how to build one.
+    """
     if not podman_image_exists(args.src_container):
         log.error(
             "Source bootc image '%s' isn't in local container store", args.src_container
@@ -626,8 +840,26 @@ def bootc_to_disk_image(args, tmpdir, runner):
         export_disk_image_file(runner, args, tmpdir, output_file, fmt)
 
 
-@command()
+@command(
+    group=CommandGroup.BOOTC,
+    help="Extract files for secure-boot signing",
+    shared_args=[],
+    args=[
+        {
+            "src_container": "Bootc container name",
+            "out": "Output directory",
+        },
+    ],
+)
 def bootc_extract_for_signing(args, tmpdir, runner):
+    """
+    Extract all the files related to secure boot that need signing in the image. This can
+    be for example EFI executables, or aboot partition data.
+
+    These files can then be signed, using whatever process available to the user, which
+    often involves sending them to a 3rd party. Once these files are signed, the modified
+    file can then be injected using bootc-inject-signed.
+    """
     if not podman_image_exists(args.src_container):
         log.error(
             "Source bootc image '%s' isn't in local container store", args.src_container
@@ -665,8 +897,28 @@ def bootc_extract_for_signing(args, tmpdir, runner):
             sys.exit(0)
 
 
-@command()
+@command(
+    group=CommandGroup.BOOTC,
+    help="Inject files that were signed for secure-boot",
+    shared_args=[],
+    args=[
+        {
+            "src_container": "Bootc container name",
+            "srcdir": "Directory with signed files",
+            "new_container": "Destination container name",
+        },
+    ],
+)
 def bootc_inject_signed(args, tmpdir, runner):
+    """
+    Once the files produced by bootc-extract-for-signing have been signed, this command
+    can be used to inject them into the bootc image again.
+
+    Note that this modified the bootc image which makes it not possible to boot if
+    sealed images are being used (which is the default). Also, signatures interact
+    in a complex way with sealing. See the help for bootc-reseal for how to re-seal
+    the modified image so that it boots again.
+    """
     if not podman_image_exists(args.src_container):
         log.error(
             "Source bootc image '%s' isn't in local container store", args.src_container
@@ -702,8 +954,40 @@ def bootc_inject_signed(args, tmpdir, runner):
             sys.exit(0)
 
 
-@command()
+@command(
+    group=CommandGroup.BOOTC,
+    help="Seal bootc image after it has been modified",
+    shared_args=[],
+    args=[
+        SHARED_RESEAL_ARGS,
+        {
+            "--key": {
+                "type": "path",
+                "help": "path to private key, as previously used in bootc-prepare-reseal",
+            },
+            "src_container": "Bootc container name",
+            "new_container": "Destination container name",
+        },
+    ],
+)
 def bootc_reseal(args, tmpdir, runner):
+    """
+    By default, bootc images are 'sealed', which means that the root filesystem
+    is signed by a secret key. The (signed by secureboot) initramfs will contain
+    the corresponding public key used to validate the root filesystem. If a
+    bootc image is built to be sealed and it is later modified then this check
+    will fail and the image will not boot. The bootc-reseal operation fixes this
+    by updating the initramfs with a new public key and signing the rootfs with
+    the (temporary) private key.
+
+    Note: Re-sealing modifies the initramfs, which interacts badly with secureboot,
+    where the initramfs is signed by a trusted key. To fix this issue there is a
+    separate command 'bootc-prepare-reseal' that does the initial step of bootc-reseal
+    i.e., it adds a new public key to the initrd. Once that is done, you can sign the
+    new initramfs and then finish with bootc-prepare-reseal, passing in the key used
+    in bootc-prepare-reseal to bootc-reseal with the --key option. See the help for
+    bootc-prepare-reseal for more details
+    """
     if not podman_image_exists(args.src_container):
         log.error(
             "Source bootc image '%s' isn't in local container store", args.src_container
@@ -751,8 +1035,36 @@ def bootc_reseal(args, tmpdir, runner):
     )
 
 
-@command()
+@command(
+    group=CommandGroup.BOOTC,
+    help="Do the initial step of sealing and image, allowing further changes before actually sealing",
+    shared_args=[],
+    args=[
+        SHARED_RESEAL_ARGS,
+        {
+            "--key": {
+                "type": "path",
+                "help": "path to private key file.",
+                "required": True,
+            },
+            "src_container": "Bootc container name",
+            "new_container": "Destination container name",
+        },
+    ],
+)
 def bootc_prepare_reseal(args, tmpdir, runner):
+    """
+    Injects the public part of a key pair into the initramfs of the bootc image, to
+    prepare for signinging the initrd, and later calling bootc-reseal.
+
+    The private key supplied should be single-use, used only for one image and discarded after
+    it has been used in the matching bootc-reseal operation.
+
+    A private key can be generated with openssl like this:
+       openssl genpkey -algorithm ed25519 -outform PEM -out private.pem
+    Optionally, `-aes-256-cbc` can be added to encrypt the private key with a password (which
+    then has to be supplied when using it).
+    """
     if not podman_image_exists(args.src_container):
         log.error(
             "Source bootc image '%s' isn't in local container store", args.src_container
@@ -778,13 +1090,18 @@ def bootc_prepare_reseal(args, tmpdir, runner):
     )
 
 
-@command()
-def no_subcommand(_args, _tmpdir, _runner):
-    log.info("No subcommand specified, see --help for usage")
-
-
 def main():
-    args = AIBParameters(args=parse_args(sys.argv[2:], base_dir), base_dir=base_dir)
+    parsed_args = parse_args(sys.argv[2:])
+    if "manifest" in parsed_args:
+        if (
+            parsed_args.manifest.endswith(".aib")
+            or parsed_args.manifest.endswith(".aib.yml")
+            or parsed_args.manifest.endswith(".aib.yaml")
+        ):
+            parsed_args.simple_manifest = parsed_args.manifest
+            parsed_args.manifest = os.path.join(base_dir, "files/simple.mpp.yml")
+
+    args = AIBParameters(args=parsed_args, base_dir=base_dir)
 
     if args.verbose:
         log.setLevel("DEBUG")

@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
+import aib.main  # noqa: F401
 from aib import AIBParameters
 from aib import exceptions
 from aib.arguments import parse_args
@@ -45,7 +46,7 @@ def test_run_args_root(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -80,7 +81,7 @@ def test_run_args_container_without_progress_no_capture(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -125,7 +126,7 @@ def test_run_args_container_without_progress_with_capture(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -182,7 +183,7 @@ def test_run_args_container_with_progress(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -233,7 +234,7 @@ def test_run_args_osbuild_without_progress_no_capture(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -284,7 +285,7 @@ def test_run_args_osbuild_without_progress_with_capture(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -347,7 +348,7 @@ def test_run_args_osbuild_with_progress(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -398,7 +399,7 @@ def test_run_with_log_file(
     log_file_path = str(tmp_path / "test.log")
 
     args = args_for(False, False)
-    runner = Runner(AIBParameters(parse_args(args, BASE_DIR), base_dir=BASE_DIR))
+    runner = Runner(AIBParameters(parse_args(args), base_dir=BASE_DIR))
     runner.use_sudo_for_root = use_sudo_for_root
 
     cmd = ["touch", "example"]
@@ -431,7 +432,7 @@ def test_run_args_user(
     args = args_for(use_container, use_user_container)
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -475,7 +476,7 @@ def test_collect_podman_args(container_autoupdate, use_non_root, volumes):
         args += ["--container-autoupdate"]
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )
@@ -510,7 +511,7 @@ def test_run_in_container_progress_without_log_file_raises_exception(use_contain
     args = ["--container"] if use_container else []
     runner = Runner(
         AIBParameters(
-            parse_args(args, base_dir=BASE_DIR),
+            parse_args(args),
             base_dir=BASE_DIR,
         )
     )

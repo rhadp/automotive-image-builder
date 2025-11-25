@@ -1,5 +1,6 @@
 import pytest
 
+import aib.main  # noqa: F401
 from aib.arguments import parse_args
 
 
@@ -33,10 +34,10 @@ def test_args_work_before_and_after_subcommands(
     else:
         args = [subcommand] + [arg_name] + arg_value + extra_args
 
-    parsed = parse_args(args, "")
+    parsed = parse_args(args)
 
     # Derive attribute name from argument name
-    attr_name = arg_name.lstrip("--").replace("-", "_")
+    attr_name = arg_name.removeprefix("--").replace("-", "_")
     attr_value = getattr(parsed, attr_name)
 
     # Check the argument was parsed correctly
