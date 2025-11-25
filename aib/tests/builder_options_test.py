@@ -1,8 +1,9 @@
 import pytest
 import re
 
-from aib.main import parse_args
+from aib.arguments import parse_args
 from aib import AIBParameters
+from aib.tests.test_helpers import get_dummy_callbacks
 
 
 BASEDIR = "/tmp/automotive-image-builder"
@@ -19,25 +20,25 @@ BASEDIR = "/tmp/automotive-image-builder"
 )
 def test_valid_subcommands(subcmd):
     with pytest.raises(SystemExit) as e:
-        parse_args([subcmd, "--help"], base_dir="")
+        parse_args([subcmd, "--help"], base_dir="", callbacks=get_dummy_callbacks())
     assert e.value.code == 0
 
 
 def test_invalid_subcommand():
     with pytest.raises(SystemExit) as e:
-        parse_args(["invalid", "--help"], base_dir="")
+        parse_args(["invalid", "--help"], base_dir="", callbacks=get_dummy_callbacks())
     assert e.value.code == 2
 
 
 def test_no_subcommand(caplog):
-    args = parse_args([], base_dir="")
+    args = parse_args([], base_dir="", callbacks=get_dummy_callbacks())
     args.func(_args=args, _tmpdir="", _runner=None)
     assert "No subcommand specified, see --help for usage" in caplog.text
 
 
 def test_build_required_positional(capsys):
     with pytest.raises(SystemExit) as e:
-        parse_args(["build"], base_dir="")
+        parse_args(["build"], base_dir="", callbacks=get_dummy_callbacks())
     assert e.value.code == 2
     assert (
         "error: the following arguments are required: manifest, out"
@@ -58,7 +59,9 @@ def test_aib_paramters(includes):
     argv = []
     for inc in includes:
         argv.extend(["--include", inc])
-    args = AIBParameters(args=parse_args(argv, base_dir), base_dir=base_dir)
+    args = AIBParameters(
+        args=parse_args(argv, base_dir, get_dummy_callbacks()), base_dir=base_dir
+    )
     assert args.base_dir == base_dir
     assert args.include_dirs == [base_dir] + includes
 
@@ -91,7 +94,7 @@ def test_aib_parameters_log_file_property(
     if progress:
         argv.append("--progress")
 
-    args = parse_args(argv, base_dir="")
+    args = parse_args(argv, base_dir="", callbacks=get_dummy_callbacks())
     params = AIBParameters(args=args, base_dir="")
 
     if expected_contains is None:
@@ -114,7 +117,7 @@ def test_aib_parameters_log_file_property_no_build_dir():
     """Test AIBParameters.log_file property when build_dir is not set but progress is enabled."""
     argv = ["build", "--export", "qcow2", "--progress", "manifest", "out"]
 
-    args = parse_args(argv, base_dir="")
+    args = parse_args(argv, base_dir="", callbacks=get_dummy_callbacks())
     params = AIBParameters(args=args, base_dir="")
 
     # Should return a path n tmpdir when build_dir is not set and progress is passed

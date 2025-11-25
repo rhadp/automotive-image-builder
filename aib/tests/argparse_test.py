@@ -1,6 +1,7 @@
 import pytest
 
-from aib.main import parse_args
+from aib.arguments import parse_args
+from aib.tests.test_helpers import get_dummy_callbacks
 
 
 @pytest.mark.parametrize("arg_before_subcommand", [True, False])
@@ -33,7 +34,7 @@ def test_args_work_before_and_after_subcommands(
     else:
         args = [subcommand] + [arg_name] + arg_value + extra_args
 
-    parsed = parse_args(args, "")
+    parsed = parse_args(args, "", get_dummy_callbacks())
 
     # Derive attribute name from argument name
     attr_name = arg_name.lstrip("--").replace("-", "_")
