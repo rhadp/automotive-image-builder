@@ -1048,7 +1048,7 @@ BUILD_ARGS = {
     "--define": {
         "type": "append",
         "metavar": "KEY=VALUE",
-        "help": "Define internal varible key to a specified value",
+        "help": "Define internal variable key to a specified value",
     },
     "--extend-define": {
         "type": "append",
@@ -1156,10 +1156,10 @@ build_subcommands = [
         "\n"
         "In non-automotive use of bootc, these tools are in the bootc image itself,\n"
         "but since automotive images are very minimal these need to come from another\n"
-        "source. The tools neet to that match the version of the image, so these\n"
+        "source. The tools need to match the version of the image, so these\n"
         "containers are built for specific distro versions.\n"
         "\n"
-        "The container to use in bootc-to-disk-iamge can be specified with --build-container,\n"
+        "The container to use in bootc-to-disk-image can be specified with --build-container,\n"
         "but normally the default name of 'localhost/aib-build:$DISTRO' is used, and if\n"
         "the out argument is not specified this will be used.\n",
         build_bootc_builder,
