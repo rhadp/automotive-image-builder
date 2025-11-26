@@ -38,6 +38,7 @@ write_log "[RUNNER] Starting boot testing..."
 run_test /usr/tests/dmesg_clean.sh dmesg
 run_test /usr/tests/selinux_check.sh selinux
 run_test /usr/tests/systemd_running.sh systemd
+run_test /usr/tests/rpmdb_initialized.sh rpmdb
 
 write_log "[RUNNER] Boot testing finished."
 
