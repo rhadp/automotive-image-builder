@@ -194,19 +194,37 @@ def run_http_server(path):
     return http_port
 
 
+def wait_for_file_at_path(path, timeout=4.0, interval=0.05):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            _ = os.stat(path)
+            return True
+        except FileNotFoundError:
+            pass
+        time.sleep(interval)
+    return False
+
+
 def run_virtiofs_server(socket, sharedir):
     vio_args = [
         "/usr/libexec/virtiofsd",
         "--socket-path=" + socket,
-        "-o", "source=" + sharedir,
-        "-o", "cache=always"
+        "-o",
+        "source=" + sharedir,
+        "-o",
+        "cache=always",
     ]
     if not is_verbose:
-        vio_args += [
-            "--log-level", "off"
-        ]
+        vio_args += ["--log-level", "off"]
     print_verbose(f"Running: {' '.join(vio_args)}")
-    return subprocess.Popen(vio_args)
+
+    virtiod = subprocess.Popen(vio_args)
+
+    if not wait_for_file_at_path(socket):
+        raise RuntimeError("Virtifsd socket never appeared")
+
+    return virtiod
 
 
 def find_ovmf(args):
