@@ -657,9 +657,10 @@ def main():
 
         virtiod = run_virtiofs_server(vhostsocket, args.sharedir)
 
+        vfsdevice = "vhost-user-fs-device" if args.aboot else "vhost-user-fs-pci"
         qemu_args += [
             "-chardev", "socket,id=char0,path=" + vhostsocket,
-            "-device", "vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=host",
+            "-device", f"{vfsdevice},queue-size=1024,chardev=char0,tag=host",
             "-object", "memory-backend-file,id=mem,size=" + str(args.memory) + ",mem-path=/dev/shm,share=on",
             "-numa", "node,memdev=mem"
         ]
@@ -670,7 +671,7 @@ def main():
 
     if args.virtio_console:
         qemu_args += [
-            "-device", "virtio-serial-pci",
+            "-device", "virtio-serial-device" if args.aboot else "virtio-serial-pci",
             "-chardev", f"socket,id=con0,path={args.virtio_console},server=on,wait=off",
             "-device", "virtconsole,chardev=con0,id=vc0",
         ]
