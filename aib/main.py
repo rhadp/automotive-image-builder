@@ -31,6 +31,7 @@ from . import log
 from .podman import (
     podman_image_exists,
     podman_image_info,
+    podman_image_rm,
     podman_run_bootc_image_builder,
     podman_bootc_inject_pubkey,
     PodmanImageMount,
@@ -907,12 +908,41 @@ def bootc_extract_for_signing(args, tmpdir, runner):
             sys.exit(0)
 
 
+def do_reseal_image(args, runner, tmpdir, privkey, src_container, dst_container):
+    privkey_file = os.path.join(tmpdir, "pkey")
+    with os.fdopen(
+        os.open(privkey_file, os.O_CREAT | os.O_WRONLY, mode=0o600), "w"
+    ) as f:
+        f.write(privkey)
+
+    runner.run_in_container(
+        [
+            "rpm-ostree",
+            "experimental",
+            "compose",
+            "build-chunked-oci",
+            "--sign-commit",
+            f"ed25519={privkey_file}",
+            "--bootc",
+            "--format-version=1",
+            f"--from={src_container}",
+            f"--output=containers-storage:{dst_container}",
+        ],
+        stdout_to_devnull=not args.verbose,
+    )
+
+
 @command(
     group=CommandGroup.BOOTC,
     help="Inject files that were signed for secure-boot",
     shared_args=[],
     args=[
+        SHARED_RESEAL_ARGS,
         {
+            "--reseal-with-key": {
+                "type": "path",
+                "help": "re-seal image with given key",
+            },
             "src_container": "Bootc container name",
             "srcdir": "Directory with signed files",
             "new_container": "Destination container name",
@@ -936,7 +966,9 @@ def bootc_inject_signed(args, tmpdir, runner):
         sys.exit(1)
 
     with PodmanImageMount(
-        args.src_container, writable=True, commit_image=args.new_container
+        args.src_container,
+        writable=True,
+        commit_image=None if args.reseal_with_key else args.new_container,
     ) as mount:
         if mount.has_file("/etc/signing_info.json"):
             content = mount.read_file("/etc/signing_info.json")
@@ -962,6 +994,13 @@ def bootc_inject_signed(args, tmpdir, runner):
         else:
             log.info("No /etc/signing-info.json, nothing needed signing")
             sys.exit(0)
+
+    if args.reseal_with_key:
+        (pubkey, privkey) = read_keys(args.reseal_with_key, args.passwd)
+        do_reseal_image(
+            args, runner, tmpdir, privkey, mount.image_id, args.new_container
+        )
+        podman_image_rm(mount.image_id)
 
 
 @command(
@@ -1022,27 +1061,7 @@ def bootc_reseal(args, tmpdir, runner):
             args.src_container, None, pubkey_file, build_container, args.verbose
         )
 
-    privkey_file = os.path.join(tmpdir, "pkey")
-    with os.fdopen(
-        os.open(privkey_file, os.O_CREAT | os.O_WRONLY, mode=0o600), "w"
-    ) as f:
-        f.write(privkey)
-
-    runner.run_in_container(
-        [
-            "rpm-ostree",
-            "experimental",
-            "compose",
-            "build-chunked-oci",
-            "--sign-commit",
-            f"ed25519={privkey_file}",
-            "--bootc",
-            "--format-version=1",
-            f"--from={src_container}",
-            f"--output=containers-storage:{args.new_container}",
-        ],
-        stdout_to_devnull=not args.verbose,
-    )
+    do_reseal_image(args, runner, tmpdir, privkey, src_container, args.new_container)
 
 
 @command(

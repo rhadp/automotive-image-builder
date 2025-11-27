@@ -245,6 +245,10 @@ def podman_image_exists(image):
     return run_cmd(["podman", "image", "exists", image]) == 0
 
 
+def podman_image_rm(image):
+    return run_cmd(["podman", "image", "rm", image]) == 0
+
+
 def parse_shvars(content):
     result = {}
     for line in content.split("\n"):
