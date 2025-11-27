@@ -401,7 +401,7 @@ run_vm() {
     fi
     local extras=( "$@" )
 
-    $AIR --virtio-console console.sock --nographics "${extras[@]}" "$image" > "$log_file" 2>&1 &
+    $AIR --verbose --virtio-console console.sock --nographics "${extras[@]}" "$image" > "$log_file" 2>&1 &
     local pid=$!
     >&2 echo "INFO: VM running at pid: $pid"
     echo "$pid"
