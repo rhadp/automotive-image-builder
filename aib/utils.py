@@ -381,10 +381,10 @@ def extract_part_of_file(
     size: int,
     chunk_size=1024 * 1024,
     skip_zero_tail: bool = False,
-    skip_zero_block_size=512,
+    skip_zero_block_size=4096,
 ):
     # If skip_zero_tail, then we don't copy out any trailing zero bytes (up to
-    # block alignement of default 512 bytes).
+    # block alignement of default 4096 bytes).
     # For example for partitions such as boot_a which only contain a smaller file
     # and are sized larger in preparation for later updates.
     # Note: We assume here that short reads are due to EOF, and
