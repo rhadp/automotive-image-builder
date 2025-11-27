@@ -21,72 +21,58 @@ mpp-vars:
 
   base_systemd_sysusers: |
     # Type  Name              ID    GECOS                         Home directory        Shell
-    u       adm               3     "adm"                         /var/adm              /sbin/nologin
+    u       root              0     "root"                        /root                 /bin/bash
     u       bin               1     "bin"                         /bin                  /sbin/nologin
-    u       chrony            998   "chrony system user"          /var/lib/chrony       /sbin/nologin
     u       daemon            2     "daemon"                      /sbin                 /sbin/nologin
-    u       dbus              81    "System message bus"          /                     /sbin/nologin
-    u       ftp               14    "FTP User"                    /var/ftp              /sbin/nologin
-    u       games             12    "games"                       /usr/games            /sbin/nologin
+    u       adm               3     "adm"                         /var/adm              /sbin/nologin
     u       lp                4     "lp"                          /var/spool/lpd        /sbin/nologin
     u       mail              8     "mail"                        /var/spool/mail       /sbin/nologin
-    u       nobody            65534 "Kernel Overflow User"        /                     /sbin/nologin
-    u       root              0     "root"                        /root                 /bin/bash
-    u       sshd              74    "Privilege-separated SSH"     /usr/share/empty.sshd /usr/sbin/nologin
-    u       systemd-coredump  999   "systemd Core Dumper"         /                     /sbin/nologin
+    u       games             12    "games"                       /usr/games            /sbin/nologin
+    u       ftp               14    "FTP User"                    /var/ftp              /sbin/nologin
     u       tss               59    "Account used for TPM access" /                     /sbin/nologin
+    u       sshd              74    "Privilege-separated SSH"     /usr/share/empty.sshd /usr/sbin/nologin
+    u       dbus              81    "System message bus"          /                     /sbin/nologin
+    u       chrony            998   "chrony system user"          /var/lib/chrony       /sbin/nologin
+    u       systemd-coredump  999   "systemd Core Dumper"         /                     /sbin/nologin
+    u       nobody            65534 "Kernel Overflow User"        /                     /sbin/nologin
     g       root              0
-    g       adm               4
-    g       audio             63
     g       bin               1
-    g       cdrom             11
-    g       chrony            995
-    g       clock             103
     g       daemon            2
-    g       dbus              81
-    g       dialout           18
+    g       sys               3
+    g       adm               4
+    g       tty               5
     g       disk              6
-    g       floppy            19
-    g       ftp               50
-    g       games             20
-    g       input             999
-    g       kmem              9
-    g       kvm               36
-    g       lock              54
     g       lp                7
+    g       mem               8
+    g       kmem              9
+    g       wheel             10
+    g       cdrom             11
     g       mail              12
     g       man               15
-    g       mem               8
-    g       nobody            65534
-    g       render            998
-    g       sgx               996
-    g       ssh_keys          101
-    g       sshd              74
-    g       sys               3
-    g       systemd-coredump  997
-    g       systemd-journal   190
-    g       tape              33
-    g       tss               59
-    g       tty               5
-    g       users             100
-    g       utempter          35
+    g       dialout           18
+    g       floppy            19
+    g       games             20
     g       utmp              22
+    g       tape              33
+    g       utempter          35
+    g       kvm               36
     g       video             39
-    g       wheel             10
-    m       root              root
-    m       adm               adm
-    m       bin               bin
-    m       chrony            chrony
-    m       daemon            daemon
-    m       dbus              dbus
-    m       ftp               ftp
-    m       games             users
-    m       lp                lp
-    m       mail              mail
-    m       nobody            nobody
-    m       sshd              sshd
-    m       systemd-coredump  systemd-coredump
-    m       tss               tss
+    g       ftp               50
+    g       lock              54
+    g       tss               59
+    g       audio             63
+    g       sshd              74
+    g       dbus              81
+    g       users             100
+    g       ssh_keys          101
+    g       clock             103
+    g       systemd-journal   190
+    g       chrony            995
+    g       sgx               996
+    g       systemd-coredump  997
+    g       render            998
+    g       input             999
+    g       nobody            65534
 
 
   _test_partitions: # A bunch of android-style partitions to test partition count scalability
