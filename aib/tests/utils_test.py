@@ -174,105 +174,6 @@ class TestRoundup(unittest.TestCase):
             utils.roundup(100, 0)
 
 
-class TestZeroTailSize(unittest.TestCase):
-    """Tests for zero_tail_size function."""
-
-    def test_no_trailing_zeros(self):
-        """Test file with no trailing zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"hello world")
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 11)
-            self.assertEqual(result, 0)
-        finally:
-            os.unlink(fname)
-
-    def test_all_zeros(self):
-        """Test file that is all zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"\x00" * 1000)
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 1000)
-            self.assertEqual(result, 1000)
-        finally:
-            os.unlink(fname)
-
-    def test_some_trailing_zeros(self):
-        """Test file with some trailing zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"data" + b"\x00" * 100)
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 104)
-            self.assertEqual(result, 100)
-        finally:
-            os.unlink(fname)
-
-    def test_with_offset(self):
-        """Test reading from offset in file."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"prefix" + b"data" + b"\x00" * 50)
-            f.flush()
-            fname = f.name
-
-        try:
-            # Read from offset 6, skipping "prefix"
-            result = utils.zero_tail_size(fname, 6, 54)
-            self.assertEqual(result, 50)
-        finally:
-            os.unlink(fname)
-
-    def test_past_eof_counts_as_zeros(self):
-        """Test that bytes past EOF are treated as zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"hello")
-            f.flush()
-            fname = f.name
-
-        try:
-            # Request 100 bytes when file only has 5
-            # Bytes 5-99 should be considered zeros
-            result = utils.zero_tail_size(fname, 0, 100)
-            self.assertEqual(result, 95)
-        finally:
-            os.unlink(fname)
-
-    def test_with_small_chunk_size(self):
-        """Test with small chunk size to test chunking logic."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"x" * 100 + b"\x00" * 100)
-            f.flush()
-            fname = f.name
-
-        try:
-            # Use small chunk to force multiple reads
-            result = utils.zero_tail_size(fname, 0, 200, chunk_size=10)
-            self.assertEqual(result, 100)
-        finally:
-            os.unlink(fname)
-
-    def test_empty_range(self):
-        """Test with zero-size range."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"hello")
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 0)
-            self.assertEqual(result, 0)
-        finally:
-            os.unlink(fname)
-
-
 class TestExtractPartOfFile(unittest.TestCase):
     """Tests for extract_part_of_file function."""
 
@@ -347,42 +248,33 @@ class TestExtractPartOfFile(unittest.TestCase):
         with open(dst, "rb") as f:
             self.assertEqual(f.read(), b"hello")
 
-    def test_skip_zero_tail_basic(self):
-        """Test skipping trailing zeros."""
+    def test_truncate_partition_size(self):
+        """Test truncating trailing zeros."""
         src = os.path.join(self.test_dir, "source.bin")
-        dst = os.path.join(self.test_dir, "dest.bin")
 
         # Data with trailing zeros
         with open(src, "wb") as f:
             f.write(b"data" + b"\x00" * 600)
 
-        written = utils.extract_part_of_file(
-            src, dst, 0, 604, skip_zero_tail=True, skip_zero_block_size=512
+        size = utils.truncate_partition_size(
+            src, 0, 604,512
         )
 
-        # Should write "data" rounded up to 512 bytes
-        self.assertEqual(written, 512)
-        with open(dst, "rb") as f:
-            result = f.read()
-            self.assertEqual(result[:4], b"data")
-            self.assertEqual(len(result), 512)
+        self.assertEqual(size, 512)
 
-    def test_skip_zero_tail_exact_block(self):
-        """Test skip_zero_tail when data is exactly block-aligned."""
+    def test_truncate_partition_size_exact_block(self):
+        """Test truncating when data is exactly block-aligned."""
         src = os.path.join(self.test_dir, "source.bin")
-        dst = os.path.join(self.test_dir, "dest.bin")
 
         # Exactly 512 bytes data + zeros
         with open(src, "wb") as f:
             f.write(b"x" * 512 + b"\x00" * 500)
 
-        written = utils.extract_part_of_file(
-            src, dst, 0, 1012, skip_zero_tail=True, skip_zero_block_size=512
+        size = utils.truncate_partition_size(
+            src, 0, 1012, 512
         )
 
-        self.assertEqual(written, 512)
-        with open(dst, "rb") as f:
-            self.assertEqual(len(f.read()), 512)
+        self.assertEqual(size, 512)
 
     def test_empty_file_extraction(self):
         """Test extracting from empty file."""

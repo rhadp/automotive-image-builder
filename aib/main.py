@@ -19,7 +19,7 @@ from .exports import export, get_export_data
 from .runner import Runner
 from .ostree import OSTree
 from .simple import ManifestLoader
-from .utils import SudoTemporaryDirectory, extract_part_of_file, rm_rf
+from .utils import SudoTemporaryDirectory, truncate_partition_size, extract_part_of_file, rm_rf
 from . import exceptions
 from . import AIBParameters
 from . import log
@@ -606,12 +606,17 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
 
             part_tmp_file = os.path.join(tmpdir, "part.img")
             part_file = os.path.join(args.out, name + fmt.ext)
+
+            if partition_is_safe_to_truncate(p):
+                size = truncate_partition_size(image_file, start, size)
+                if size == 0:
+                    continue # Skip empty partitions
+
             extract_part_of_file(
                 image_file,
                 part_tmp_file,
                 start,
                 size,
-                skip_zero_tail=partition_is_safe_to_truncate(p),
             )
             convert_image_file(runner, part_tmp_file, part_file, fmt)
     else:
