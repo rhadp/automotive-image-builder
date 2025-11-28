@@ -174,105 +174,6 @@ class TestRoundup(unittest.TestCase):
             utils.roundup(100, 0)
 
 
-class TestZeroTailSize(unittest.TestCase):
-    """Tests for zero_tail_size function."""
-
-    def test_no_trailing_zeros(self):
-        """Test file with no trailing zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"hello world")
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 11)
-            self.assertEqual(result, 0)
-        finally:
-            os.unlink(fname)
-
-    def test_all_zeros(self):
-        """Test file that is all zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"\x00" * 1000)
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 1000)
-            self.assertEqual(result, 1000)
-        finally:
-            os.unlink(fname)
-
-    def test_some_trailing_zeros(self):
-        """Test file with some trailing zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"data" + b"\x00" * 100)
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 104)
-            self.assertEqual(result, 100)
-        finally:
-            os.unlink(fname)
-
-    def test_with_offset(self):
-        """Test reading from offset in file."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"prefix" + b"data" + b"\x00" * 50)
-            f.flush()
-            fname = f.name
-
-        try:
-            # Read from offset 6, skipping "prefix"
-            result = utils.zero_tail_size(fname, 6, 54)
-            self.assertEqual(result, 50)
-        finally:
-            os.unlink(fname)
-
-    def test_past_eof_counts_as_zeros(self):
-        """Test that bytes past EOF are treated as zeros."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"hello")
-            f.flush()
-            fname = f.name
-
-        try:
-            # Request 100 bytes when file only has 5
-            # Bytes 5-99 should be considered zeros
-            result = utils.zero_tail_size(fname, 0, 100)
-            self.assertEqual(result, 95)
-        finally:
-            os.unlink(fname)
-
-    def test_with_small_chunk_size(self):
-        """Test with small chunk size to test chunking logic."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"x" * 100 + b"\x00" * 100)
-            f.flush()
-            fname = f.name
-
-        try:
-            # Use small chunk to force multiple reads
-            result = utils.zero_tail_size(fname, 0, 200, chunk_size=10)
-            self.assertEqual(result, 100)
-        finally:
-            os.unlink(fname)
-
-    def test_empty_range(self):
-        """Test with zero-size range."""
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(b"hello")
-            f.flush()
-            fname = f.name
-
-        try:
-            result = utils.zero_tail_size(fname, 0, 0)
-            self.assertEqual(result, 0)
-        finally:
-            os.unlink(fname)
-
-
 class TestExtractPartOfFile(unittest.TestCase):
     """Tests for extract_part_of_file function."""
 
@@ -342,47 +243,161 @@ class TestExtractPartOfFile(unittest.TestCase):
         # Request 100 bytes but file only has 5
         written = utils.extract_part_of_file(src, dst, 0, 100)
 
-        # Should only write what's available
+        # Should only write the actual data bytes
         self.assertEqual(written, 5)
-        with open(dst, "rb") as f:
-            self.assertEqual(f.read(), b"hello")
 
-    def test_skip_zero_tail_basic(self):
-        """Test skipping trailing zeros."""
+        # File should be sized to requested size with hole at end
+        self.assertEqual(os.path.getsize(dst), 100)
+
+        with open(dst, "rb") as f:
+            self.assertEqual(f.read(5), b"hello")
+            # Rest should be zeros (from the hole)
+            f.seek(5)
+            self.assertEqual(f.read(95), b"\x00" * 95)
+
+    def test_truncate_partition_size(self):
+        """Test truncating trailing hole."""
+        src = os.path.join(self.test_dir, "source.bin")
+
+        # Data with trailing hole
+        with open(src, "wb") as f:
+            f.write(b"data")
+            f.seek(604)
+            f.write(b"")
+
+        size = utils.truncate_partition_size(src, 0, 604, 512)
+
+        self.assertEqual(size, 512)
+
+    def test_truncate_partition_size_exact_block(self):
+        """Test truncating when data is exactly block-aligned."""
+        src = os.path.join(self.test_dir, "source.bin")
+
+        # Exactly 512 bytes data + hole
+        with open(src, "wb") as f:
+            f.write(b"x" * 512)
+            f.seek(1012)
+            f.write(b"")
+
+        size = utils.truncate_partition_size(src, 0, 1012, 512)
+
+        self.assertEqual(size, 512)
+
+    def test_truncate_partition_size_no_trailing_hole(self):
+        """Test truncate when there's no trailing hole."""
+        src = os.path.join(self.test_dir, "source.bin")
+
+        with open(src, "wb") as f:
+            f.write(b"x" * 1024)
+
+        size = utils.truncate_partition_size(src, 0, 1024, 512)
+
+        self.assertEqual(size, 1024)
+
+    def test_truncate_partition_size_entirely_sparse(self):
+        """Test truncate when partition is entirely sparse."""
+        src = os.path.join(self.test_dir, "source.bin")
+
+        with open(src, "wb") as f:
+            f.seek(1024)
+            f.write(b"")
+
+        size = utils.truncate_partition_size(src, 0, 1024, 512)
+
+        self.assertEqual(size, 0)
+
+    def test_truncate_partition_size_with_offset(self):
+        """Test truncate with non-zero start offset."""
+        src = os.path.join(self.test_dir, "source.bin")
+
+        with open(src, "wb") as f:
+            f.write(b"x" * 1000)
+            f.write(b"y" * 500)
+            f.seek(2000)
+            f.write(b"")
+
+        size = utils.truncate_partition_size(src, 1000, 1000, 512)
+
+        self.assertEqual(size, 512)
+
+    def _create_sparse_file(self, path, *regions):
+        """Helper to create sparse files with actual holes.
+
+        regions: tuples of (offset, data) where data is written at offset.
+        Gaps between regions become sparse holes.
+        """
+        with open(path, "wb") as f:
+            for offset, data in regions:
+                f.seek(offset)
+                f.write(data)
+            # Use truncate via os.ftruncate to create sparse file
+            fd = f.fileno()
+            if regions:
+                max_offset = max(offset + len(data) for offset, data in regions)
+                os.ftruncate(fd, max_offset)
+
+    def test_extract_sparse_file(self):
+        """Test extracting sparse file preserves holes."""
         src = os.path.join(self.test_dir, "source.bin")
         dst = os.path.join(self.test_dir, "dest.bin")
 
-        # Data with trailing zeros
-        with open(src, "wb") as f:
-            f.write(b"data" + b"\x00" * 600)
+        # Create sparse file: data at 0, hole, data at 1MB
+        self._create_sparse_file(src, (0, b"start"), (1024 * 1024, b"end"))
 
-        written = utils.extract_part_of_file(
-            src, dst, 0, 604, skip_zero_tail=True, skip_zero_block_size=512
-        )
+        written = utils.extract_part_of_file(src, dst, 0, 1024 * 1024 + 3)
 
-        # Should write "data" rounded up to 512 bytes
-        self.assertEqual(written, 512)
+        # Should write data regions (rounded to block boundaries by filesystem)
+        # First region: 0-4095 (block-aligned), second region: 1048576-1048578
+        self.assertEqual(written, 4096 + 3)
+
+        # Check file size (should be sparse)
+        self.assertEqual(os.path.getsize(dst), 1024 * 1024 + 3)
+
+        # Verify destination file is sparse
+        dst_stat = os.stat(dst)
+        dst_physical = dst_stat.st_blocks * 512
+        self.assertLess(dst_physical, dst_stat.st_size)
+
+        # Verify content
         with open(dst, "rb") as f:
-            result = f.read()
-            self.assertEqual(result[:4], b"data")
-            self.assertEqual(len(result), 512)
+            self.assertEqual(f.read(5), b"start")
+            f.seek(1024 * 1024)
+            self.assertEqual(f.read(3), b"end")
 
-    def test_skip_zero_tail_exact_block(self):
-        """Test skip_zero_tail when data is exactly block-aligned."""
+    def test_extract_sparse_with_offset(self):
+        """Test extracting sparse region from middle of file."""
         src = os.path.join(self.test_dir, "source.bin")
         dst = os.path.join(self.test_dir, "dest.bin")
 
-        # Exactly 512 bytes data + zeros
-        with open(src, "wb") as f:
-            f.write(b"x" * 512 + b"\x00" * 500)
-
-        written = utils.extract_part_of_file(
-            src, dst, 0, 1012, skip_zero_tail=True, skip_zero_block_size=512
+        # Create file: prefix, data at 600, hole, data at 1MB, suffix
+        self._create_sparse_file(
+            src,
+            (0, b"prefix" * 100),
+            (600, b"data1"),
+            (1024 * 1024, b"data2"),
+            (1024 * 1024 + 5, b"suffix" * 100),
         )
 
-        self.assertEqual(written, 512)
+        # Extract the sparse region (data1, hole, data2)
+        start = 600
+        size = 1024 * 1024 - 600 + 5
+
+        written = utils.extract_part_of_file(src, dst, start, size)
+
+        # Should write data regions only (not holes)
+        # First region: 600 to first hole (block-aligned ~4096)
+        # Second region: 1048576 to 1048580 (5 bytes)
+        self.assertEqual(written, (4096 - 600) + 5)
+
+        # Verify destination is sparse
+        dst_stat = os.stat(dst)
+        self.assertLess(dst_stat.st_blocks * 512, dst_stat.st_size)
+
+        # Verify sparse region extracted correctly
         with open(dst, "rb") as f:
-            self.assertEqual(len(f.read()), 512)
+            self.assertEqual(f.read(5), b"data1")
+            f.seek(size - 5)
+            self.assertEqual(f.read(5), b"data2")
 
     def test_empty_file_extraction(self):
         """Test extracting from empty file."""

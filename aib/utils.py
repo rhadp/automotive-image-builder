@@ -342,30 +342,48 @@ def count_trailing_zeros(b: bytes) -> int:
     return len(mv) - 1 - i
 
 
-def zero_tail_size(src_path: str, start: int, size: int, chunk_size=1024 * 1024):
+def truncate_partition_size(src_path: str, start: int, size: int, block_size=4096):
     """
-    Count the number of trailing zeros in a range of a file. Bytes
-    in the range that are past the end of file are considered zero.
+    Remove trailing hole from the size, ensuring that (if we truncate) the end result
+    is some even number of block_size.
     """
-    tail_size = 0
 
     with open(src_path, "rb") as src:
-        read_end = size
-        while read_end > 0:
-            read_start = max(read_end - chunk_size, 0)
-            read_size = read_end - read_start
+        src_fd = src.fileno()
+        end = start + size
+        pos = start
+        last_data_end = None
 
-            src.seek(start + read_start)
-            data = src.read(read_size)
+        while pos < end:
+            try:
+                data_start = os.lseek(src_fd, pos, os.SEEK_DATA)
+            except OSError:
+                break
 
-            n_zeros = count_trailing_zeros(data) + (read_size - len(data))
-            tail_size += n_zeros
+            if data_start >= end:
+                break
 
-            if n_zeros < read_size:
-                return tail_size  # Found a non-zero
+            try:
+                hole_start = os.lseek(src_fd, data_start, os.SEEK_HOLE)
+            except OSError:
+                hole_start = end
 
-            read_end = read_start
-        return tail_size
+            hole_start = min(hole_start, end)
+            last_data_end = hole_start
+
+            if last_data_end >= end:
+                break
+
+            pos = hole_start
+
+        if last_data_end is None:
+            return 0
+
+        if last_data_end < end:
+            new_size = last_data_end - start
+            return min(roundup(new_size, block_size), size)
+
+        return size
 
 
 def roundup(n: int, block: int) -> int:
@@ -380,36 +398,52 @@ def extract_part_of_file(
     start: int,
     size: int,
     chunk_size=1024 * 1024,
-    skip_zero_tail: bool = False,
-    skip_zero_block_size=4096,
 ):
-    # If skip_zero_tail, then we don't copy out any trailing zero bytes (up to
-    # block alignement of default 4096 bytes).
-    # For example for partitions such as boot_a which only contain a smaller file
-    # and are sized larger in preparation for later updates.
-    # Note: We assume here that short reads are due to EOF, and
-    # we consider read past-eof as zero
-    if skip_zero_tail:
-        tail_size = zero_tail_size(src_path, start, size, chunk_size)
-        # We skip zeros so we end up with a multiple of a block size
-        # (typically 512, which is a block sector)
-        size = min(roundup(size - tail_size, skip_zero_block_size), size)
-
     total_written = 0
     with open(src_path, "rb") as src, open(dst_path, "wb") as dst:
-        src.seek(start)
-        remaining = size
-        while remaining > 0:
-            to_read = min(chunk_size, remaining)
+        src_fd = src.fileno()
+        dst_fd = dst.fileno()
 
-            data = src.read(to_read)
-            if not data:  # EOF
+        end = start + size
+        pos = start
+
+        while pos < end:
+            try:
+                data_start = os.lseek(src_fd, pos, os.SEEK_DATA)
+            except OSError:
                 break
 
-            dst.write(data)
-            total_written += len(data)
+            if data_start >= end:
+                break
 
-            remaining -= len(data)
+            try:
+                hole_start = os.lseek(src_fd, data_start, os.SEEK_HOLE)
+            except OSError:
+                hole_start = end
+
+            hole_start = min(hole_start, end)
+
+            data_size = hole_start - data_start
+            dst_offset = data_start - start
+
+            os.lseek(src_fd, data_start, os.SEEK_SET)
+            os.lseek(dst_fd, dst_offset, os.SEEK_SET)
+
+            remaining = data_size
+            while remaining > 0:
+                to_read = min(chunk_size, remaining)
+                data = os.read(src_fd, to_read)
+                if not data:
+                    break
+                os.write(dst_fd, data)
+                total_written += len(data)
+                remaining -= len(data)
+
+            pos = hole_start
+
+        # Ensure destination file has the correct size, even if it ends with a hole
+        if size > 0:
+            os.ftruncate(dst_fd, size)
 
     return total_written
 
