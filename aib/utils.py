@@ -637,7 +637,7 @@ class DiskFormat(Enum):
 
     RAW = ("raw", ".img", ["mv"])
     QCOW2 = ("qcow2", ".qcow2", ["qemu-img", "convert", "-O", "qcow2"])
-    SING = ("simg", ".simg", ["img2simg"])
+    SIMG = ("simg", ".simg", None)  # This uses internal conversion
 
     @classmethod
     def from_string(cls, s: str) -> "Optional[DiskFormat]":
@@ -657,3 +657,11 @@ class DiskFormat(Enum):
             if ext == member.ext:
                 return member
         return cls.RAW
+
+    def convert_image(self, runner, src, dest):
+        if self.convert:
+            runner.run_in_container(self.convert + [src, dest], need_selinux_privs=True)
+            runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", dest])
+        else:
+            if self == DiskFormat.SIMG:
+                convert_to_simg(src, dest)

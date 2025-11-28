@@ -578,11 +578,6 @@ def build_bootc(args, tmpdir, runner):
             bootc_archive_to_store(runner, output_file, args.out, user=args.user)
 
 
-def convert_image_file(runner, src, dest, fmt):
-    runner.run_in_container(fmt.convert + [src, dest], need_selinux_privs=True)
-    runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", dest])
-
-
 def partition_is_safe_to_truncate(p):
     name = p.get("name")
     if name:
@@ -622,9 +617,9 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
                 start,
                 size,
             )
-            convert_image_file(runner, part_tmp_file, part_file, fmt)
+            fmt.convert_image(runner, part_tmp_file, part_file)
     else:
-        convert_image_file(runner, image_file, args.out, fmt)
+        fmt.convert_image(runner, image_file, args.out)
 
 
 @command(
