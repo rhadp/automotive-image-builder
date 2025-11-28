@@ -1,58 +1,10 @@
-# A target for the QC RIDESX4 board.
-version: '2'
-mpp-vars:
-  target_supported_arches:
-    - aarch64
-  use_boot: aboot
-  skip_root_on_cmdline: true # This uses ABL bootloader which appends root= cmdline
-  use_efi_runtime: false
-  use_autoinit: true
-  use_autoinit_root: true
-  consoles: "ttyMSM0,115200,n8"
-  aboot_pagesize: 4096
-  aboot_kernel_offset: "0x80208000"
-  aboot_partition_a: "/dev/disk/by-partlabel/boot_a"
-  aboot_partition_b: "/dev/disk/by-partlabel/boot_b"
-  aboot_second_offset: "0x81100000"
-  aboot_tags_offset: "0x7d00000"
-  aboot_base: "0x1208800"
-  aboot_dtb_file: "qcom/sa8775p-ride.dtb"
-  image_size: 17179824128
-  qm_varpart_uuid: "283dd53c-d749-68ac-261d-104d9cd22f76"
+version: "2"
 
-  #use_tuned_realtime: true
-  target_repos:
-    - id: qcom-board-support
-      baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/qcom-board-support/$distro_chroot/
-      priority: 1
-  target_rpms:
-    - stmmac-mac-generator
-  image_enabled_services:
-    mpp-join:
-      - mpp-eval: image_enabled_services
-      - - stmmac-mac-generator.service
-  kernel_opts:
-    mpp-join:
-      - mpp-eval: kernel_opts
-      - - no_console_suspend=1
-        - clk_ignore_unused
-        - pd_ignore_unused
-        - acpi=off
-        - net.naming-scheme=v252
-      - - mpp-if: is_autoinit_supported and use_autoinit
-          then: rd.modules-load=pinctrl_msm,pinctrl_sa8775p,qcom_geni_serial,ufs_qcom
-  dracut_drivers: []
-  dracut_add_drivers:
-    - pinctrl-msm
-    - pinctrl-sa8775p
-    - qcom-geni-se
-    - qcom_geni_serial
-    - ufs_qcom
-  dracut_omit_drivers:
-    mpp-join:
-      - mpp-eval: dracut_omit_drivers
-      - - "ipv6"
-        - "crc32_generic"
-        - "sha256_arm64"
-        - "sha2_ce"
-pipelines: []
+mpp-vars:
+  aboot_dtb_file: "qcom/sa8775p-ride.dtb"
+
+pipelines:
+  - mpp-import-pipelines:
+      path: include/_ridesx4_common.ipp.yml
+  - mpp-import-pipelines:
+      path: include/_ridesx4.ipp.yml
