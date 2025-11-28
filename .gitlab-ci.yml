@@ -144,7 +144,10 @@ pages:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-container-latest:
+variables:
+  IMAGE: quay.io/centos-sig-automotive/automotive-image-builder
+
+.container-build: &container-build
   stage: container
   image: quay.io/buildah/stable:latest
   interruptible: true
@@ -153,31 +156,52 @@ container-latest:
       - ARCH: [amd64, arm64]
   tags:
     - saas-linux-small-${ARCH}
-  variables:
-    IMAGE: quay.io/centos-sig-automotive/automotive-image-builder
-    TAG: latest
   script:
-    - buildah bud -f Containerfile -t "$IMAGE:$TAG-$ARCH" .
+    - buildah bud -f Containerfile ${BUILD_ARGS} -t "$IMAGE:$TAG-$ARCH" .
     - buildah login -u "$CONTAINER_REGISTRY_USER" -p "$CONTAINER_REGISTRY_PASSWORD" quay.io
     - buildah push "$IMAGE:$TAG-$ARCH"
     - echo "MANIFEST=$IMAGE:$TAG" > container.env
   artifacts:
     reports:
       dotenv: container.env
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "web"
 
-container-latest-manifest:
+.container-manifest: &container-manifest
   stage: deploy
   image: quay.io/buildah/stable:latest
   script:
     - buildah login -u "$CONTAINER_REGISTRY_USER" -p "$CONTAINER_REGISTRY_PASSWORD" quay.io
     - buildah manifest create $MANIFEST $MANIFEST-{amd64,arm64}
     - buildah manifest push $MANIFEST docker://$MANIFEST
+
+container-latest:
+  <<: *container-build
+  variables:
+    TAG: latest
+    BUILD_ARGS: ""
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
     - if: $CI_PIPELINE_SOURCE == "web"
+
+container-latest-manifest:
+  <<: *container-manifest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# Release builds are triggered only by version tags (e.g., 1.1.4 or v1.1.4)
+# This prevents accidental release builds from arbitrary tags
+container-release:
+  <<: *container-build
+  variables:
+    TAG: $CI_COMMIT_TAG
+    BUILD_ARGS: "--build-arg MAKE_WHAT=rpm"
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+$/
+
+container-release-manifest:
+  <<: *container-manifest
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+$/
 
 trigger-pipeline:
   stage: test
