@@ -359,9 +359,6 @@ def listrpms(args, tmpdir, runner):
 
 
 def _run_osbuild(args, tmpdir, runner, exports):
-    if args.out:
-        runner.add_volume_for(args.out)
-
     osbuild_manifest = os.path.join(tmpdir, "osbuild.json")
     if args.osbuild_manifest:
         osbuild_manifest = args.osbuild_manifest
@@ -574,6 +571,7 @@ def build_bootc(args, tmpdir, runner):
         if args.dry_run:
             pass
         elif args.tar or args.oci_archive:
+            runner.add_volume_for(args.out)
             runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", output_file])
             runner.run_as_root(["mv", output_file, args.out])
         else:
@@ -596,6 +594,7 @@ def partition_is_safe_to_truncate(p):
 
 
 def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
+    runner.add_volume_for(args.out)
     if args.separate_partitions:
         runner.run_as_root(["rm", "-rf", args.out])
         os.mkdir(args.out)

@@ -139,6 +139,9 @@ def export(outputdir, dest, dest_is_directory, export, runner):
             ]
         )
 
+    if handle_file:
+        runner.add_volume_for(dest)
+
     if dest_is_directory:
         dest = os.path.join(dest, os.path.basename(export_file))
 
