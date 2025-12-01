@@ -421,8 +421,8 @@ mpp-vars:
           to: tree:///etc/passwd
         - from: input://etc-tree/etc/group
           to: tree:///etc/group
-        - from: input://etc-tree/usr/lib/sysusers.d/base-users.conf
-          to: tree:///usr/lib/sysusers.d/base-users.conf
+        - from: input://etc-tree/usr/lib/sysusers.d/00-base-users.conf
+          to: tree:///usr/lib/sysusers.d/00-base-users.conf
         - from: input://data-tree/etc/selinux/config
           to: tree:///etc/selinux/config
 

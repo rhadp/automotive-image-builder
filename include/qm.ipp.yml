@@ -27,8 +27,8 @@ pipelines:
               to: tree:///etc/passwd
             - from: input://data-tree/etc/group
               to: tree:///etc/group
-            - from: input://data-tree/usr/lib/sysusers.d/base-users.conf
-              to: tree:///usr/lib/sysusers.d/base-users.conf
+            - from: input://data-tree/usr/lib/sysusers.d/00-base-users.conf
+              to: tree:///usr/lib/sysusers.d/00-base-users.conf
 
       - type: org.osbuild.systemd-sysusers
 
