@@ -49,7 +49,9 @@ class Runner:
         for d in args.include_dirs:
             self.add_volume(d)
 
-    def _collect_podman_args(self, rootless, as_user_in_container, need_osbuild_privs):
+    def _collect_podman_args(
+        self, rootless, as_user_in_container, need_osbuild_privs, need_selinux_privs
+    ):
         podman_args = [
             "--rm",
             "--workdir",
@@ -79,6 +81,11 @@ class Runner:
                 "--privileged",
             ]
 
+        if need_selinux_privs and not rootless:
+            podman_args = podman_args + [
+                "--privileged",
+            ]
+
         if as_user_in_container:
             podman_args = podman_args + [
                 "--user",
@@ -101,14 +108,16 @@ class Runner:
     def add_volume_for(self, file):
         self.volumes.add_volume_for(file)
 
-    def _add_container_cmd(self, rootless, as_user_in_container, need_osbuild_privs):
+    def _add_container_cmd(
+        self, rootless, as_user_in_container, need_osbuild_privs, need_selinux_privs
+    ):
         return (
             [
                 self.conman,
                 "run",
             ]
             + self._collect_podman_args(
-                rootless, as_user_in_container, need_osbuild_privs
+                rootless, as_user_in_container, need_osbuild_privs, need_selinux_privs
             )
             + [self.container_image]
         )
@@ -120,6 +129,7 @@ class Runner:
         as_root=False,
         as_user_in_container=False,
         need_osbuild_privs=False,
+        need_selinux_privs=False,
         with_progress=False,
         capture_output=False,
         stdout_to_devnull=False,
@@ -129,7 +139,10 @@ class Runner:
         if use_container:
             cmdline = (
                 self._add_container_cmd(
-                    not as_root, as_user_in_container, need_osbuild_privs
+                    not as_root,
+                    as_user_in_container,
+                    need_osbuild_privs,
+                    need_selinux_privs,
                 )
                 + cmdline
             )
@@ -208,6 +221,7 @@ class Runner:
         self,
         cmdline,
         need_osbuild_privs=False,
+        need_selinux_privs=False,
         progress=False,
         capture_output=False,
         stdout_to_devnull=False,
@@ -225,6 +239,7 @@ class Runner:
             use_container=use_container,
             as_root=as_root,
             need_osbuild_privs=need_osbuild_privs,
+            need_selinux_privs=need_selinux_privs,
             with_progress=progress,
             stdout_to_devnull=stdout_to_devnull,
             verbose=verbose,

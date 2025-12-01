@@ -482,7 +482,7 @@ def test_collect_podman_args(container_autoupdate, use_non_root, volumes):
     )
     for v in volumes:
         runner.add_volume(v)
-    podman_args = runner._collect_podman_args(False, use_non_root, False)
+    podman_args = runner._collect_podman_args(False, use_non_root, False, False)
 
     index = 3
     assert podman_args[:2] == ["--rm", "--workdir"]

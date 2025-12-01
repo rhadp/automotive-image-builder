@@ -106,7 +106,9 @@ def export(outputdir, dest, dest_is_directory, export, runner):
             convert_files = [export_file]
         for convert_file in convert_files:
             converted_file = os.path.splitext(convert_file)[0] + ".simg"
-            runner.run_in_container(["img2simg", convert_file, converted_file])
+            runner.run_in_container(
+                ["img2simg", convert_file, converted_file], need_selinux_privs=True
+            )
             runner.run_as_root(["rm", "-rf", convert_file])
 
         if not export_is_dir:
@@ -136,6 +138,9 @@ def export(outputdir, dest, dest_is_directory, export, runner):
                 "containers-storage:" + dest,
             ]
         )
+
+    if handle_file:
+        runner.add_volume_for(dest)
 
     if dest_is_directory:
         dest = os.path.join(dest, os.path.basename(export_file))
