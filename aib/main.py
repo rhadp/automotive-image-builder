@@ -635,13 +635,6 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
     args=[
         DISK_FORMAT_ARGS,
         {
-            "--ostree": {
-                "help": "Build a legacy osbuild image instead of package based"
-            },
-            "--ostree-repo": {
-                "type": "path",
-                "help": "Export ostree commit to ostree repo at this path",
-            },
             "--dry-run": {
                 "help": "Just compose the osbuild manifest, don't build it.",
             },
@@ -658,21 +651,16 @@ def build_traditional(args, tmpdir, runner):
     Builds a disk image from a manifest describing its content, and options like what
     board to target and what distribution version to use.
 
-    By default this creates images that use rpm packages in a traditional writable
-    filesystem. However, if you specify --ostree it will use ostree to make the
-    root filesystem an immutable image. However, the later is a legacy option and
-    it is recommended that new users use build-bootc instead.
+    The creates disk image has a mutable, package-base regular rootfs (i.e. it is not
+    using image mode).
     """
-    use_ostree = args.ostree or args.ostree_repo
-    args.mode = "image" if use_ostree else "package"
+    args.mode = "package"
 
     fmt = DiskFormat.from_string(args.format) or DiskFormat.from_filename(args.out)
 
     exports = []
     if not args.dry_run:
         exports.append("image")
-        if args.ostree_repo:
-            exports.append("ostree-commit")
 
     with _run_osbuild(args, tmpdir, runner, exports) as outputdir:
         output_file = os.path.join(outputdir.name, "image/disk.img")

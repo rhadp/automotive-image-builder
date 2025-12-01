@@ -103,9 +103,6 @@ echo_log "Compliance policy allows bootc"
 build --policy compliance.aibp.yml --mode image simple-rpms.aib.yml out
 echo_log "Compliance policy allows image mode"
 
-build_traditional --dry-run --policy compliance.aibp.yml --ostree simple-rpms.aib.yml out.img
-echo_log "Compliance policy allows traditional --ostree"
-
 if trybuild --policy compliance.aibp.yml --mode package simple-rpms.aib.yml out 2> mode_error.txt; then
     echo_fail "Compliance policy should deny package mode"
     fatal "Compliance policy should have blocked package mode"
