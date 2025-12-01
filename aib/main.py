@@ -581,7 +581,7 @@ def build_bootc(args, tmpdir, runner):
 
 
 def convert_image_file(runner, src, dest, fmt):
-    runner.run_in_container(fmt.convert + [src, dest])
+    runner.run_in_container(fmt.convert + [src, dest], need_selinux_privs=True)
     runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", dest])
 
 

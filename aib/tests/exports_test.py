@@ -153,7 +153,7 @@ class TestExport(unittest.TestCase):
         # Should call img2simg for conversion
         converted_file = os.path.splitext(test_file)[0] + ".simg"
         self.mock_runner.run_in_container.assert_any_call(
-            ["img2simg", test_file, converted_file]
+            ["img2simg", test_file, converted_file], need_selinux_privs=True
         )
         # Should remove original file
         self.mock_runner.run_as_root.assert_any_call(["rm", "-rf", test_file])
@@ -182,10 +182,10 @@ class TestExport(unittest.TestCase):
         converted_file2 = os.path.splitext(test_file2)[0] + ".simg"
 
         self.mock_runner.run_in_container.assert_any_call(
-            ["img2simg", test_file1, converted_file1]
+            ["img2simg", test_file1, converted_file1], need_selinux_privs=True
         )
         self.mock_runner.run_in_container.assert_any_call(
-            ["img2simg", test_file2, converted_file2]
+            ["img2simg", test_file2, converted_file2], need_selinux_privs=True
         )
 
     def test_export_no_chown_flag(self):
