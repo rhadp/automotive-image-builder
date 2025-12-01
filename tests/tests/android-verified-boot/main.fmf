@@ -1,0 +1,31 @@
+summary: Verify that we can build, sign and boot using android verified boot
+description: |
+  Builds two AIB bootc container image, one initial and one update.
+  These are signed (aboot files) with a known private key and a disk
+  image is built and booted (with android verified boot). We check
+  that boot works and is AVB enabled, and then we update to the update
+  container image and ensure the update boots.
+
+  This only works on aarch64, because it uses the abootqemukvm target,
+  so it is marked special meaning we can run it manually only.
+
+  NOTE: The inputs like the signing code and keys are copies from
+  the contrib/avb directory.
+
+  Test inputs:
+    - Custom a-i-b manifests with some changes to make boot messages easy to see
+    - scripts and key to sign aboot files
+
+  Expected results:
+    - PASS: 'Built signed bootc container'
+    - PASS: 'Built signed bootc update container'
+    - PASS: 'Built signed bootc disk image'
+    - PASS: 'Booted signed bootc disk image with AVC enabled'
+    - PASS: 'Booted into updated image'
+
+  Results location:
+    output.txt
+
+duration: 60m
+tag: [special]
+id: 3c95050c-ca1a-11f0-8d64-e89c256c3906

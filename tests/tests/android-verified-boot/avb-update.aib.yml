@@ -1,0 +1,16 @@
+name: avc
+
+content:
+  systemd:
+    enabled_services:
+      - getty@hvc0.service  # For some reason this is not auto-enabled in aboot
+  rpms:
+    - less # Add this in the update
+
+kernel:
+  cmdline:
+    - systemd.log_target=console
+    - systemd.journald.forward_to_console=1
+
+auth:
+  root_password: $6$xoLqEUz0cGGJRx01$H3H/bFm0myJPULNMtbSsOFd/2BnHqHkMD92Sfxd.EKM9hXTWSmELG8cf205l6dktomuTcgKGGtGDgtvHVXSWU.

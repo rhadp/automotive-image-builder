@@ -12,11 +12,16 @@ testing.
 
 ## Quickstart
 
-If you just want to do some quick testing there is a pre-generated set
-of keys in the `pregenerated` directory. Read below to understand how
-they were created and how to use them, but then you don't have to run
-all the commands to generate and enroll keys. The password for these
-files is `password`.
+If you just want to do some quick testing there is a pre-generated and
+pre-enrolled set of keys in the `pregenerated` director. Read below to
+understand how they were created and how to use them, but then you
+don't have to run all the commands to generate and enroll keys. The
+password for these files is `password`.
+
+Note: The pre-enrolled key works in fedora, but for some reason not
+with the EFI firmware in centos 10. You can use the EFI firmware
+from on CS10:
+https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/releases/1.1.3/downloads/OVMF_CODE.secboot.fd
 
 **WARNING**: Never ever use these files in production, as the key is
 public.
@@ -130,7 +135,7 @@ knowing that it will now only boot EFI files signed by the PK.
 To do this, build and run the `enroll.aib.yml` image which embeds the keys that
 where generated above (in the `secureboot-keys` directory.
 ```
-$ automotive-image-builder build --distro autosd10-latest-sig --export image enroll.aib.yml enroll.img
+$ automotive-image-builder build-traditional --distro autosd10-latest-sig enroll.aib.yml enroll.img
 $ automotive-image-runner --secureboot-vars=secboot_vars.fd --secureboot-writeable enroll.img
 ```
 

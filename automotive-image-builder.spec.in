@@ -19,6 +19,10 @@ Requires:       ostree
 Requires:       python3-dnf
 Requires:       python3-jsonschema
 Requires:       python3-pyyaml
+Requires:       lz4
+Requires:       gzip
+Requires:       cpio
+Requires:       openssl
 Recommends:     python3-rich
 
 %description

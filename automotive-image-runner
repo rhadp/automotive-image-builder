@@ -194,19 +194,37 @@ def run_http_server(path):
     return http_port
 
 
+def wait_for_file_at_path(path, timeout=4.0, interval=0.05):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            _ = os.stat(path)
+            return True
+        except FileNotFoundError:
+            pass
+        time.sleep(interval)
+    return False
+
+
 def run_virtiofs_server(socket, sharedir):
     vio_args = [
         "/usr/libexec/virtiofsd",
         "--socket-path=" + socket,
-        "-o", "source=" + sharedir,
-        "-o", "cache=always"
+        "-o",
+        "source=" + sharedir,
+        "-o",
+        "cache=always",
     ]
     if not is_verbose:
-        vio_args += [
-            "--log-level", "off"
-        ]
+        vio_args += ["--log-level", "off"]
     print_verbose(f"Running: {' '.join(vio_args)}")
-    return subprocess.Popen(vio_args)
+
+    virtiod = subprocess.Popen(vio_args)
+
+    if not wait_for_file_at_path(socket):
+        raise RuntimeError("Virtifsd socket never appeared")
+
+    return virtiod
 
 
 def find_ovmf(args):
@@ -657,9 +675,10 @@ def main():
 
         virtiod = run_virtiofs_server(vhostsocket, args.sharedir)
 
+        vfsdevice = "vhost-user-fs-device" if args.aboot else "vhost-user-fs-pci"
         qemu_args += [
             "-chardev", "socket,id=char0,path=" + vhostsocket,
-            "-device", "vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=host",
+            "-device", f"{vfsdevice},queue-size=1024,chardev=char0,tag=host",
             "-object", "memory-backend-file,id=mem,size=" + str(args.memory) + ",mem-path=/dev/shm,share=on",
             "-numa", "node,memdev=mem"
         ]
@@ -670,7 +689,7 @@ def main():
 
     if args.virtio_console:
         qemu_args += [
-            "-device", "virtio-serial-pci",
+            "-device", "virtio-serial-device" if args.aboot else "virtio-serial-pci",
             "-chardev", f"socket,id=con0,path={args.virtio_console},server=on,wait=off",
             "-device", "virtconsole,chardev=con0,id=vc0",
         ]

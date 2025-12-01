@@ -254,7 +254,24 @@ list_tar_modules () {
 }
 
 save_to_tmt_test_data () {
-    cp $1 "${TMT_TEST_DATA}"
+    local src="$1"
+    local base
+    local dest
+    base="$(basename "$src")"
+    dest="$TMT_TEST_DATA/$base"
+
+    if [[ ! -e "$dest" ]]; then
+        cp "$src" "$dest"
+        return
+    fi
+
+    # Conflict, find the next free suffix
+    local n=2
+    while [[ -e "${dest}${n}" ]]; do
+        ((n++))
+    done
+
+    cp "$src" "${dest}${n}"
 }
 
 # Some default options that make builds faster, override if problematic
@@ -312,6 +329,32 @@ build_bootc() {
    save_to_tmt_test_data build.log
 }
 
+trybuild_bootc_builder() {
+    local result=0
+
+    $AIB build-bootc-builder \
+        --distro=$AIB_DISTRO \
+        --cache $OUTDIR/dnf-cache \
+        --build-dir "$BUILDDIR" $FAST_OPTIONS \
+        --define reproducible_image=true \
+        "$@" > build-builder.log
+    result=$?
+
+    return $result
+}
+
+build_bootc_builder() {
+   if ! trybuild_bootc_builder "$@"; then
+      echo FAILED to build image
+      # only show last 50 lines in
+      tail -n 50 build-builder.log
+      # save build log to tmt test data
+      save_to_tmt_test_data build-builder.log
+      exit 1
+   fi
+   save_to_tmt_test_data build-builder.log
+}
+
 trybuild_traditional() {
     local result=0
 
@@ -349,9 +392,16 @@ assert_image_exists() {
 
 # Start the VM and return its PID
 run_vm() {
-    local image=$1
-    local log_file=${2:-"serial-console.log"}
-    $AIR --virtio-console console.sock --nographics "$image" > "$log_file" 2>&1 &
+    local image="$1"
+    shift
+    log_file="serial-console.log"
+    if [[ $# -ge 1 ]]; then
+        log_file="$1"
+        shift
+    fi
+    local extras=( "$@" )
+
+    $AIR --verbose --virtio-console console.sock --nographics "${extras[@]}" "$image" > "$log_file" 2>&1 &
     local pid=$!
     >&2 echo "INFO: VM running at pid: $pid"
     echo "$pid"
