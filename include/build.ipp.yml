@@ -339,6 +339,6 @@ pipelines:
               to: tree:///etc/group
             - from:
                 mpp-format-string: input://inlinefile4/{embedded['sysusers']}
-              to: tree:///usr/lib/sysusers.d/base-users.conf
+              to: tree:///usr/lib/sysusers.d/00-base-users.conf
 
       - type: org.osbuild.systemd-sysusers
