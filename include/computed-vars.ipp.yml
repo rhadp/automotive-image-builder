@@ -113,8 +113,7 @@ mpp-vars:
   use_bootpart:
     mpp-if: not "use_bootpart" in locals()
     then:
-      # TODO-BOOTC: Until https://github.com/osbuild/bootc-image-builder/issues/1161 is fixed we need a boot partition for bootc
-      mpp-eval: use_grub2 or (use_aboot_like and use_bootc)
+      mpp-eval: use_grub2
   use_sblpart:
     mpp-if: not "use_sblpart" in locals()
     then:
