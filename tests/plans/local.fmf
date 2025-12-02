@@ -8,6 +8,9 @@ environment:
     # Available distributions can be listed using `automotive-image-builder list-dist` on the relevant platform.
     AIB_DISTRO: autosd10-sig
 
+    # Build boot builder container only when it doesn't exist
+    REBUILD_BOOTC_BUILDER: no
+
     AIB: $PROJECT_DIR/automotive-image-builder
     AIB_BASEDIR: $PROJECT_DIR
     AIR: $PROJECT_DIR/automotive-image-runner
@@ -38,6 +41,11 @@ prepare:
       how: shell
       script: |
           ./scripts/init-build-cache.sh
+
+    - name: Initialize bootc builder container
+      how: shell
+      script: |
+          ./scripts/init-bootc-builder.sh
 
 discover:
     how: fmf

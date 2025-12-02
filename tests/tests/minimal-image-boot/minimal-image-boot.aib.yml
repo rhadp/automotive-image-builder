@@ -14,6 +14,8 @@ content:
       source_path: ../../image-tests/systemd_running.sh
     - path: /usr/tests/selinux_check.sh
       source_path: ../../image-tests/selinux_check.sh
+    - path: /usr/tests/rpmdb_initialized.sh
+      source_path: ../../image-tests/rpmdb_initialized.sh
     - path: /usr/tests/run-all.sh
       source_path: ../../image-tests/run-all.sh
     - path: /etc/systemd/system/test-runner.service
@@ -24,6 +26,8 @@ content:
     - path: /usr/tests/systemd_running.sh
       mode: "755"
     - path: /usr/tests/selinux_check.sh
+      mode: "755"
+    - path: /usr/tests/rpmdb_initialized.sh
       mode: "755"
     - path: /usr/tests/run-all.sh
       mode: "755"

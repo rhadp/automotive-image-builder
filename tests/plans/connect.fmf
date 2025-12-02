@@ -20,6 +20,9 @@ environment:
     # Directory when a-i-b SRPM should exist in order to build it
     AIB_SRPM_DIR: /var/tmp/aib-srpm
 
+    # Build boot builder container only when it doesn't exist
+    REBUILD_BOOTC_BUILDER: no
+
     AIB: automotive-image-builder
     AIB_BASEDIR: /usr/lib/automotive-image-builder
     AIR: automotive-image-runner
@@ -44,11 +47,12 @@ prepare:
       script: |
           ./scripts/rebuild-package.sh
 
-    - name: Install a-i-b
+    - name: Install required packages
       how: install
       package:
           - automotive-image-builder
           - jq
+          - podman
 
     - name: Report a-i-b version
       how: shell
@@ -60,6 +64,10 @@ prepare:
       script: |
           ./scripts/init-build-cache.sh
 
+    - name: Initialize bootc builder container
+      how: shell
+      script: |
+          ./scripts/init-bootc-builder.sh
 discover:
     how: fmf
     filter: tag:-special

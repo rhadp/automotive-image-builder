@@ -311,7 +311,7 @@ trybuild_bootc() {
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
         --define reproducible_image=true \
-        "$@" > build.log
+        "$@" > build-bootc.log
     result=$?
 
     return $result
@@ -319,14 +319,37 @@ trybuild_bootc() {
 
 build_bootc() {
    if ! trybuild_bootc "$@"; then
-      echo FAILED to build image
+      echo FAILED to build bootc container
       # only show last 50 lines in
-      tail -n 50 build.log
+      tail -n 50 build-bootc.log
       # save build log to tmt test data
-      save_to_tmt_test_data build.log
+      save_to_tmt_test_data build-bootc.log
       exit 1
    fi
-   save_to_tmt_test_data build.log
+   save_to_tmt_test_data build-bootc.log
+}
+
+trybootc_to_disk_image() {
+    local result=0
+
+    $AIB bootc-to-disk-image \
+        --verbose \
+        "$@" > bootc-to-disk-image.log
+    result=$?
+
+    return $result
+}
+
+bootc_to_disk_image() {
+   if ! trybootc_to_disk_image "$@"; then
+      echo FAILED to build image from bootc container
+      # only show last 50 lines in
+      tail -n 50 bootc-to-disk-image.log
+      # save build log to tmt test data
+      save_to_tmt_test_data bootc-to-disk-image.log
+      exit 1
+   fi
+   save_to_tmt_test_data bootc-to-disk-image.log
 }
 
 trybuild_bootc_builder() {

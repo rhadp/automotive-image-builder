@@ -196,6 +196,10 @@ The following environment variables exist to customize test execution:
      variable
    - Default value: `no`
    - Possible values: `yes` `no`
+- **`REBUILD_BOOTC_BUILDER`**
+   - Forces the rebuild of bootc builder container. By default the container is being rebuilt only when it doesn't exist.
+   - Default value: `no`
+   - Possible values: `yes` `no`
 - **`NODE`**
    - IP address or hostname of the machine where integration tests will be run
    - Default value: _empty_
