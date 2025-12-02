@@ -136,10 +136,6 @@ except (ModuleNotFoundError, ImportError):
             sys.stdout.write(f"\r{' ' * 100}\r{progress_line}")
             sys.stdout.flush()
 
-        def refresh(self):
-            """Refresh method to mimic rich class."""
-            self._maybe_refresh()
-
     class Console:
         """Simple console fallback for when rich is not available."""
 
@@ -374,8 +370,6 @@ class OSBuildProgressMonitor:
                 description=progress_info.description,
             )
 
-        progress.refresh()
-
     def monitor_subprocess_output(
         self,
         process: subprocess.Popen,
@@ -418,7 +412,7 @@ class OSBuildProgressMonitor:
             ]
             progress_kwargs = {
                 "console": self.console,
-                "auto_refresh": False,
+                "refresh_per_second": 10,
             }
             return ProgressArgs(columns=progress_columns, kwargs=progress_kwargs)
 

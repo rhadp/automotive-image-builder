@@ -51,6 +51,7 @@ def test_run_args_root(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_as_root(cmd)
@@ -86,6 +87,7 @@ def test_run_args_container_without_progress_no_capture(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_in_container(cmd, progress=False, capture_output=False, verbose=verbose)
@@ -131,6 +133,7 @@ def test_run_args_container_without_progress_with_capture(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_in_container(cmd, progress=False, capture_output=True, verbose=verbose)
@@ -188,6 +191,7 @@ def test_run_args_container_with_progress(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_in_container(
@@ -239,6 +243,7 @@ def test_run_args_osbuild_without_progress_no_capture(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_in_container(
@@ -290,6 +295,7 @@ def test_run_args_osbuild_without_progress_with_capture(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_in_container(
@@ -353,6 +359,7 @@ def test_run_args_osbuild_with_progress(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_in_container(
@@ -401,6 +408,7 @@ def test_run_with_log_file(
     args = args_for(False, False)
     runner = Runner(AIBParameters(parse_args(args), base_dir=BASE_DIR))
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_in_container(
@@ -437,6 +445,7 @@ def test_run_args_user(
         )
     )
     runner.use_sudo_for_root = use_sudo_for_root
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["touch", "example"]
     runner.run_as_user(cmd)
@@ -515,9 +524,59 @@ def test_run_in_container_progress_without_log_file_raises_exception(use_contain
             base_dir=BASE_DIR,
         )
     )
+    runner.ensure_sudo = MagicMock()
 
     cmd = ["osbuild", "manifest.json"]
 
     # Should raise MissingLogFile when progress=True but log_file=None
     with pytest.raises(exceptions.MissingLogFile):
         runner.run_in_container(cmd, progress=True, log_file=None)
+
+
+@patch("aib.runner.threading.Thread")
+@patch("aib.runner.subprocess")
+def test_ensure_sudo_success(subprocess_mock, thread_mock):
+    """Test that ensure_sudo calls sudo -v and starts keepalive thread."""
+    # Setup
+    args = MagicMock()
+    args.container = False
+    args.user_container = False
+    args.include_dirs = []
+
+    runner = Runner(args)
+    runner.use_sudo_for_root = True
+
+    # Execution
+    runner.ensure_sudo()
+
+    # Verification
+    subprocess_mock.check_call.assert_called_once_with(["sudo", "-v"])
+
+    thread_mock.assert_called_once()
+    call_args = thread_mock.call_args
+    assert call_args.kwargs["daemon"] is True
+
+    thread_instance = thread_mock.return_value
+    thread_instance.start.assert_called_once()
+
+
+def test_ensure_sudo_already_running():
+    """Test that ensure_sudo does nothing if keepalive thread is alive."""
+    args = MagicMock()
+    args.container = False
+    args.user_container = False
+    args.include_dirs = []
+
+    runner = Runner(args)
+    runner.use_sudo_for_root = True
+
+    # Mock existing thread
+    mock_thread = MagicMock()
+    mock_thread.is_alive.return_value = True
+    runner.keepalive_thread = mock_thread
+
+    # We shouldn't need to mock subprocess because it shouldn't be called
+    # But to be safe and catch regressions, we can patch it
+    with patch("aib.runner.subprocess") as subprocess_mock:
+        runner.ensure_sudo()
+        subprocess_mock.check_call.assert_not_called()

@@ -4,6 +4,8 @@ import shutil
 import shlex
 import subprocess
 import sys
+import threading
+import time
 
 from . import log
 from . import exceptions
@@ -45,6 +47,7 @@ class Runner:
         self.container_image = args.container_image_name
         self.container_autoupdate = args.container_autoupdate
         self.use_sudo_for_root = os.getuid() != 0
+        self.keepalive_thread = None
         self.volumes = Volumes()
         for d in args.include_dirs:
             self.add_volume(d)
@@ -122,6 +125,31 @@ class Runner:
             + [self.container_image]
         )
 
+    def _start_sudo_keepalive(self):
+        def keepalive():
+            while True:
+                time.sleep(300)
+                # Update timestamp without prompting
+                subprocess.call(
+                    ["sudo", "-n", "-v"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+
+        self.keepalive_thread = threading.Thread(target=keepalive, daemon=True)
+        self.keepalive_thread.start()
+
+    def ensure_sudo(self):
+        if not self.use_sudo_for_root:
+            return
+
+        if self.keepalive_thread and self.keepalive_thread.is_alive():
+            return
+
+        # Update sudo timestamp, prompting if necessary
+        subprocess.check_call(["sudo", "-v"])
+        self._start_sudo_keepalive()
+
     def _run(
         self,
         cmdline,
@@ -148,12 +176,15 @@ class Runner:
             )
 
         if as_root and self.use_sudo_for_root:
+            self.ensure_sudo()
+
             allowed_env_vars = [
                 "REGISTRY_AUTH_FILE",
                 "CONTAINERS_CONF",
                 "CONTAINERS_REGISTRIES_CONF",
                 "CONTAINERS_STORAGE_CONF",
             ]
+
             sudo_cmd = [
                 "sudo",
                 "--preserve-env={}".format(",".join(allowed_env_vars)),
