@@ -76,6 +76,9 @@ echo "Preparing tests execution"
 PREPARE_TESTS_ID="$(format_test_id "-1" "prepare-tests")"
 tmt -q $FEELING_SAFE  run -i "$PREPARE_TESTS_ID" -B execute "${TMT_RUN_OPTIONS[@]}"
 
+END_TIME=$(date +%s)
+echo "Finished test preparation, execution time: $(format_time $((END_TIME - START_TIME)))"
+
 # Gather discovered tests
 mapfile -t DISCOVERED_TESTS< \
     <(grep "name:" < "$TMT_WORKDIR_ROOT/$PREPARE_TESTS_ID/plans/$PLAN/discover/tests.yaml" | sed 's/.*tests\///')
