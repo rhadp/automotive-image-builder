@@ -253,12 +253,19 @@ list_tar_modules () {
     list_tar $1 | grep "usr/lib/modules/.*/kernel/.*.ko" | xargs basename -a | sed s/.ko.*//
 }
 
-save_to_tmt_test_data () {
+# Saves the file into TMT_TEST_DATA directory (when executed from specific test) or TMT_PLAN_DATA (otherwise)
+save_to_tmt_data () {
     local src="$1"
     local base
     local dest
     base="$(basename "$src")"
-    dest="$TMT_TEST_DATA/$base"
+
+    if [ -z "$TMT_TEST_DATA" ] && [ -z "$TMT_PLAN_DATA" ]; then
+        echo "Neither TMT_TEST_DATA nor TMT_PLAN_DATA set, exiting!";
+        exit 1
+    fi
+
+    dest="${TMT_TEST_DATA:-$TMT_PLAN_DATA}/$base"
 
     if [[ ! -e "$dest" ]]; then
         cp "$src" "$dest"
@@ -297,10 +304,10 @@ build() {
       # only show last 50 lines in
       tail -n 50 build.log
       # save build log to tmt test data
-      save_to_tmt_test_data build.log
+      save_to_tmt_data build.log
       exit 1
    fi
-   save_to_tmt_test_data build.log
+   save_to_tmt_data build.log
 }
 
 trybuild_bootc() {
@@ -323,10 +330,10 @@ build_bootc() {
       # only show last 50 lines in
       tail -n 50 build-bootc.log
       # save build log to tmt test data
-      save_to_tmt_test_data build-bootc.log
+      save_to_tmt_data build-bootc.log
       exit 1
    fi
-   save_to_tmt_test_data build-bootc.log
+   save_to_tmt_data build-bootc.log
 }
 
 trybootc_to_disk_image() {
@@ -346,10 +353,10 @@ bootc_to_disk_image() {
       # only show last 50 lines in
       tail -n 50 bootc-to-disk-image.log
       # save build log to tmt test data
-      save_to_tmt_test_data bootc-to-disk-image.log
+      save_to_tmt_data bootc-to-disk-image.log
       exit 1
    fi
-   save_to_tmt_test_data bootc-to-disk-image.log
+   save_to_tmt_data bootc-to-disk-image.log
 }
 
 trybuild_bootc_builder() {
@@ -372,10 +379,10 @@ build_bootc_builder() {
       # only show last 50 lines in
       tail -n 50 build-builder.log
       # save build log to tmt test data
-      save_to_tmt_test_data build-builder.log
+      save_to_tmt_data build-builder.log
       exit 1
    fi
-   save_to_tmt_test_data build-builder.log
+   save_to_tmt_data build-builder.log
 }
 
 trybuild_traditional() {
@@ -398,10 +405,10 @@ build_traditional() {
       # only show last 50 lines in
       tail -n 50 build.log
       # save build log to tmt test data
-      save_to_tmt_test_data build.log
+      save_to_tmt_data build.log
       exit 1
    fi
-   save_to_tmt_test_data build.log
+   save_to_tmt_data build.log
 }
 
 # Check if the image was created
@@ -461,7 +468,7 @@ stop_vm() {
     fi
     if [ -f "$log_file" ]; then
         # Save serial-console.log into tmt data
-        save_to_tmt_test_data "$log_file"
+        save_to_tmt_data "$log_file"
     fi
 }
 

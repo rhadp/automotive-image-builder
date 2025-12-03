@@ -4,11 +4,6 @@ source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 set -euo pipefail
 
-# Build bootc builder helper if needed
-build_bootc_builder --if-needed
-
-echo_log "Helpers built"
-
 #########################################
 ### Build base bootc image and disk image
 #########################################

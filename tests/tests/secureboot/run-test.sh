@@ -8,9 +8,6 @@ echo_log "Building helpers..."
 # Build EFI signer helper
 sudo podman build signer -t localhost/test-efi-signer
 
-# Build bootc builder helper if needed
-build_bootc_builder --if-needed
-
 # Download EFI firmware that is guaranteed to work with the stored enrolled key
 curl -L https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/releases/1.1.3/downloads/OVMF_CODE.secboot.fd -o OVMF_CODE.secboot.fd
 curl -L https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/releases/1.1.3/downloads/OVMF_VARS.secboot.fd -o OVMF_VARS.secboot.fd
