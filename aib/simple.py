@@ -349,13 +349,13 @@ class Contents:
         # First check if path is explicitly disallowed
         if any(path.startswith(prefix) for prefix in DISALLOWED_PATHS):
             raise exceptions.InvalidTopLevelPath(
-                path, allowed_dirs, operation_type.value
+                path, allowed_dirs, DISALLOWED_PATHS, operation_type.value
             )
 
         # Then check if path is under allowed directories
         if not any(path.startswith(prefix) for prefix in allowed_dirs):
             raise exceptions.InvalidTopLevelPath(
-                path, allowed_dirs, operation_type.value
+                path, allowed_dirs, DISALLOWED_PATHS, operation_type.value
             )
 
     def validate_paths(self):
