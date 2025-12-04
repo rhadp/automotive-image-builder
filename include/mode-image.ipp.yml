@@ -100,6 +100,8 @@ pipelines:
                   then: greenboot-grub2-set-success.service
                 - mpp-if: use_ukiboot
                   then: ukiboot-set-success.service
+                - mpp-if: use_aboot and aboot_boot_type == 'aboot-gptctl'
+                  then: aboot-gptctl-set-success.service
                 - greenboot-healthcheck.service
                 - mpp-if: use_grub2
                   then: greenboot-rpm-ostree-grub2-check-fallback.service

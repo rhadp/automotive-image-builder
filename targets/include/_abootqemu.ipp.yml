@@ -4,6 +4,7 @@ mpp-vars:
   use_boot: aboot
   target_supported_arches: ["aarch64"]
   use_efi_runtime: false
+  aboot_boot_type: aboot-gptctl
   aboot_pagesize: 4096
   aboot_kernel_offset: "0x40000000"
   aboot_partition_a: "/dev/disk/by-partlabel/boot_a"

@@ -124,6 +124,8 @@ mpp-vars:
     then:
       mpp-eval: use_bootc
 
+  aboot_boot_type:
+    mpp-eval: "'ukiboot' if use_ukiboot else aboot_boot_type"
   use_gpt:
     mpp-eval: partition_label == 'gpt'
   use_repart:
@@ -637,8 +639,7 @@ mpp-vars:
           - type: org.osbuild-auto.aboot.conf
             options:
               boot_type:
-                mpp-if: use_ukiboot
-                then: ukiboot
+                mpp-eval: aboot_boot_type
               pagesize:
                 mpp-if: "locals().get('aboot_pagesize',) != None"
                 then:
