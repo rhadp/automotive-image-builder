@@ -300,6 +300,28 @@ class OSBuildProgressMonitor:
             # Not a JSON line, might be other output
             return None
 
+    def _log_result_info(self, data: Dict[str, Any], log_file: IO):
+        """Log result information to the log file."""
+        result_data = data.get("result", {})
+        stage_info = data.get("context", {}).get("pipeline", {}).get("stage", {})
+        stage_name = stage_info.get("name", result_data.get("name", ""))
+        stage_id = stage_info.get("id", result_data.get("id", ""))
+
+        if stage_name:
+            header = f"{stage_name}: {stage_id}" if stage_id else stage_name
+            log_file.write(header)
+
+        options = data.get("options")
+        if options:
+            log_file.write(" ")
+            json.dump(options, log_file, indent=2)
+        log_file.write("\n")
+
+        duration = data.get("duration")
+        if duration is not None:
+            log_file.write(f"\n⏱  Duration: {duration:.2f}s\n")
+        log_file.flush()
+
     def extract_progress_info(
         self, data: Dict[str, Any], log_file: Optional[IO] = None
     ) -> Optional[ProgressInfo]:
@@ -311,6 +333,10 @@ class OSBuildProgressMonitor:
                 log_file.flush()
             if self.verbose:
                 self.console.print(f"[dim]{message}[/dim]")
+
+        # Check for result data (stage/module completion)
+        if "result" in data and log_file:
+            self._log_result_info(data, log_file)
 
         # Check for osbuild JSONSeqMonitor progress format
         if "progress" in data:
@@ -396,6 +422,9 @@ class OSBuildProgressMonitor:
                         # Non-JSON output, only print if it looks important (not empty lines, etc.)
                         if line_str and not line_str.isspace():
                             self.console.print(line_str)
+                            if log_file:
+                                log_file.write(f"{line_str}\n")
+                                log_file.flush()
         except (IOError, OSError) as e:
             self.console.print(f"[red]Error monitoring output: {e}[/red]")
 
