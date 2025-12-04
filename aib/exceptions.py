@@ -100,13 +100,15 @@ class MissingLogFile(AIBException):
 
 
 class InvalidTopLevelPath(AIBException):
-    def __init__(self, path, allowed_dirs, operation_type):
+    def __init__(self, path, allowed_dirs, disallowed_paths, operation_type):
         self.path = path
         self.allowed_dirs = allowed_dirs
+        self.disallowed_paths = disallowed_paths
         self.operation_type = operation_type
 
     def __str__(self):
         return (
             f"Path '{self.path}' is not allowed for {self.operation_type}. "
-            f"Files and directories must be under one of: {', '.join(self.allowed_dirs)}"
+            f"Files and directories must be under one of: {', '.join(self.allowed_dirs)}, "
+            f"but not under {', '.join(self.disallowed_paths)}"
         )
