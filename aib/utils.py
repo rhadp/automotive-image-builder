@@ -1,7 +1,9 @@
 import argparse
 import base64
+import errno
 import os
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -448,6 +450,183 @@ def extract_part_of_file(
     return total_written
 
 
+def convert_to_simg(src_path: str, dst_path: str, block_size: int = 4096):
+    """
+    Convert file to Android sparse image (v1.0).
+    Chunks are strictly block-aligned; offsets are implicit via chunk order.
+    """
+    if block_size < 1024:
+        raise ValueError(f"Block size must be larger than 1024, got {block_size}")
+    if block_size % 4 != 0:
+        raise ValueError(f"Block size must be multiple of 4, got {block_size}")
+    if not hasattr(os, "SEEK_DATA") or not hasattr(os, "SEEK_HOLE"):
+        raise OSError("SEEK_DATA/SEEK_HOLE not supported by this Python/OS")
+
+    SPARSE_HEADER_MAGIC = 0xED26FF3A
+    CHUNK_TYPE_RAW = 0xCAC1
+    CHUNK_TYPE_FILL = 0xCAC2
+    CHUNK_TYPE_DONT_CARE = 0xCAC3
+
+    file_size = os.path.getsize(src_path)
+    total_blocks = (file_size + block_size - 1) // block_size
+
+    def block_has_data(fd, block_idx):
+        start = block_idx * block_size
+        end = min(start + block_size, file_size)
+        if start >= file_size:
+            return False  # beyond EOF: treat as hole (but typically no chunks past total_blocks)
+        try:
+            off = os.lseek(fd, start, os.SEEK_DATA)
+            return off < end
+        except OSError as e:
+            if e.errno in (errno.ENXIO,):  # no more data past 'start'
+                return False
+            if e.errno in (
+                errno.EINVAL,
+                errno.ENOTSUP,
+                getattr(errno, "EOPNOTSUPP", 95),
+            ):
+                raise OSError("Filesystem does not support SEEK_DATA/SEEK_HOLE") from e
+            raise
+
+    # Collect chunks of blocks with their type (data or hole)
+    chunks = []
+    with open(src_path, "rb") as src:
+        fd = src.fileno()
+        i = 0
+        while i < total_blocks:
+            has_data = block_has_data(fd, i)
+            j = i + 1
+            while j < total_blocks and block_has_data(fd, j) == has_data:
+                j += 1
+
+            chunks.append(("data" if has_data else "hole", i, j - i))
+            i = j
+
+    def is_all_zeros(data: memoryview) -> bool:
+        for x in data:
+            if x:
+                return False
+        return True
+
+    # Write sparse image directly to destination
+    def analyze_block_runs(buf: bytes, block_size: int):
+        runs = []
+        total_blocks = len(buf) // block_size
+        mv = memoryview(buf)
+
+        block_idx = 0
+        while block_idx < total_blocks:
+            block_start = block_idx * block_size
+            block_end = block_start + block_size
+            block_data = mv[block_start:block_end]
+            is_zero = is_all_zeros(block_data)
+
+            # Find consecutive blocks of same type
+            run_length = 1
+            while block_idx + run_length < total_blocks:
+                next_start = (block_idx + run_length) * block_size
+                next_end = next_start + block_size
+                next_block = mv[next_start:next_end]
+                next_is_zero = is_all_zeros(next_block)
+
+                if next_is_zero == is_zero:
+                    run_length += 1
+                else:
+                    break
+
+            run_end = block_start + run_length * block_size
+            run = mv[block_start:run_end]
+            runs.append((is_zero, run_length, run))
+
+            block_idx += run_length
+
+        return runs
+
+    chunk_count = 0
+    with open(dst_path, "wb") as dst:
+        # Write placeholder header (we'll update chunk_count later)
+        sparse_header = struct.pack(
+            "<IHHHHIIII",
+            SPARSE_HEADER_MAGIC,
+            1,  # major_version
+            0,  # minor_version
+            28,  # file_hdr_sz
+            12,  # chunk_hdr_sz
+            block_size,
+            total_blocks,
+            0,  # chunk_count - placeholder
+            0,  # image_checksum (0 = not provided)
+        )
+        dst.write(sparse_header)
+
+        with open(src_path, "rb") as src:
+            for kind, start_blk, n_blocks in chunks:
+                if kind == "hole":
+                    chunk_header = struct.pack(
+                        "<HHII", CHUNK_TYPE_DONT_CARE, 0, n_blocks, 12
+                    )
+                    dst.write(chunk_header)
+                    chunk_count += 1
+                else:
+                    # Stream data chunk, detecting zero-filled blocks on the fly
+                    src.seek(start_blk * block_size)
+                    blocks_remaining = n_blocks
+                    read_chunk_size = (
+                        32 * 1024
+                    )  # Read 32k blocks at a time (128MB with 4K blocks)
+
+                    while blocks_remaining > 0:
+                        blocks_to_read = min(read_chunk_size, blocks_remaining)
+                        chunk_data = src.read(blocks_to_read * block_size)
+
+                        # Pad if needed
+                        if len(chunk_data) < blocks_to_read * block_size:
+                            chunk_data += b"\x00" * (
+                                blocks_to_read * block_size - len(chunk_data)
+                            )
+
+                        for is_zero, run_length, run in analyze_block_runs(
+                            chunk_data, block_size
+                        ):
+                            if is_zero:
+                                chunk_header = struct.pack(
+                                    "<HHII", CHUNK_TYPE_FILL, 0, run_length, 16
+                                )
+                                dst.write(chunk_header)
+                                dst.write(struct.pack("<I", 0))
+                            else:
+                                chunk_header = struct.pack(
+                                    "<HHII",
+                                    CHUNK_TYPE_RAW,
+                                    0,
+                                    run_length,
+                                    12 + len(run),
+                                )
+                                dst.write(chunk_header)
+                                dst.write(run)
+
+                            chunk_count += 1
+
+                        blocks_remaining -= blocks_to_read
+
+        # Seek back and update the header with correct chunk count
+        dst.seek(0)
+        sparse_header = struct.pack(
+            "<IHHHHIIII",
+            SPARSE_HEADER_MAGIC,
+            1,  # major_version
+            0,  # minor_version
+            28,  # file_hdr_sz
+            12,  # chunk_hdr_sz
+            block_size,
+            total_blocks,
+            chunk_count,
+            0,  # image_checksum (0 = not provided)
+        )
+        dst.write(sparse_header)
+
+
 class DiskFormat(Enum):
     def __new__(cls, value: str, ext: str, convert: List[str]):
         obj = object.__new__(cls)
@@ -458,7 +637,7 @@ class DiskFormat(Enum):
 
     RAW = ("raw", ".img", ["mv"])
     QCOW2 = ("qcow2", ".qcow2", ["qemu-img", "convert", "-O", "qcow2"])
-    SING = ("simg", ".simg", ["img2simg"])
+    SIMG = ("simg", ".simg", None)  # This uses internal conversion
 
     @classmethod
     def from_string(cls, s: str) -> "Optional[DiskFormat]":
@@ -478,3 +657,11 @@ class DiskFormat(Enum):
             if ext == member.ext:
                 return member
         return cls.RAW
+
+    def convert_image(self, runner, src, dest):
+        if self.convert:
+            runner.run_in_container(self.convert + [src, dest], need_selinux_privs=True)
+            runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", dest])
+        else:
+            if self == DiskFormat.SIMG:
+                convert_to_simg(src, dest)

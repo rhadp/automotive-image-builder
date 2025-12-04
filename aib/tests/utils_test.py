@@ -477,3 +477,379 @@ class TestExtractPartOfFile(unittest.TestCase):
         self.assertEqual(written, 1000)
         with open(dst, "rb") as f:
             self.assertEqual(f.read(), b"B" * 1000)
+
+    def test_convert_to_simg_sparse_file(self):
+        """Test converting sparse file to Android sparse image format."""
+        import struct
+
+        src = os.path.join(self.test_dir, "source.bin")
+        dst = os.path.join(self.test_dir, "dest.simg")
+
+        # Create sparse file: data, hole, data
+        self._create_sparse_file(src, (0, b"A" * 8192), (1024 * 1024, b"B" * 4096))
+
+        utils.convert_to_simg(src, dst)
+
+        # Verify sparse image format
+        with open(dst, "rb") as f:
+            # Read header
+            header = f.read(28)
+            (
+                magic,
+                major,
+                minor,
+                file_hdr_sz,
+                chunk_hdr_sz,
+                blk_sz,
+                total_blks,
+                total_chunks,
+                checksum,
+            ) = struct.unpack("<IHHHHIIII", header)
+
+            self.assertEqual(magic, 0xED26FF3A)
+            self.assertEqual(major, 1)
+            self.assertEqual(minor, 0)
+            self.assertEqual(file_hdr_sz, 28)
+            self.assertEqual(chunk_hdr_sz, 12)
+            self.assertEqual(blk_sz, 4096)
+            self.assertEqual(total_chunks, 3)  # data, hole, data
+
+            # Read first chunk (data)
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC1)  # RAW
+            self.assertEqual(chunk_hdr[2], 2)  # 2 blocks (8192 bytes)
+            data = f.read(8192)
+            self.assertEqual(data, b"A" * 8192)
+
+            # Read second chunk (hole)
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC3)  # DONT_CARE
+            self.assertEqual(chunk_hdr[3], 12)  # header only, no data
+
+            # Read third chunk (data)
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC1)  # RAW
+            self.assertEqual(chunk_hdr[2], 1)  # 1 block (4096 bytes)
+            data = f.read(4096)
+            self.assertEqual(data, b"B" * 4096)
+
+    def test_convert_to_simg_no_holes(self):
+        """Test converting non-sparse file to simg."""
+        import struct
+
+        src = os.path.join(self.test_dir, "source.bin")
+        dst = os.path.join(self.test_dir, "dest.simg")
+
+        with open(src, "wb") as f:
+            f.write(b"X" * 8192)
+
+        utils.convert_to_simg(src, dst)
+
+        with open(dst, "rb") as f:
+            header = struct.unpack("<IHHHHIIII", f.read(28))
+            self.assertEqual(header[7], 1)  # total_chunks = 1 (just data)
+
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC1)  # RAW
+            self.assertEqual(chunk_hdr[2], 2)  # 2 blocks
+
+    def test_convert_to_simg_all_sparse(self):
+        """Test converting entirely sparse file to simg."""
+        import struct
+
+        src = os.path.join(self.test_dir, "source.bin")
+        dst = os.path.join(self.test_dir, "dest.simg")
+
+        # Create entirely sparse file using ftruncate
+        with open(src, "wb") as f:
+            os.ftruncate(f.fileno(), 16384)
+
+        utils.convert_to_simg(src, dst)
+
+        with open(dst, "rb") as f:
+            header = struct.unpack("<IHHHHIIII", f.read(28))
+            self.assertEqual(header[7], 1)  # total_chunks = 1 (just hole)
+
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC3)  # DONT_CARE
+            self.assertEqual(chunk_hdr[2], 4)  # 4 blocks
+
+    def test_convert_to_simg_unaligned_holes(self):
+        """Test conversion with holes that aren't block-aligned.
+
+        This tests the critical case where naive rounding would fail:
+        - Data from 0-100 bytes
+        - Hole from 100-5000 bytes
+        - Data from 5000-5100 bytes
+
+        With 4096-byte blocks, both block 0 and block 1 contain data,
+        so there should be NO hole chunks - just 2 consecutive data blocks.
+        """
+        import struct
+
+        src = os.path.join(self.test_dir, "source.bin")
+        dst = os.path.join(self.test_dir, "dest.simg")
+
+        # Create file with non-block-aligned data regions
+        self._create_sparse_file(
+            src,
+            (0, b"A" * 100),  # Data at start of block 0
+            (5000, b"B" * 100),  # Data in block 1 (5000 is in range 4096-8191)
+        )
+
+        utils.convert_to_simg(src, dst)
+
+        # Verify sparse image structure
+        with open(dst, "rb") as f:
+            # Read header
+            header = struct.unpack("<IHHHHIIII", f.read(28))
+            (
+                magic,
+                major,
+                minor,
+                file_hdr_sz,
+                chunk_hdr_sz,
+                blk_sz,
+                total_blks,
+                total_chunks,
+                checksum,
+            ) = header
+
+            self.assertEqual(magic, 0xED26FF3A)
+            self.assertEqual(blk_sz, 4096)
+            self.assertEqual(total_blks, 2)  # 2 blocks (0-4095, 4096-8191)
+
+            # Should be 1 chunk: both blocks contain data
+            self.assertEqual(total_chunks, 1)
+
+            # Read the single chunk (should be RAW type)
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            chunk_type, reserved, chunk_sz, total_sz = chunk_hdr
+
+            self.assertEqual(chunk_type, 0xCAC1)  # RAW
+            self.assertEqual(chunk_sz, 2)  # 2 blocks
+            self.assertEqual(total_sz, 12 + 2 * 4096)  # header + 2 blocks of data
+
+        # Also validate with simg2img if available
+        import shutil
+        import subprocess
+
+        if shutil.which("simg2img"):
+            restored = os.path.join(self.test_dir, "restored.bin")
+            result = subprocess.run(
+                ["simg2img", dst, restored],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0)
+
+            # Verify the data regions are preserved
+            with open(src, "rb") as f1, open(restored, "rb") as f2:
+                # Check first data region
+                self.assertEqual(f1.read(100), f2.read(100))
+
+                # Check second data region
+                f1.seek(5000)
+                f2.seek(5000)
+                self.assertEqual(f1.read(100), f2.read(100))
+
+    def test_convert_to_simg_zero_filled_blocks(self):
+        """Test that zero-filled blocks generate FILL chunks."""
+        import struct
+
+        src = os.path.join(self.test_dir, "source.bin")
+        dst = os.path.join(self.test_dir, "dest.simg")
+
+        # Create file with:
+        # - Non-zero data blocks
+        # - Zero-filled data blocks (not holes!)
+        # - More non-zero data
+        with open(src, "wb") as f:
+            f.write(b"A" * 4096)  # Block 0: non-zero data
+            f.write(b"\x00" * (4096 * 10))  # Blocks 1-10: zero-filled data
+            f.write(b"B" * 4096)  # Block 11: non-zero data
+
+        utils.convert_to_simg(src, dst)
+
+        # Verify the sparse image structure
+        with open(dst, "rb") as f:
+            # Read header
+            header = struct.unpack("<IHHHHIIII", f.read(28))
+            (
+                magic,
+                major,
+                minor,
+                file_hdr_sz,
+                chunk_hdr_sz,
+                blk_sz,
+                total_blks,
+                total_chunks,
+                checksum,
+            ) = header
+
+            self.assertEqual(magic, 0xED26FF3A)
+            self.assertEqual(total_blks, 12)
+
+            # Should have 3 chunks: RAW, FILL, RAW
+            self.assertEqual(total_chunks, 3)
+
+            # First chunk: RAW (1 block of 'A')
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC1)  # RAW
+            self.assertEqual(chunk_hdr[2], 1)  # 1 block
+            data = f.read(4096)
+            self.assertEqual(data, b"A" * 4096)
+
+            # Second chunk: FILL (10 blocks of zeros)
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC2)  # FILL
+            self.assertEqual(chunk_hdr[2], 10)  # 10 blocks
+            self.assertEqual(chunk_hdr[3], 16)  # total_sz = 12 + 4
+            fill_value = struct.unpack("<I", f.read(4))[0]
+            self.assertEqual(fill_value, 0)
+
+            # Third chunk: RAW (1 block of 'B')
+            chunk_hdr = struct.unpack("<HHII", f.read(12))
+            self.assertEqual(chunk_hdr[0], 0xCAC1)  # RAW
+            self.assertEqual(chunk_hdr[2], 1)  # 1 block
+            data = f.read(4096)
+            self.assertEqual(data, b"B" * 4096)
+
+    def test_convert_to_simg_validate_with_simg2img(self):
+        """Test conversion validation using android-tools simg2img."""
+        import shutil
+        import subprocess
+
+        # Check if simg2img is available
+        if not shutil.which("simg2img"):
+            self.skipTest("simg2img not available")
+
+        src = os.path.join(self.test_dir, "source.bin")
+        simg = os.path.join(self.test_dir, "image.simg")
+        restored = os.path.join(self.test_dir, "restored.bin")
+
+        # Create test image with sparse regions
+        self._create_sparse_file(
+            src,
+            (0, b"START" * 100),  # 500 bytes
+            (8192, b"MIDDLE" * 100),  # 600 bytes at 8KB
+            (1024 * 1024, b"END" * 100),  # 300 bytes at 1MB
+        )
+
+        # Convert to simg
+        utils.convert_to_simg(src, simg)
+
+        # Convert back using simg2img
+        result = subprocess.run(
+            ["simg2img", simg, restored],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, f"simg2img failed: {result.stderr}")
+
+        # Android sparse format only stores block count, not exact byte size
+        # So restored file may be block-aligned (larger than original)
+        src_size = os.path.getsize(src)
+        restored_size = os.path.getsize(restored)
+
+        # Restored should be at least as large as source
+        self.assertGreaterEqual(restored_size, src_size)
+
+        # Restored should be block-aligned
+        self.assertEqual(restored_size % 4096, 0)
+
+        # Verify content up to original size matches
+        with open(src, "rb") as f1, open(restored, "rb") as f2:
+            src_data = f1.read()
+            restored_data = f2.read(src_size)
+            self.assertEqual(src_data, restored_data)
+
+    def test_convert_to_simg_validate_nonsparse(self):
+        """Test conversion of non-sparse file with simg2img validation."""
+        import shutil
+        import subprocess
+
+        if not shutil.which("simg2img"):
+            self.skipTest("simg2img not available")
+
+        src = os.path.join(self.test_dir, "source.bin")
+        simg = os.path.join(self.test_dir, "image.simg")
+        restored = os.path.join(self.test_dir, "restored.bin")
+
+        # Create non-sparse file with pattern
+        with open(src, "wb") as f:
+            for i in range(256):
+                f.write(bytes([i]) * 256)
+
+        utils.convert_to_simg(src, simg)
+
+        # Convert back
+        result = subprocess.run(
+            ["simg2img", simg, restored],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, f"simg2img failed: {result.stderr}")
+
+        # Verify exact match
+        with open(src, "rb") as f1, open(restored, "rb") as f2:
+            self.assertEqual(f1.read(), f2.read())
+
+    def test_convert_to_simg_validate_large_sparse(self):
+        """Test conversion of large sparse file with simg2img validation."""
+        import shutil
+        import subprocess
+
+        if not shutil.which("simg2img"):
+            self.skipTest("simg2img not available")
+
+        src = os.path.join(self.test_dir, "source.bin")
+        simg = os.path.join(self.test_dir, "image.simg")
+        restored = os.path.join(self.test_dir, "restored.bin")
+
+        # Create large sparse file: 100MB logical size with small data regions
+        self._create_sparse_file(
+            src,
+            (0, b"A" * 4096),
+            (10 * 1024 * 1024, b"B" * 8192),
+            (50 * 1024 * 1024, b"C" * 4096),
+            (100 * 1024 * 1024 - 4096, b"D" * 4096),
+        )
+
+        utils.convert_to_simg(src, simg)
+
+        # Verify simg file is much smaller than source
+        simg_size = os.path.getsize(simg)
+        src_size = os.path.getsize(src)
+        self.assertLess(simg_size, src_size / 10)
+
+        # Convert back
+        result = subprocess.run(
+            ["simg2img", simg, restored],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, f"simg2img failed: {result.stderr}")
+
+        # Verify size
+        self.assertEqual(os.path.getsize(restored), src_size)
+
+        # Verify data regions match
+        with open(src, "rb") as f1, open(restored, "rb") as f2:
+            # Check first region
+            self.assertEqual(f1.read(4096), f2.read(4096))
+
+            # Check second region
+            f1.seek(10 * 1024 * 1024)
+            f2.seek(10 * 1024 * 1024)
+            self.assertEqual(f1.read(8192), f2.read(8192))
+
+            # Check third region
+            f1.seek(50 * 1024 * 1024)
+            f2.seek(50 * 1024 * 1024)
+            self.assertEqual(f1.read(4096), f2.read(4096))
+
+            # Check last region
+            f1.seek(100 * 1024 * 1024 - 4096)
+            f2.seek(100 * 1024 * 1024 - 4096)
+            self.assertEqual(f1.read(4096), f2.read(4096))
