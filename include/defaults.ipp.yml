@@ -143,6 +143,7 @@ mpp-vars:
 
   extra_image_copy: []
 
+  aboot_boot_type: aboot
   aboot_compress_kernel: null
   active_gpt_attrs: # Default active setup for Qualcomm
     - 48
