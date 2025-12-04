@@ -2,6 +2,11 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
+TAR_FILE="out.tar"
+
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$TAR_FILE" "modules.list"' 'EXIT'
+
 # Function to log test results
 echo_final_test_result() {
     if [ "$1" -eq 0 ] && [ "$2" -eq 0 ]; then
@@ -12,11 +17,14 @@ echo_final_test_result() {
 }
 
 echo_log "Starting build..."
-build --export bootc-tar --extend-define tar_paths='usr/lib/modules' denylist-modules.aib.yml out.tar
-echo_log "Build completed, output: out.tar"
+build --export bootc-tar \
+    --extend-define tar_paths='usr/lib/modules' \
+    denylist-modules.aib.yml \
+    "$TAR_FILE"
+echo_log "Build completed, output: $TAR_FILE"
 
-echo_log "Extracting modules list from out.tar..."  
-list_tar_modules out.tar > modules.list
+echo_log "Extracting modules list from $TAR_FILE..."
+list_tar_modules "$TAR_FILE" > modules.list
 
 # Checking modules
 echo_log "Checking for nfs module..."

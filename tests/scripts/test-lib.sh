@@ -472,3 +472,20 @@ stop_vm() {
     fi
 }
 
+# Should be used in trap part to remove specified paths
+cleanup_path() {
+    for path in "$@"; do
+        rm -rf "$path" || echo "Error cleaning up path '$path'!"
+    done
+}
+
+# Should be used in trap part to remove container images for a specified
+# container names
+cleanup_container() {
+    for name in "$@"; do
+        img_id=$(podman image ls --format "{{.ID}}" "$name" || true)
+        if [ -n "$img_id" ]; then
+            podman image rm -f "$img_id" || echo "Error cleaning up container '$name'!"
+        fi
+    done
+}

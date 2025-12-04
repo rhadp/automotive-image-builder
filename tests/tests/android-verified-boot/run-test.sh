@@ -4,32 +4,46 @@ source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 set -euo pipefail
 
+AVB_UNSIGNED="localhost/avb:unsigned"
+AVB_PREPARED="localhost/avb:prepared"
+AVB_SIGNED="localhost/avb:signed"
+AVB_UPD_UNSIGNED="localhost/secureboot-update:unsigned"
+AVB_UPD_PREPARED="localhost/avb-update:prepared"
+AVB_UPD_SIGNED="localhost/avb-update:signed"
+IMG_SIGNED="bootc-signed.img"
+UPDATE_TAR="update.tar"
+
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$IMG_SIGNED" "$UPDATE_TAR"; cleanup_container "$AVB_UNSIGNED" "$AVB_PREPARED" "$AVB_SIGNED" "$AVB_UPD_UNSIGNED" "$AVB_UPD_PREPARED" "$AVB_UPD_SIGNED"' 'EXIT'
+
 #########################################
 ### Build base bootc image and disk image
 #########################################
 
 echo_log "Starting bootc build..."
-build_bootc --target abootqemukvm avb.aib.yml localhost/avb:unsigned
-echo_log "Build completed, output: localhost/avb:unsigned"
+build_bootc --target abootqemukvm \
+    avb.aib.yml \
+    "$AVB_UNSIGNED"
+echo_log "Build completed, output: $AVB_UNSIGNED"
 
 echo_log "AVB Signing bootc image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private.pem
-$AIB bootc-prepare-reseal --key=private.pem localhost/avb:unsigned localhost/avb:prepared
+$AIB bootc-prepare-reseal --key=private.pem "$AVB_UNSIGNED" "$AVB_PREPARED"
 
 # Extract aboot files to sign
-$AIB bootc-extract-for-signing localhost/avb:prepared to-sign
+$AIB bootc-extract-for-signing "$AVB_PREPARED" to-sign
 
 # Sign aboot files
 ./sign.sh to-sign/
 
 # Inject signed aboot files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private.pem localhost/avb:prepared to-sign localhost/avb:signed
+$AIB bootc-inject-signed --reseal-with-key=private.pem "$AVB_PREPARED" to-sign "$AVB_SIGNED"
 
 echo_pass "Built signed bootc container"
 
 echo_log "Building bootc disk image..."
-$AIB bootc-to-disk-image localhost/avb:signed bootc-signed.img
+$AIB bootc-to-disk-image "$AVB_SIGNED" "$IMG_SIGNED"
 echo_pass "Built signed bootc disk image"
 
 ############################################
@@ -37,25 +51,27 @@ echo_pass "Built signed bootc disk image"
 ############################################
 
 echo_log "Starting bootc build of update..."
-build_bootc --target abootqemukvm avb-update.aib.yml localhost/avb-update:unsigned
-echo_log "Build completed, output: localhost/avb-update:unsigned"
+build_bootc --target abootqemukvm \
+    avb-update.aib.yml \
+    "$AVB_UPD_UNSIGNED"
+echo_log "Build completed, output: $AVB_UPD_UNSIGNED"
 
 echo_log "AVB Signing bootc update image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private2.pem
-$AIB bootc-prepare-reseal --key=private2.pem localhost/avb-update:unsigned localhost/avb-update:prepared
+$AIB bootc-prepare-reseal --key=private2.pem "$AVB_UPD_UNSIGNED" "$AVB_UPD_PREPARED"
 
 # Extract aboot files to sign
-$AIB bootc-extract-for-signing localhost/avb-update:prepared to-sign
+$AIB bootc-extract-for-signing "$AVB_UPD_PREPARED" to-sign
 
 # Sign aboot files
 ./sign.sh to-sign/
 
 # Inject signed aboot files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private2.pem localhost/avb-update:prepared to-sign localhost/avb-update:signed
+$AIB bootc-inject-signed --reseal-with-key=private2.pem "$AVB_UPD_PREPARED" to-sign "$AVB_UPD_SIGNED"
 
 # Export file
-sudo podman save --format=oci-archive -o update.tar localhost/avb-update:signed
+sudo podman save --format=oci-archive -o "$UPDATE_TAR" "$AVB_UPD_SIGNED"
 
 echo_pass "Built signed bootc update container"
 
@@ -64,7 +80,7 @@ echo_pass "Built signed bootc update container"
 ################################
 
 echo_log "Running bootc disk image..."
-VM_PID=$(run_vm bootc-signed.img "serial-console.log" --avb --sharedir .)
+VM_PID=$(run_vm "$IMG_SIGNED" "serial-console.log" --avb --sharedir .)
 
 PASSWORD="password"
 LOGIN_TIMEOUT=40
@@ -85,9 +101,9 @@ fi
 echo_pass "Booted signed bootc disk image with AVC enabled"
 run_vm_command "rpm-ostree status"
 
-echo_log "bootc switching to update.tar..."
+echo_log "bootc switching to $UPDATE_TAR..."
 run_vm_command "mount -t virtiofs host /mnt"
-run_vm_command "bootc switch --transport oci-archive /mnt/update.tar"
+run_vm_command "bootc switch --transport oci-archive /mnt/$UPDATE_TAR"
 run_vm_command "reboot now"
 
 echo_log "Waiting for reboot..."

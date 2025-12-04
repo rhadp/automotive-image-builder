@@ -2,6 +2,21 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/test-lib.sh"
 
+# Set up cleanup trap for policy resolution tests
+cleanup_policy_tests() {
+    rm -f installed-test.aibp.yml
+    rm -f system-test.aibp.yml
+    rm -f "${AIB_BASEDIR}/files/policies/installed-test.aibp.yml"
+    rm -f "${AIB_BASEDIR}/files/policies/system-test.aibp.yml"
+    sudo rm -f /etc/automotive-image-builder/policies/system-test.aibp.yml
+    # Only remove directories if they're empty (i.e., we didn't break existing setup)
+    sudo rmdir /etc/automotive-image-builder/policies 2>/dev/null || true
+    sudo rmdir /etc/automotive-image-builder 2>/dev/null || true
+}
+
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "out*" "*error.txt" "*.json" ; cleanup_policy_tests' 'EXIT'
+
 # Helper functions for Compliance policy testing
 _build_stage_selector() {
     local stage_type="$1"
@@ -190,19 +205,6 @@ assert_jq compliance_out.json '.pipelines[] | .stages[] | select(.type == "org.o
 echo_log "Compliance policy configuration verification passed"
 
 echo_log "=== Testing policy resolution behavior ==="
-
-# Set up cleanup trap for policy resolution tests
-cleanup_policy_tests() {
-    rm -f installed-test.aibp.yml
-    rm -f system-test.aibp.yml
-    rm -f "${AIB_BASEDIR}/files/policies/installed-test.aibp.yml"
-    rm -f "${AIB_BASEDIR}/files/policies/system-test.aibp.yml"
-    sudo rm -f /etc/automotive-image-builder/policies/system-test.aibp.yml
-    # Only remove directories if they're empty (i.e., we didn't break existing setup)
-    sudo rmdir /etc/automotive-image-builder/policies 2>/dev/null || true
-    sudo rmdir /etc/automotive-image-builder 2>/dev/null || true
-}
-trap cleanup_policy_tests EXIT
 
 # Test 9: Create a different policy in the base directory's policies folder
 echo_log "Test 9: Testing policy name resolution from base directory..."

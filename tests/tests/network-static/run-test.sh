@@ -2,15 +2,20 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
+TAR_FILE="out.tar"
+
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$TAR_FILE" "etc" "usr"' 'EXIT'
+
 echo_log "Starting build for static network configuration..."
 build --export bootc-tar \
     --extend-define "tar_paths=['etc/hostname','etc/main.nmstate','usr/lib/boot-check.d/nmstate.conf','usr/lib/modules-load.d/auto-modules.conf']" \
     network-static.aib.yml \
-    out.tar
-echo_log "Build completed, output: out.tar"
+    "$TAR_FILE"
+echo_log "Build completed, output: $TAR_FILE"
 
-echo_log "Extracting out.tar..."
-tar xvf out.tar
+echo_log "Extracting $TAR_FILE..."
+tar xvf "$TAR_FILE"
 
 # Expected hostname configuration
 HOSTNAME_FILE_PATH="./etc/hostname"

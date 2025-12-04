@@ -2,9 +2,12 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
-for YML_NAME in image-size-*.aib.yml; do
-    IMAGE_NAME="test-image.qcow2"
+IMAGE_NAME="test-image.qcow2"
 
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$IMAGE_NAME"' 'EXIT'
+
+for YML_NAME in image-size-*.aib.yml; do
     # Extract image_size value
     IMAGE_SIZE=$(grep 'image_size:' "$YML_NAME" | awk -F': *' '{ print $2 }' | tr -d '"')
 

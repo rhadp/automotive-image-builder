@@ -16,9 +16,16 @@ EXPECTED_SELINUX_BOOLEANS=(
     "deny_bluetooth=on"
 )
 
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$IMG_NAME"' 'EXIT'
+
 # Build the image
 echo_log "Building AIB image..."
-build --target qemu --mode image --export image selinux-config.aib.yml "$IMG_NAME"
+build --target qemu \
+    --mode image \
+    --export image \
+    selinux-config.aib.yml \
+    "$IMG_NAME"
 
 # Check if image was created
 assert_image_exists "$IMG_NAME"

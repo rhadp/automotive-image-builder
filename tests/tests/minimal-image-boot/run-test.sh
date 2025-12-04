@@ -8,6 +8,9 @@ IMG_NAME="test.img"
 MANIFEST=minimal-image-boot.aib.yml
 LOGFILE=serial-console.log
 
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$IMG_NAME" ; cleanup_container "$CTR_NAME"' 'EXIT'
+
 # Build the image
 echo_log "Building image from $MANIFEST..."
 build_bootc --target qemu "$MANIFEST" "$CTR_NAME"
@@ -64,11 +67,5 @@ fi
 
 # Clean up automotive-image-runner process
 stop_vm "$VM_PID"
-
-CTR_ID=$(podman image ls --format "{{.ID}}" "$CTR_NAME" || true)
-if [ -n "$CTR_ID" ]; then
-    echo "Removing bootc build container"
-    podman image rm -f "$CTR_ID"
-fi
 
 exit $success

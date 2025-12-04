@@ -2,12 +2,20 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
-echo_log "Starting build..."
-build --export bootc-tar --extend-define tar_paths=['etc/custom-files','usr/lib/qm/rootfs/etc/qm-custom','etc/test-glob','etc/test-glob-preserve-log','etc/test-glob-preserve'] custom-files.aib.yml out.tar
-echo_log "Build completed, output: out.tar"
+TAR_FILE="out.tar"
 
-echo_log "Extracting out.tar..."
-tar xvf out.tar
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$TAR_FILE" "etc" "usr" "error.txt" "error2.txt"' 'EXIT'
+
+echo_log "Starting build..."
+build --export bootc-tar \
+    --extend-define tar_paths=['etc/custom-files','usr/lib/qm/rootfs/etc/qm-custom','etc/test-glob','etc/test-glob-preserve-log','etc/test-glob-preserve'] \
+    custom-files.aib.yml \
+    "$TAR_FILE"
+echo_log "Build completed, output: $TAR_FILE"
+
+echo_log "Extracting $TAR_FILE..."
+tar xvf "$TAR_FILE"
 
 echo_log "Checking file contents..."
 assert_file_has_content etc/custom-files/file1.txt "name: add_files"

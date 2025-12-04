@@ -2,12 +2,20 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
-echo_log "Starting build..."
-build --export bootc-tar --extend-define "tar_paths=['etc','usr/lib']" network-dynamic.aib.yml out.tar
-echo_log "Build completed, output: out.tar"
+TAR_FILE="out.tar"
 
-echo_log "Extracting out.tar..."
-tar xf out.tar
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$TAR_FILE" "etc" "usr"' 'EXIT'
+
+echo_log "Starting build..."
+build --export bootc-tar \
+    --extend-define "tar_paths=['etc','usr/lib']" \
+    network-dynamic.aib.yml \
+    "$TAR_FILE"
+echo_log "Build completed, output: $TAR_FILE"
+
+echo_log "Extracting $TAR_FILE..."
+tar xf "$TAR_FILE"
 
 # 1. Ensure no static network config files exist
 assert_not_has_file etc/main.nmstate
