@@ -27,5 +27,10 @@ description: |
     output.txt
 
 duration: 60m
-tag: [special]
+tag: [virt-required]
+# This test works only in aarch64 platform
+enabled: false
+adjust:
+  - when: arch == aarch64
+    enabled: true
 id: 3c95050c-ca1a-11f0-8d64-e89c256c3906

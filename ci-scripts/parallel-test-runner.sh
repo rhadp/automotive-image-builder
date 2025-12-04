@@ -59,9 +59,13 @@ execute_test() {
     echo "Starting test '$test_name'"
     start_time=$(date +%s)
     # TODO: simplify when https://github.com/teemtee/tmt/issues/2757 is fixed
-    tmt -q $FEELING_SAFE run \
+    tmt -c arch="$(arch)" \
+        -q \
+        $FEELING_SAFE \
+        run \
         -i "$test_id" \
-        "${TMT_RUN_OPTIONS[@]}" test --name "$test_name" \
+        "${TMT_RUN_OPTIONS[@]}" \
+        test --name "$test_name" \
         discover prepare provision execute -h tmt --no-progress-bar report &
     local pid=$!
     TEST_START_TIME[$pid]=$start_time
@@ -74,7 +78,13 @@ START_TIME=$(date +%s)
 echo "Preparing tests execution"
 # Execute phases up to prepare
 PREPARE_TESTS_ID="$(format_test_id "-1" "prepare-tests")"
-tmt -q $FEELING_SAFE  run -i "$PREPARE_TESTS_ID" -B execute "${TMT_RUN_OPTIONS[@]}"
+tmt -c arch="$(arch)" \
+    -q \
+    $FEELING_SAFE \
+    run \
+    -i "$PREPARE_TESTS_ID" \
+    -B execute \
+    "${TMT_RUN_OPTIONS[@]}"
 
 END_TIME=$(date +%s)
 echo "Finished test preparation, execution time: $(format_time $((END_TIME - START_TIME)))"
@@ -138,7 +148,13 @@ done
 
 # Execute cleanup
 echo "Cleaning up tests execution"
-tmt -q $FEELING_SAFE run --last -A execute "${TMT_RUN_OPTIONS[@]}"
+tmt -c arch="$(arch)" \
+    -q \
+    $FEELING_SAFE \
+    run \
+    --last \
+    -A execute \
+    "${TMT_RUN_OPTIONS[@]}"
 
 END_TIME=$(date +%s)
 
