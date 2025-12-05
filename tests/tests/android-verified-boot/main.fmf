@@ -26,6 +26,12 @@ description: |
   Results location:
     output.txt
 
+require:
+  - openssl
+  - podman
+  - qemu-kvm
+  - expect
+  - socat
 duration: 60m
 tag: [virt-required]
 # This test works only in aarch64 platform
