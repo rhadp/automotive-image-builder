@@ -2,6 +2,9 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "out.json" "*.txt"' 'EXIT'
+
 echo_log "Starting build..."
 build --export rpmlist install-rpms.aib.yml out.json
 echo_log "Build completed, output: out.json"

@@ -2,12 +2,20 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
-echo_log "Starting build for auth users and groups test..."
-build --export bootc-tar --extend-define "tar_paths=['usr/lib/passwd','usr/lib/group','etc/shadow']" users-and-groups.aib.yml out.tar
-echo_log "Build completed, output: out.tar"
+TAR_FILE="out.tar"
 
-echo_log "Extracting out.tar..."
-tar xvf out.tar --no-same-owner --no-same-permissions
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$TAR_FILE" "etc" "usr"' 'EXIT'
+
+echo_log "Starting build for auth users and groups test..."
+build --export bootc-tar \
+    --extend-define "tar_paths=['usr/lib/passwd','usr/lib/group','etc/shadow']" \
+    users-and-groups.aib.yml \
+    "$TAR_FILE"
+echo_log "Build completed, output: $TAR_FILE"
+
+echo_log "Extracting $TAR_FILE..."
+tar xvf "$TAR_FILE" --no-same-owner --no-same-permissions
 
 PASSWD_PATH="./usr/lib/passwd"
 GROUP_PATH="./usr/lib/group"

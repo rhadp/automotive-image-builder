@@ -72,7 +72,7 @@ All **automotive-image-builder** dependencies and **tmt** infrastructure must be
 To run integration tests, please execute the following command in the [tests](./) directory:
 
 ```shell
-tmt --feeling-safe run -v plan --name local
+tmt -c arch=$(arch) --feeling-safe run -v plan --name local
 ```
 
 #### Running tests requiring sudo privileges
@@ -83,8 +83,8 @@ You can use the SUDO_ASKPASS environment variable to provide a script that retur
 
 ```shell
 cd tests
-SUDO_ASKPASS=/usr/libexec/git-core/git-gui--askpass tmt --feeling-safe run -v \
- -ePROJECT_DIR="Absolute path to your repository clone" plan --name local
+SUDO_ASKPASS=/usr/libexec/git-core/git-gui--askpass tmt -c arch=$(arch) --feeling-safe run -v \
+    -ePROJECT_DIR="Absolute path to your repository clone" plan --name local
 ```
 
 2. Allow passwordless sudo for Specific Commands
@@ -103,7 +103,7 @@ Run the following commands to initiate integration testing:
 
 ```shell
 cd tests
-tmt run -v -eNODE="IP or hostname" plan --name connect
+tmt -c arch=$(arch) run -v -eNODE="IP or hostname" plan --name connect
 ```
 
 ### Using manually provisioned machine with custom AIB package
@@ -119,7 +119,7 @@ Run the following commands to initiate integration testing:
 
 ```shell
 cd tests
-tmt run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes plan --name connect
+tmt -c arch=$(arch) run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes plan --name connect
 ```
 
 ### Running special tests
@@ -133,7 +133,7 @@ specify the test you want to run:
 
 ```shell
 cd tests
-tmt run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes \
+tmt -c arch=$(arch) run -v -eNODE="IP or hostname" -eBUILD_AIB_RPM=yes \
     plan --name connect \
     test --name qm-container-checksum \
     --filter 'tag:special'

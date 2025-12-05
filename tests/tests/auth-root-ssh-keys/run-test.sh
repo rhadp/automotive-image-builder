@@ -2,16 +2,21 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
+TAR_FILE="out.tar"
+
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$TAR_FILE" "etc"' 'EXIT'
+
 echo_log "Starting build for root_ssh_keys test..."
 build \
     --export bootc-tar \
     --extend-define tar_paths=['etc/ssh/sshd_config','etc/ssh/authorized_keys/root','etc/ssh/sshd_config.d/99-custom-authorized-keys.conf'] \
     authorized-keys.aib.yml \
-    out.tar
-echo_log "Build completed, output: out.tar"
+    "$TAR_FILE"
+echo_log "Build completed, output: $TAR_FILE"
 
-echo_log "Extracting out.tar..."
-tar xvf out.tar
+echo_log "Extracting $TAR_FILE..."
+tar xvf "$TAR_FILE"
 
 KEY_FILE_PATH="./etc/ssh/authorized_keys/root"
 SSHD_CONFIG_PATH="./etc/ssh/sshd_config"

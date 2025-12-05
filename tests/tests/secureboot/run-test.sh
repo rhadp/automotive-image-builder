@@ -4,12 +4,23 @@ source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
 set -euo pipefail
 
+
+EFI_SIGNER="localhost/test-efi-signer"
+SB_UNSIGNED="localhost/secureboot:unsigned"
+SB_PREPARED="localhost/secureboot:prepared"
+SB_SIGNED="localhost/secureboot:signed"
+SB_UPD_UNSIGNED="localhost/secureboot-update:unsigned"
+SB_UPD_PREPARED="localhost/secureboot-update:prepared"
+SB_UPD_SIGNED="localhost/secureboot-update:signed"
+IMG_SIGNED="bootc-signed.img"
+UPDATE_TAR="update.tar"
+
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "$IMG_SIGNED" "$UPDATE_TAR"; cleanup_container "$EFI_SIGNER" "$SB_UNSIGNED" "$SB_PREPARED" "$SB_SIGNED" "$SB_UPD_UNSIGNED" "$SB_UPD_PREPARED" "$SB_UPD_SIGNED"' 'EXIT'
+
 echo_log "Building helpers..."
 # Build EFI signer helper
-sudo podman build signer -t localhost/test-efi-signer
-
-# Build bootc builder helper if needed
-build_bootc_builder --if-needed
+sudo podman build signer -t "$EFI_SIGNER"
 
 # Download EFI firmware that is guaranteed to work with the stored enrolled key
 curl -L https://gitlab.com/CentOS/automotive/src/automotive-image-builder/-/releases/1.1.3/downloads/OVMF_CODE.secboot.fd -o OVMF_CODE.secboot.fd
@@ -22,27 +33,27 @@ echo_log "Helpers built"
 #########################################
 
 echo_log "Starting bootc build..."
-build_bootc secureboot.aib.yml localhost/secureboot:unsigned
-echo_log "Build completed, output: localhost/secureboot:unsigned"
+build_bootc secureboot.aib.yml "$SB_UNSIGNED"
+echo_log "Build completed, output: $SB_UNSIGNED"
 
 echo_log "EFI Signing bootc image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private.pem
-$AIB bootc-prepare-reseal --key=private.pem localhost/secureboot:unsigned localhost/secureboot:prepared
+$AIB bootc-prepare-reseal --key=private.pem "$SB_UNSIGNED" "$SB_PREPARED"
 
 # Extract EFI files to sign
-$AIB bootc-extract-for-signing localhost/secureboot:prepared to-sign
+$AIB bootc-extract-for-signing "$SB_PREPARED" to-sign
 
 # Sign EFI files
-sudo podman run --rm -ti --privileged -v .:/work localhost/test-efi-signer --certificates db.p12 --password-file password to-sign/efi/*
+sudo podman run --rm -ti --privileged -v .:/work "$EFI_SIGNER" --certificates db.p12 --password-file password to-sign/efi/*
 
 # Inject signed EFI files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private.pem localhost/secureboot:prepared to-sign localhost/secureboot:signed
+$AIB bootc-inject-signed --reseal-with-key=private.pem "$SB_PREPARED" to-sign "$SB_SIGNED"
 
 echo_pass "Built signed bootc container"
 
 echo_log "Building bootc disk image..."
-$AIB bootc-to-disk-image localhost/secureboot:signed bootc-signed.img
+$AIB bootc-to-disk-image "$SB_SIGNED" "$IMG_SIGNED"
 echo_pass "Built signed bootc disk image"
 
 ############################################
@@ -50,25 +61,25 @@ echo_pass "Built signed bootc disk image"
 ############################################
 
 echo_log "Starting bootc build of update..."
-build_bootc secureboot-update.aib.yml localhost/secureboot-update:unsigned
-echo_log "Build completed, output: localhost/secureboot-update:unsigned"
+build_bootc secureboot-update.aib.yml "$SB_UPD_UNSIGNED"
+echo_log "Build completed, output: $SB_UPD_UNSIGNED"
 
 echo_log "EFI Signing bootc update image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private2.pem
-$AIB bootc-prepare-reseal --key=private2.pem localhost/secureboot-update:unsigned localhost/secureboot-update:prepared
+$AIB bootc-prepare-reseal --key=private2.pem "$SB_UPD_UNSIGNED" "$SB_UPD_PREPARED"
 
 # Extract EFI files to sign
-$AIB bootc-extract-for-signing localhost/secureboot-update:prepared to-sign
+$AIB bootc-extract-for-signing "$SB_UPD_PREPARED" to-sign
 
 # Sign EFI files
-sudo podman run --rm -ti --privileged -v .:/work localhost/test-efi-signer --certificates db.p12 --password-file password to-sign/efi/*
+sudo podman run --rm -ti --privileged -v .:/work "$EFI_SIGNER" --certificates db.p12 --password-file password to-sign/efi/*
 
 # Inject signed EFI files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private2.pem localhost/secureboot-update:prepared to-sign localhost/secureboot-update:signed
+$AIB bootc-inject-signed --reseal-with-key=private2.pem "$SB_UPD_PREPARED" to-sign "$SB_UPD_SIGNED"
 
 # Export file
-sudo podman save --format=oci-archive -o update.tar localhost/secureboot-update:signed
+sudo podman save --format=oci-archive -o "$UPDATE_TAR" "$SB_UPD_SIGNED"
 
 echo_pass "Built signed bootc update container"
 
@@ -77,7 +88,7 @@ echo_pass "Built signed bootc update container"
 ################################
 
 echo_log "Running bootc disk image..."
-VM_PID=$(run_vm bootc-signed.img "serial-console.log" --ovmf-dir=. --secureboot-vars=secboot_vars.fd --sharedir .)
+VM_PID=$(run_vm "$IMG_SIGNED" "serial-console.log" --ovmf-dir=. --secureboot-vars=secboot_vars.fd --sharedir .)
 
 PASSWORD="password"
 LOGIN_TIMEOUT=40
@@ -99,9 +110,9 @@ fi
 
 echo_pass "Booted signed bootc disk image with Secure Boot enabled"
 
-echo_log "bootc switching to update.tar..."
+echo_log "bootc switching to $UPDATE_TAR..."
 run_vm_command "mount -t virtiofs host /mnt"
-run_vm_command "bootc switch --transport oci-archive /mnt/update.tar"
+run_vm_command "bootc switch --transport oci-archive /mnt/$UPDATE_TAR"
 run_vm_command "reboot now"
 
 echo_log "Waiting for reboot..."

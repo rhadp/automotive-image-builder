@@ -2,6 +2,9 @@
 
 source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 
+# Update cleanup function parameters on each test artifact change
+trap 'cleanup_path "error.txt" "out.json"' 'EXIT'
+
 echo_log "Starting trybuild with denied RPM..."
 if trybuild --export rpmlist --extend-define denylist_rpms=strace denylist-rpms.aib.yml out.json 2> error.txt; then
     echo_log "ERROR: Build should not have succeeded with denied RPM."
