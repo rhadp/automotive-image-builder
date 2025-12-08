@@ -1,8 +1,11 @@
-summary: Verify that custom files and directories (exact paths or globs) are properly added to the image
+summary: Verify various operation with custom files and directories
 description: |
   Builds an AIB image with custom files using direct paths and glob patterns,
   and verifies their presence in the output image according to the configured behavior.
   Also tests that invalid top-level paths are properly rejected during validation.
+  Also some files are added with custom ownership and permissions, so the test
+  verifies that both default and custom ownership and permissions are assigned
+  correctly.
 
   Test inputs:
     - Custom a-i-b manifest with files in allowed directories (/etc, /var)
@@ -10,6 +13,7 @@ description: |
 
   Expected results:
     - PASS: 'Image contains all required files'
+    - PASS: 'All file permissions and ownerships are correctly set.'
     - PASS: 'Build failed as expected for custom top-level directory'
     - PASS: 'Build failed as expected for root-level file'
     - PASS: 'Path validation correctly rejects invalid paths'

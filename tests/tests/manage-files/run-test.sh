@@ -42,6 +42,22 @@ assert_file_has_content etc/test-glob-preserve/file2.txt "This is test file 2"
 assert_file_has_content etc/test-glob-preserve/subdir1/app.log "App log from subdir1"
 assert_file_has_content etc/test-glob-preserve/subdir2/system.log "System log from subdir2"
 
+echo_log "Checking permissions and ownership (content)..."
+# file1.txt - custom permissions and ownership
+assert_file_has_permission etc/custom-files/file1.txt "777"
+assert_file_has_owner etc/custom-files/file1.txt "65534:65534"
+# file2.txt - default permissions and ownership
+assert_file_has_permission etc/custom-files/file2.txt "644"
+assert_file_has_owner etc/custom-files/file2.txt "0:0"
+
+echo_log "Checking permissions and ownership (QM)..."
+# file4.txt - custom permissions and ownership
+assert_file_has_permission usr/lib/qm/rootfs/etc/qm-custom/file4.txt "777"
+assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file4.txt "65534:65534"
+# file5.txt - default permissions and ownership
+assert_file_has_permission usr/lib/qm/rootfs/etc/qm-custom/file5.txt "644"
+assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file5.txt "0:0"
+
 echo_pass "Image contains all required files"
 
 echo_log "Testing invalid custom top-level directory..."
