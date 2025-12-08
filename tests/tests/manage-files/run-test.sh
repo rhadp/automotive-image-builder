@@ -8,8 +8,17 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "etc" "usr" "error.txt" "error2.txt"' 'EXIT'
 
 echo_log "Starting build..."
+tar_paths="[\
+'etc/custom-files',\
+'etc/test-glob',\
+'etc/test-glob-preserve',\
+'etc/test-glob-preserve-log',\
+'usr/lib/qm/rootfs/etc/qm-custom',\
+'usr/lib/qm/rootfs/usr/sbin',\
+'usr/sbin'\
+]"
 build --export bootc-tar \
-    --extend-define tar_paths=['etc/custom-files','usr/lib/qm/rootfs/etc/qm-custom','etc/test-glob','etc/test-glob-preserve-log','etc/test-glob-preserve'] \
+    --extend-define tar_paths="$tar_paths" \
     custom-files.aib.yml \
     "$TAR_FILE"
 echo_log "Build completed, output: $TAR_FILE"
@@ -42,6 +51,8 @@ assert_file_has_content etc/test-glob-preserve/file2.txt "This is test file 2"
 assert_file_has_content etc/test-glob-preserve/subdir1/app.log "App log from subdir1"
 assert_file_has_content etc/test-glob-preserve/subdir2/system.log "System log from subdir2"
 
+echo_pass "Image contains all required files"
+
 echo_log "Checking permissions and ownership (content)..."
 # file1.txt - custom permissions and ownership
 assert_file_has_permission etc/custom-files/file1.txt "777"
@@ -58,7 +69,15 @@ assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file4.txt "65534:65534"
 assert_file_has_permission usr/lib/qm/rootfs/etc/qm-custom/file5.txt "644"
 assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file5.txt "0:0"
 
-echo_pass "Image contains all required files"
+echo_pass "All file permissions and ownerships are correctly set."
+
+echo_log "Checking removed files in content section..."
+assert_not_has_file "usr/sbin/crond"
+
+echo_log "Checking files in qm.content section..."
+assert_not_has_file "usr/lib/qm/rootfs/usr/sbin/cupsd"
+
+echo_pass "Files marked for removal are not present in the image."
 
 echo_log "Testing invalid custom top-level directory..."
 if trybuild --export tar invalid-custom-dir.aib.yml invalid-out.tar 2> error.txt; then

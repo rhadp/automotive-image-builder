@@ -41,6 +41,11 @@ content:
     - path: /etc/custom-files/file1.txt
       user: nobody
       group: nobody
+  rpms:
+    - cronie
+  remove_files:
+    # This file is installed by cronie package
+    - path: /usr/sbin/crond
 
 qm:
   content:
@@ -60,3 +65,8 @@ qm:
       - path: /etc/qm-custom/file4.txt
         user: nobody
         group: nobody
+    rpms:
+      - cups
+    remove_files:
+      # This file is installed by cups package
+      - path: /usr/sbin/cupsd
