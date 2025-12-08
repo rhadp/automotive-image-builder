@@ -19,4 +19,7 @@ require:
   - socat
 duration: 60m
 tag: [virt-required]
+# Tests, which require virtualization, usually take more time to run, so let's
+# increase their priority to run earlier (helps parallel execution time)
+order: 40
 id: aa926eb8-a22e-4a07-b595-9802e3fd2eed

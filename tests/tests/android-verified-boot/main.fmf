@@ -34,6 +34,9 @@ require:
   - socat
 duration: 60m
 tag: [virt-required]
+# Tests, which require virtualization, usually take more time to run, so let's
+# increase their priority to run earlier (helps parallel execution time)
+order: 30
 # This test works only in aarch64 platform
 enabled: false
 adjust:
