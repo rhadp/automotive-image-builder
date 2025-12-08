@@ -249,7 +249,7 @@ build_doc_demos:
     - apt-get install -y jq less
     - *prepare-aws-setup
   script:
-    - sh tests/run_aws.sh
+    - sh ci-scripts/run-sig-doc-demos.sh
   allow_failure: true
   artifacts:
     paths:
