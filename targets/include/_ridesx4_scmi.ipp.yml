@@ -9,3 +9,4 @@ mpp-vars:
     mpp-join:
       - mpp-eval: target_rpms
       - - downstream-dtbs
+      - - kmod-qcom-scmi
