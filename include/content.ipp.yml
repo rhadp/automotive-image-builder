@@ -74,7 +74,7 @@ mpp-vars:
   systemd_repart_dropin:
     mpp-format-string: |
       [Unit]
-      After=mount-sysroot.service
+      After={sysroot_unit}
       Before=ostree-prepare-root.service
 
       [Service]

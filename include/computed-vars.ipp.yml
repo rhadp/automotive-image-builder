@@ -234,10 +234,13 @@ mpp-vars:
           - systemd-initrd-automotive
           - mpp-if: use_debug or use_kernel_debug_package
             then: systemd-journald
-      - mpp-if: use_repart
-        then:
-          - systemd-repart
-
+          - mpp-if: use_repart
+            then: systemd-repart
+  dracut_add_modules:
+    mpp-join:
+      - mpp-eval: dracut_add_modules
+      - - mpp-if: use_repart
+          then: systemd-repart
   dracut_add_drivers:
     mpp-join:
       - mpp-eval: dracut_add_drivers
@@ -445,6 +448,10 @@ mpp-vars:
     mpp-eval: aboot_partlabel if use_aboot else "root"
   autoinit_root:
     mpp-eval: locals().get("autoinit_root", f"PARTLABEL={rootpart_label}")
+  sysroot_unit:
+    mpp-if: use_autoinit
+    then: mount-sysroot.service
+    else: sysroot.mount
   qm_importfile:
     mpp-if: use_qm
     then: "qm"
