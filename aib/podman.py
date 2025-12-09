@@ -328,7 +328,7 @@ def podman_run_bootc_image_builder(
             if res == 0:
                 src = os.path.join(tmpdir, src_path)
                 log.debug("Copying: %s to %s", src, dest_path)
-                shutil.copyfile(src, dest_path, follow_symlinks=False)
+                run_cmd(["cp", src, dest_path])
             return res
 
         finally:
