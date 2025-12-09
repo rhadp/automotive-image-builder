@@ -45,11 +45,7 @@ jobs:
       - name: set image tags
         id: set-tags
         run: |
-          TAGS="${{ vars.REGISTRY_ORG }}/${{ matrix.name }}:${{ env.VERSION }}"
-
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            TAGS="$TAGS,${{ vars.REGISTRY_ORG }}/${{ matrix.name }}:latest"
-          fi
+          TAGS="${{ vars.REGISTRY_ORG }}/${{ matrix.name }}:${{ env.VERSION }},${{ vars.REGISTRY_ORG }}/${{ matrix.name }}:latest"
 
           if [[ "${{ github.ref }}" == refs/heads/release-* ]]; then
             RELEASE_BRANCH_NAME=$(basename "${{ github.ref }}")
