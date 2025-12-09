@@ -2,6 +2,7 @@
 # Needs eeprom firmware later than 2020-09-14 (for GPT support)
 version: '2'
 mpp-vars:
+  use_autoinit: true
   extra_image_source_image: ostree-tree
   extra_image_copy_image:
     - from: input://extra-tree/lib/ostree-boot/efi/
@@ -21,8 +22,14 @@ mpp-vars:
       - - bcm2835
         - bcm2835-mailbox
         - sdhci
+        - sdhci_iproc
   dracut_force_drivers:
     mpp-join:
       - mpp-eval: dracut_force_drivers
       - - simplefb
+  kernel_opts:
+    mpp-join:
+      - mpp-eval: kernel_opts
+      - - mpp-if: is_autoinit_supported and use_autoinit # With autoinit, udev will not load block drivers
+          then: rd.modules-load=sdhci_iproc
 pipelines: []
