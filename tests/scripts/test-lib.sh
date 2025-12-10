@@ -108,9 +108,9 @@ assert_file_has_owner() {
     local actual_uid_gid
     actual_uid_gid=$(stat -c "%u:%g" "$file")
     if [[ "$actual_uid_gid" == "$expected_uid_gid" ]]; then
-        echo_pass $file has correct UID:GID $expected_uid_gid"
+        echo_pass "$file has correct UID:GID $expected_uid_gid"
     else
-        echo_fail $file has UID:GID $actual_uid_gid, expected $expected_uid_gid"
+        echo_fail "$file has UID:GID $actual_uid_gid, expected $expected_uid_gid"
     fi
 }
 
@@ -120,9 +120,9 @@ assert_file_has_permission() {
     local actual_perm
     actual_perm=$(stat -c "%a" "$file")
     if [[ "$actual_perm" == "$expected_perm" ]]; then
-        echo_pass $file has correct permissions $expected_perm
+        echo_pass "$file has correct permissions $expected_perm"
     else
-        echo_fail $file permissions are $actual_perm, expected $expected_perm
+        echo_fail "$file permissions are $actual_perm, expected $expected_perm"
     fi
 }
 
