@@ -1,4 +1,0 @@
-name: denylist_rpms
-content:
-  rpms:
-    - strace
