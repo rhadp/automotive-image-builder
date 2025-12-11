@@ -14,11 +14,7 @@ from enum import Enum
 from .utils import DiskFormat
 from .version import __version__
 from . import log
-
-# Default values used across arguments
-default_distro = "autosd10-sig"
-default_container_image_name = "quay.io/centos-sig-automotive/automotive-image-builder"
-default_bib_container = "quay.io/centos-bootc/bootc-image-builder:latest"
+from .globals import default_distro, default_container_image_name
 
 
 def aib_build_container_name(distro):

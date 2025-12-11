@@ -37,7 +37,6 @@ from .podman import (
 )
 from .arguments import (
     parse_args,
-    default_distro,
     aib_build_container_name,
     command,
     POLICY_ARGS,
@@ -45,8 +44,11 @@ from .arguments import (
     BUILD_ARGS,
     DISK_FORMAT_ARGS,
     SHARED_RESEAL_ARGS,
-    default_bib_container,
     CommandGroup,
+)
+from .globals import (
+    default_bib_container,
+    default_distro,
 )
 
 from . import list_ops  # noqa: F401
