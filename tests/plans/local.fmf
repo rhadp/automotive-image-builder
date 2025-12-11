@@ -5,15 +5,15 @@ environment:
     PROJECT_DIR: ""
 
     # Distribution used inside tests.
-    # Available distributions can be listed using `automotive-image-builder list-dist` on the relevant platform.
+    # Available distributions can be listed using `aib list-dist` on the relevant platform.
     AIB_DISTRO: autosd10-sig
 
     # Build boot builder container only when it doesn't exist
     REBUILD_BOOTC_BUILDER: no
 
-    AIB: $PROJECT_DIR/automotive-image-builder
+    AIB: $PROJECT_DIR/bin/aib
     AIB_BASEDIR: $PROJECT_DIR
-    AIR: $PROJECT_DIR/automotive-image-runner
+    AIR: $PROJECT_DIR/bin/air
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
     RUNDIR: $OUTDIR/run

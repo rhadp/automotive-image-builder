@@ -391,7 +391,7 @@ def parse_args(args):
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(
-        prog="automotive-image-builder",
+        prog="aib",
         description="Select subcommand to run.\n"
         "For more details, use --help for the individual commands.",
         formatter_class=AIBHelpFormatter,

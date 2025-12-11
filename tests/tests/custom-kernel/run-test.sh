@@ -131,7 +131,7 @@ else
     success=1
 fi
 
-# Clean up automotive-image-runner process
+# Clean up air process
 stop_vm "$VM_PID"
 
 exit $success

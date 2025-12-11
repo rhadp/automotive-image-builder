@@ -68,7 +68,7 @@ for opt in "${EXPECTED_SELINUX_BOOLEANS[@]}"; do
     fi
 done
 
-# Clean up automotive-image-runner process
+# Clean up air process
 stop_vm "$VM_PID"
 
 # Report test result

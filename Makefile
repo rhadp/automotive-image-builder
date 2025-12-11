@@ -13,8 +13,11 @@ all:
 
 install:
 	mkdir -p $(DESTDIR)$(BINDIR)
-	install automotive-image-builder.installed $(DESTDIR)$(BINDIR)/automotive-image-builder
-	install -t $(DESTDIR)$(BINDIR) automotive-image-runner
+	install bin/aib.installed $(DESTDIR)$(BINDIR)/aib
+	install -t $(DESTDIR)$(BINDIR) bin/air
+	ln -s aib $(DESTDIR)$(BINDIR)/automotive-image-builder
+	ln -s aib-dev $(DESTDIR)$(BINDIR)/automotive-image-builder-dev
+	ln -s air $(DESTDIR)$(BINDIR)/automotive-image-runner
 	for subdir in distro include targets targets/include ; do \
 		mkdir -p $(DESTDIR)$(DATADIR)/$$subdir ; \
 		install -m 0644 -t $(DESTDIR)$(DATADIR)/$$subdir $$subdir/*.yml ; \

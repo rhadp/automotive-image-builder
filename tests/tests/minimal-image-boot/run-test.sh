@@ -20,7 +20,7 @@ bootc_to_disk_image "$CTR_NAME" "$IMG_NAME"
 assert_image_exists "$IMG_NAME"
 
 # Start the VM using the built AIB image
-automotive-image-runner --nographics "$IMG_NAME" >"$LOGFILE" 2>&1 &
+$AIR --nographics "$IMG_NAME" >"$LOGFILE" 2>&1 &
 VM_PID=$!
 echo_log "VM running at pid: $VM_PID"
 echo_log $VM_PID
@@ -65,7 +65,7 @@ if [ -n "$TMT_TEST_DATA" ] && [ -f "$LOGFILE" ]; then
     save_to_tmt_test_data "$LOGFILE"
 fi
 
-# Clean up automotive-image-runner process
+# Clean up air process
 stop_vm "$VM_PID"
 
 exit $success

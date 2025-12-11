@@ -4,7 +4,7 @@ Automotive Image Builder (AIB) is a tool to create various kinds of OS images ba
 distributions. The images can support package-based mode (called "package") as well as image-based mode
 (called "image").
 
-The main tool is called `automotive-image-builder`, and its primary function is to compose manifests. 
+The main tool is called `aib`, and its primary function is to compose manifests.
 The compose operation takes a YAML-based Automotive Image Builder manifest and a set of options 
 that affect the compose, and it resolves the manifest into an osbuild JSON file. This
 JSON file contains precise instructions for building an image using the
@@ -14,14 +14,14 @@ container images.
 Build a `qcow2` image:
 
 ```shell
- $ automotive-image-builder compose --distro autosd10 --mode package --target qemu my-image.aib.yml osbuild.json
+ $ aib compose --distro autosd10 --mode package --target qemu my-image.aib.yml osbuild.json
  $ sudo osbuild --store osbuild_store --output-directory output --export qcow2 osbuild.json
 ```
 
 Alternatively, you can combine these two commands into one:
 
 ```shell
- $ automotive-image-builder build --distro autosd10 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
+ $ aib build --distro autosd10 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
 ```
 
 These commands compose the `osbuild.json` file and then build it and export the `qcow2` output to the the `output` 
@@ -30,10 +30,10 @@ directory, for example, `output/qcow2/disk.qcow2`.
 Run the QCOW image in a virtual machine:
 
 ```shell
- $ automotive-image-runner  output/qcow2/disk.qcow2
+ $ air  output/qcow2/disk.qcow2
 ```
 
-Note: When you run `automotive-image-builder build`, it's helpful and time-saving
+Note: When you run `aib build`, it's helpful and time-saving
 to pass the option `--build-dir some/dir`, which stores intermediate data, such as downloaded
 RPMs between runs.
 
@@ -67,8 +67,8 @@ You can find detailed
 You can also experiment with the example manifests in the [examples](examples) directory:
 
 ```shell
-$ automotive-image-builder build --export qcow2 examples/simple.aib.yml example.qcow2
-$ automotive-image-runner example.qcow2
+$ aib build --export qcow2 examples/simple.aib.yml example.qcow2
+$ air example.qcow2
 ```
 
 The sample-images repository
@@ -91,7 +91,7 @@ When composing (or building) a manifest, there are some core options that contro
    only build one for the native architecture.
 
 * `--target`: The board to target, defaults to `qemu`. You can get a list of the supported targets from
-  `automotive-image-builder list-targets`.
+  `aib list-targets`.
 
 * `--mode`: Either `package` or `image`. Default is `image`. Package mode is a read-write OS that uses
   `dnf` to install packages. Image mode is an immutable OS image based on OSTree, which supports
@@ -100,7 +100,7 @@ When composing (or building) a manifest, there are some core options that contro
 
 * `--distro`: There are a set of distribution definitions that can be used. These define which package
   repositories to use. The default is "autosd10-sig", but the full list can be obtained with
-  `automotive-image-builder list-dist`.  It is also possible to extend the list of distributions
+  `aib list-dist`.  It is also possible to extend the list of distributions
   with your custom ones by placing them in a directory called "/some/dir/distro" and passing
   `--include /some/dir` on the command line.
 
@@ -136,7 +136,7 @@ Installed policy locations (searched in order):
 2. `/usr/lib/automotive-image-builder/files/policies/` (package-provided)
 
 ```shell
-$ automotive-image-builder build --policy security --export qcow2 my-image.aib.yml output.qcow2
+$ aib build --policy security --export qcow2 my-image.aib.yml output.qcow2
 ```
 
 Policy files use the `.aibp.yml` extension and define restrictions and forced configurations:

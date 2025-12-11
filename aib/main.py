@@ -765,7 +765,7 @@ def get_build_container_for(container):
             "Either specify another one with --build-container, or create it using: "
         )
         log.error(
-            " automotive-image-builder build-bootc-builder --distro %s",
+            " aib build-bootc-builder --distro %s",
             distro,
         )
         sys.exit(1)
