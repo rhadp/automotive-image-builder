@@ -307,6 +307,13 @@ mpp-vars:
   efipart_bootable: false
   distro_gpg_keys: ""
   ld_so_cache_protected: false
+  # Enable wayland scenario in QM
+  qm_wayland_enable: false
+  # Source for the wayland compositor image. Can be a full container image URL
+  # or 'default' to use the pre-defined one.
+  qm_wayland_source: default
+  # Local name for the wayland compositor container image inside the build.
+  qm_wayland_compositor_name: localhost/wayland-compositor
 
   # Timestamps, etc
   reproducible_image: false
