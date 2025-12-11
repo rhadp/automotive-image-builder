@@ -720,19 +720,7 @@ def bootc_prepare_reseal(args, tmpdir, runner):
 
 def main():
     parsed_args = parse_args(sys.argv[2:])
-    if "manifest" in parsed_args:
-        if (
-            parsed_args.manifest.endswith(".aib")
-            or parsed_args.manifest.endswith(".aib.yml")
-            or parsed_args.manifest.endswith(".aib.yaml")
-        ):
-            parsed_args.simple_manifest = parsed_args.manifest
-            parsed_args.manifest = os.path.join(base_dir, "files/simple.mpp.yml")
-
-    args = AIBParameters(args=parsed_args, base_dir=base_dir)
-
-    if args.verbose:
-        log.setLevel("DEBUG")
+    args = AIBParameters(parsed_args, base_dir)
 
     runner = Runner(args)
     runner.add_volume(os.getcwd())
