@@ -162,7 +162,9 @@ class ExtraInclude:
             matched_files = self._find_glob_matches(source_glob)
         except exceptions.NoMatchingFilesError:
             if allow_empty:
-                contents.make_dirs.append({"path": dest_dir, "parents": True})
+                contents.make_dirs.append(
+                    {"path": dest_dir, "parents": True, "exist_ok": True}
+                )
                 log.info(
                     "Glob pattern '%s' matched no files, but allow_empty=True, "
                     "so creating destination directory '%s'",
@@ -289,7 +291,10 @@ class ExtraInclude:
 
         if parent_dir not in existing_dirs:
             # Add directory to make_dirs if it's not already there
-            contents.make_dirs.append({"path": parent_dir, "parents": True})
+            # Use exist_ok to avoid failures when directory already exists
+            contents.make_dirs.append(
+                {"path": parent_dir, "parents": True, "exist_ok": True}
+            )
 
     def _add_file_to_content(self, contents, file_data):
         """Add a file to the content processing pipeline"""
