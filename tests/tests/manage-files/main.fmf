@@ -8,6 +8,7 @@ description: |
   correctly.
   Also some files are marked for removal, so the test verifies that they
   are not present in the built image.
+  Also symbolic links are created to test symlink creation functionality.
 
   Test inputs:
     - Custom a-i-b manifest with files in allowed directories (/etc, /var)
@@ -15,7 +16,7 @@ description: |
 
   Expected results:
     - PASS: 'Image contains all required files'
-    - PASS: 'All file permissions and ownerships are correctly set.'
+    - PASS: 'All file permissions, ownerships, and symlinks are correctly set.'
     - PASS: 'Files marked for removal are not present in the image.'
     - PASS: 'Build failed as expected for custom top-level directory'
     - PASS: 'Build failed as expected for root-level file'

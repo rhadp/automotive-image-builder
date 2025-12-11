@@ -69,7 +69,15 @@ assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file4.txt "65534:65534"
 assert_file_has_permission usr/lib/qm/rootfs/etc/qm-custom/file5.txt "644"
 assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file5.txt "0:0"
 
-echo_pass "All file permissions and ownerships are correctly set."
+echo_log "Checking symlinks (content)..."
+assert_symlink_target "etc/custom-files/link-absolute" "/etc/custom-files/file1.txt"
+assert_symlink_target "etc/custom-files/link-relative" "file2.txt"
+
+echo_log "Checking symlinks (QM)..."
+assert_symlink_target "usr/lib/qm/rootfs/etc/qm-custom/qm-link-absolute" "/etc/qm-custom/file4.txt"
+assert_symlink_target "usr/lib/qm/rootfs/etc/qm-custom/qm-link-relative" "file5.txt"
+
+echo_pass "All file permissions, ownerships, and symlinks are correctly set."
 
 echo_log "Checking removed files in content section..."
 assert_not_has_file "usr/sbin/crond"

@@ -16,13 +16,18 @@ class ValidatedPathOperation(Enum):
 
     ADD_FILES = "add_files"
     MAKE_DIRS = "make_dirs"
+    ADD_SYMLINKS = "add_symlinks"
 
+    def allowed_dirs(self):
+        """Return the list of allowed top-level directories for this operation."""
+        match self:
+            case ValidatedPathOperation.ADD_FILES:
+                return ["/etc/", "/usr/"]
+            case ValidatedPathOperation.MAKE_DIRS:
+                return ["/etc/", "/usr/", "/var/"]
+            case ValidatedPathOperation.ADD_SYMLINKS:
+                return ["/etc/", "/usr/", "/var/"]
 
-# Allowed top-level directories per operation type
-ALLOWED_DIRS_BY_OPERATION = {
-    ValidatedPathOperation.ADD_FILES: ["/etc/", "/usr/"],
-    ValidatedPathOperation.MAKE_DIRS: ["/etc/", "/usr/", "/var/"],
-}
 
 # Disallowed paths (take precedence over allowed directories)
 DISALLOWED_PATHS = [
@@ -335,6 +340,7 @@ class Contents:
         self.chmod_files = data.get("chmod_files", [])
         self.remove_files = data.get("remove_files", [])
         self.make_dirs = data.get("make_dirs", [])
+        self.add_symlinks = data.get("add_symlinks", [])
         self.file_content_copy = []
         self.systemd = data.get("systemd", {})
         self.sbom = data.get("sbom", {})
@@ -344,7 +350,7 @@ class Contents:
     def _validate_path(self, path, operation_type):
         """Check if a single path is under allowed top-level directories."""
         # Get the allowed directories for this operation type
-        allowed_dirs = ALLOWED_DIRS_BY_OPERATION[operation_type]
+        allowed_dirs = operation_type.allowed_dirs()
 
         # First check if path is explicitly disallowed
         if any(path.startswith(prefix) for prefix in DISALLOWED_PATHS):
@@ -360,15 +366,16 @@ class Contents:
 
     def validate_paths(self):
         """Validate that all paths are under allowed top-level directories."""
-        # Validate make_dirs
-        for dir_entry in self.make_dirs:
-            self._validate_path(dir_entry.get("path"), ValidatedPathOperation.MAKE_DIRS)
+        # List of (data, path_key, operation_type) tuples to validate
+        validations = [
+            (self.make_dirs, "path", ValidatedPathOperation.MAKE_DIRS),
+            (self.add_files, "path", ValidatedPathOperation.ADD_FILES),
+            (self.add_symlinks, "link", ValidatedPathOperation.ADD_SYMLINKS),
+        ]
 
-        # Validate add_files destination paths
-        for file_entry in self.add_files:
-            self._validate_path(
-                file_entry.get("path", ""), ValidatedPathOperation.ADD_FILES
-            )
+        for data, path_key, operation_type in validations:
+            for entry in data:
+                self._validate_path(entry.get(path_key, ""), operation_type)
 
     # Gets key to use for target partition (rootfs/qm)
     def get_key(self, key):
@@ -385,6 +392,16 @@ class Contents:
         self.set_define("simple_copy", self.file_content_copy)
 
         self.set_define("simple_mkdir", self.make_dirs)
+
+        simple_symlinks = [
+            {
+                "target": s["target"],
+                "link_name": "tree://" + s["link"],
+                "symbolic": True,
+            }
+            for s in self.add_symlinks
+        ]
+        self.set_define("simple_symlinks", simple_symlinks)
 
         chmod_files = {f["path"]: without(f, "path") for f in self.chmod_files}
         self.set_define("simple_chmod", chmod_files)
