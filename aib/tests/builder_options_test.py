@@ -14,7 +14,6 @@ BASEDIR = "/tmp/automotive-image-builder"
     [
         "list-distro",
         "list-targets",
-        "build-bootc",
         "build",
     ],
 )
@@ -81,7 +80,7 @@ def test_aib_parameters_log_file_property(
     logfile, build_dir, progress, expected_contains
 ):
     """Test AIBParameters.log_file property returns correct path."""
-    argv = ["build", "--export", "qcow2", "manifest", "out"]
+    argv = ["build", "--target", "qemu", "manifest", "out"]
 
     if logfile:
         argv.extend(["--logfile", logfile])
@@ -113,7 +112,7 @@ def test_aib_parameters_log_file_property(
 
 def test_aib_parameters_log_file_property_no_build_dir():
     """Test AIBParameters.log_file property when build_dir is not set but progress is enabled."""
-    argv = ["build", "--export", "qcow2", "--progress", "manifest", "out"]
+    argv = ["build", "--target", "qemu", "--progress", "manifest", "out"]
 
     args = parse_args(argv)
     params = AIBParameters(args=args, base_dir="")

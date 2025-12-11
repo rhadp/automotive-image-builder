@@ -40,7 +40,11 @@ Tool to build (and run) automotive images
 %files
 %license LICENSE
 %doc README.md docs/manifest.html docs/manifest.md
+%{_bindir}/aib
+%{_bindir}/aib-dev
+%{_bindir}/air
 %{_bindir}/automotive-image-builder
+%{_bindir}/automotive-image-builder-dev
 %{_bindir}/automotive-image-runner
 %{_prefix}/lib/automotive-image-builder
 %{_sysconfdir}/automotive-image-builder

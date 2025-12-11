@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+BASEDIR=/usr/lib/automotive-image-builder
+
+PYTHONPATH="${BASEDIR}/" exec python3 -m aib.main_dev "${BASEDIR}" "$@"

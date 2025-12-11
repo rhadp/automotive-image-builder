@@ -2,4 +2,4 @@
 
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-exec "${BASEDIR}/bin/aib" "$@"
+exec "${BASEDIR}/bin/aib-dev" "$@"

@@ -126,7 +126,7 @@ by the PK. Also, the system will only boot EFI firmware files
 containing trusted signatures.
 
 In qemu, the EFI variables is stored in a file, which can be specified
-in `automotive-image-runner` with the `--secureboot-vars` and
+in `air` with the `--secureboot-vars` and
 `--secureboot-writeable` arguments. So, to enroll the keys we boot an
 image with an empty variable file, and enroll the keys. This will
 update the file which we can then later reuse to boot any image,
@@ -135,8 +135,8 @@ knowing that it will now only boot EFI files signed by the PK.
 To do this, build and run the `enroll.aib.yml` image which embeds the keys that
 where generated above (in the `secureboot-keys` directory.
 ```
-$ automotive-image-builder build-traditional --distro autosd10-latest-sig enroll.aib.yml enroll.img
-$ automotive-image-runner --secureboot-vars=secboot_vars.fd --secureboot-writeable enroll.img
+$ aib-dev build-traditional --distro autosd10-latest-sig enroll.aib.yml enroll.img
+$ air --secureboot-vars=secboot_vars.fd --secureboot-writeable enroll.img
 ```
 
 In this VM, log in as root and run `enroll-keys.sh`. Then save the
@@ -147,7 +147,7 @@ generated `secboot_vars.fd` for later use (with --secureboot).
 If you have an image where the EFI files are signed with the
 secureboot keys you can use the `secboot_vars.fd` file generated above
 by passing `--secureboot-vars=secboot_vars.fd` to
-`automotive-image-builder`. This will fail to boot a non-signed or
+`air`. This will fail to boot a non-signed or
 incorrectly signed image.
 
 ## Signing EFI files

@@ -1,6 +1,6 @@
 import pytest
 
-from aib.main import rewrite_manifest
+from aib.osbuild import rewrite_manifest
 
 
 # fmt: off

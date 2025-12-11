@@ -14,7 +14,7 @@ EXPECTED_CPU_WEIGHT="CPUWeight=50"
 trap 'cleanup_path "$TAR_FILE" "$RESOURCE_CONF_PATH"' 'EXIT'
 
 echo_log "Starting build..."
-build --export bootc-tar \
+build_bootc --tar \
     --extend-define tar_paths="$RESOURCE_CONF_PATH" \
     memory-limit-cpu-weight.aib.yml \
     "$TAR_FILE"

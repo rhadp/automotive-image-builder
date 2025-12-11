@@ -1,6 +1,6 @@
 #!/usr/bin/expect -f
 
-# Example expect script to use with automotive-image-runner
+# Example expect script to use with air
 # --serial-socket=$path, pass $path as argument.
 
 if {$argc == 0} {

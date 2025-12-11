@@ -83,13 +83,13 @@ build-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --mode=image --export qcow2 examples/lowlevel.mpp.yml lowlevel.qcow2
+    - ./bin/aib-dev build-deprecated --build-dir _build --mode=image --export qcow2 examples/lowlevel.mpp.yml lowlevel.qcow2
 
 build-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --mode=package --export image examples/lowlevel.mpp.yml lowlevel.img
+    - ./bin/aib-dev build-deprecated --build-dir _build --mode=package --export image examples/lowlevel.mpp.yml lowlevel.img
 
 packit-srpm-build:
   image: quay.io/packit/packit
@@ -105,25 +105,25 @@ build-simple-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10-latest-sig --mode=image --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10-latest-sig --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10-latest-sig --mode=package --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10-latest-sig --mode=package --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10 --mode=image --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10 --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10 --mode=package --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10 --mode=package --export image examples/complex.aib.yml example.img
 
 pages:
   stage: deploy
