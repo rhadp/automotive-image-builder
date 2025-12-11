@@ -15,7 +15,8 @@ tar_paths="[\
 'etc/test-glob-preserve-log',\
 'usr/lib/qm/rootfs/etc/qm-custom',\
 'usr/lib/qm/rootfs/usr/sbin',\
-'usr/sbin'\
+'usr/sbin',\
+'usr/share/containers/systemd'\
 ]"
 build --export bootc-tar \
     --extend-define tar_paths="$tar_paths" \
@@ -50,6 +51,10 @@ assert_file_has_content etc/test-glob-preserve/file1.txt "This is test file 1"
 assert_file_has_content etc/test-glob-preserve/file2.txt "This is test file 2"
 assert_file_has_content etc/test-glob-preserve/subdir1/app.log "App log from subdir1"
 assert_file_has_content etc/test-glob-preserve/subdir2/system.log "System log from subdir2"
+
+# Test that files were copied to /usr/ with preserved paths
+# This verifies that directories are created with exist_ok=True
+assert_file_has_content usr/share/containers/systemd/test.container "# Test container configuration"
 
 echo_pass "Image contains all required files"
 
