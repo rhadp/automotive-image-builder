@@ -37,7 +37,7 @@ class SubCommand:
     Definition of a CLI subcommand.
 
     Attributes:
-        name: The subcommand name (e.g., "build-bootc")
+        name: The subcommand name (e.g., "build")
         help: Short help text shown in command list
         description: Long description shown in subcommand --help
         callback: Function to call when this subcommand is invoked
@@ -83,7 +83,7 @@ def command(
     Args:
         name: Optional name to register this callback under.
               If None, uses the function's __name__ with underscores replaced by hyphens
-              (e.g. 'build_bootc' -> 'build-bootc')
+              (e.g. 'build_builder' -> 'build-builder')
         help: Short help text shown in command list
         description: Long description shown in subcommand --help.
                      If not provided, uses the docstring of the function.

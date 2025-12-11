@@ -9,14 +9,14 @@ from aib.arguments import parse_args
     "subcommand,arg_name,arg_value,extra_args,expected_value",
     [
         (
-            "build-bootc",
+            "build",
             "--container",
             [],
             ["--target", "qemu", "test.mpp.yml", "output"],
             True,
         ),
         (
-            "build-bootc",
+            "build",
             "--include",
             ["/some/path"],
             ["--target", "qemu", "test.mpp.yml", "output.json"],

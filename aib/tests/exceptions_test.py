@@ -24,7 +24,7 @@ def test_create_manifest(tmp_path):
     args = AIBParameters(
         args=parse_args(
             [
-                "build-bootc",
+                "build",
                 "--tar",
                 "--osbuild-manifest",
                 "output",

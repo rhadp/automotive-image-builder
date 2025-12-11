@@ -39,21 +39,21 @@ echo_log "Build completed, output: $SB_UNSIGNED"
 echo_log "EFI Signing bootc image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private.pem
-$AIB bootc-prepare-reseal --key=private.pem "$SB_UNSIGNED" "$SB_PREPARED"
+$AIB prepare-reseal --key=private.pem "$SB_UNSIGNED" "$SB_PREPARED"
 
 # Extract EFI files to sign
-$AIB bootc-extract-for-signing "$SB_PREPARED" to-sign
+$AIB extract-for-signing "$SB_PREPARED" to-sign
 
 # Sign EFI files
 sudo podman run --rm -ti --privileged -v .:/work "$EFI_SIGNER" --certificates db.p12 --password-file password to-sign/efi/*
 
 # Inject signed EFI files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private.pem "$SB_PREPARED" to-sign "$SB_SIGNED"
+$AIB inject-signed --reseal-with-key=private.pem "$SB_PREPARED" to-sign "$SB_SIGNED"
 
 echo_pass "Built signed bootc container"
 
 echo_log "Building bootc disk image..."
-$AIB bootc-to-disk-image "$SB_SIGNED" "$IMG_SIGNED"
+$AIB to-disk-image "$SB_SIGNED" "$IMG_SIGNED"
 echo_pass "Built signed bootc disk image"
 
 ############################################
@@ -67,16 +67,16 @@ echo_log "Build completed, output: $SB_UPD_UNSIGNED"
 echo_log "EFI Signing bootc update image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private2.pem
-$AIB bootc-prepare-reseal --key=private2.pem "$SB_UPD_UNSIGNED" "$SB_UPD_PREPARED"
+$AIB prepare-reseal --key=private2.pem "$SB_UPD_UNSIGNED" "$SB_UPD_PREPARED"
 
 # Extract EFI files to sign
-$AIB bootc-extract-for-signing "$SB_UPD_PREPARED" to-sign
+$AIB extract-for-signing "$SB_UPD_PREPARED" to-sign
 
 # Sign EFI files
 sudo podman run --rm -ti --privileged -v .:/work "$EFI_SIGNER" --certificates db.p12 --password-file password to-sign/efi/*
 
 # Inject signed EFI files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private2.pem "$SB_UPD_PREPARED" to-sign "$SB_UPD_SIGNED"
+$AIB inject-signed --reseal-with-key=private2.pem "$SB_UPD_PREPARED" to-sign "$SB_UPD_SIGNED"
 
 # Export file
 sudo podman save --format=oci-archive -o "$UPDATE_TAR" "$SB_UPD_SIGNED"

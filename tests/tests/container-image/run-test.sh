@@ -8,7 +8,7 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "usr"' 'EXIT'
 
 echo_log "Starting build for container_images and qm.content.container_images test..."
-build --export bootc-tar \
+build_bootc --tar \
     --extend-define tar_paths="['usr/share/containers/storage/overlay-images', 'usr/lib/qm/rootfs/usr/share/containers/storage/overlay-images']" \
     container-image.aib.yml \
     "$TAR_FILE"

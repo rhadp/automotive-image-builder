@@ -91,15 +91,15 @@ def listrpms(args, tmpdir, runner):
         BUILD_ARGS,
     ],
 )
-def build(args, tmpdir, runner):
+def build_deprecated(args, tmpdir, runner):
     """
     Backwards compatibility command to build various types of images.
     This takes '--mode' and '--export' options that together define
     what to build and how.
 
-    This command is deprecated, and we now recommend using 'build-bootc'
-    or 'build-traditional' instead, as these are easier to use, and
-    avoid accidentally using problematic combination of image options
+    This command is deprecated, and we now recommend using 'build'
+    instead, as this are easier to use, and  avoid accidentally using
+    problematic combination of image options
     """
     has_repo = False
     exports = []
@@ -163,7 +163,7 @@ def build(args, tmpdir, runner):
         BUILD_ARGS,
     ],
 )
-def build_traditional(args, tmpdir, runner):
+def build(args, tmpdir, runner):
     """
     Builds a disk image from a manifest describing its content, and options like what
     board to target and what distribution version to use.

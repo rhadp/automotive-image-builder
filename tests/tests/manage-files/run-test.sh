@@ -17,7 +17,7 @@ tar_paths="[\
 'usr/lib/qm/rootfs/usr/sbin',\
 'usr/sbin'\
 ]"
-build --export bootc-tar \
+build_bootc --tar \
     --extend-define tar_paths="$tar_paths" \
     custom-files.aib.yml \
     "$TAR_FILE"

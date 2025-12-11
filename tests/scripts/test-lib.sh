@@ -308,7 +308,7 @@ FAST_OPTIONS="--define sign_kernel_modules=false"
 trybuild() {
     local result=0
 
-    $AIBDEV build \
+    $AIBDEV build-deprecated \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -334,7 +334,7 @@ build() {
 trybuild_bootc() {
     local result=0
 
-    $AIB build-bootc \
+    $AIB build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -360,7 +360,7 @@ build_bootc() {
 trybootc_to_disk_image() {
     local result=0
 
-    $AIB bootc-to-disk-image \
+    $AIB to-disk-image \
         --verbose \
         "$@" > bootc-to-disk-image.log
     result=$?
@@ -383,7 +383,7 @@ bootc_to_disk_image() {
 trybuild_bootc_builder() {
     local result=0
 
-    $AIB build-bootc-builder \
+    $AIB build-builder \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -409,7 +409,7 @@ build_bootc_builder() {
 trybuild_traditional() {
     local result=0
 
-    $AIBDEV build-traditional \
+    $AIBDEV build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \

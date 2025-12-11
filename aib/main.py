@@ -124,7 +124,7 @@ def bootc_archive_to_store(runner, archive_file, container_name, user=False):
         BUILD_ARGS,
     ],
 )
-def build_bootc(args, tmpdir, runner):
+def build(args, tmpdir, runner):
     """
     This builds a bootc-style container image from a manifest describing its
     content, and options like what board to target and what distribution version
@@ -132,7 +132,7 @@ def build_bootc(args, tmpdir, runner):
 
     The resulting container image can used to update a running bootc system, using
     `bootc update` or `bootc switch`. Or, alternatively it can be converted to a
-    disk-image which can be flashed to a board using `bootc-to-disk-image`.
+    disk-image which can be flashed to a board using `to-disk-image`.
     """
     args.mode = "bootc"
 
@@ -188,7 +188,7 @@ def download(args, tmpdir, runner):
 
 @command(
     group=CommandGroup.BASIC,
-    help="Build helper bootc image used by bootc-to-disk-image",
+    help="Build helper bootc image used by to-disk-image",
     shared_args=["container", "include"],
     args=[
         BUILD_ARGS,
@@ -203,10 +203,10 @@ def download(args, tmpdir, runner):
         },
     ],
 )
-def build_bootc_builder(args, tmpdir, runner):
+def build_builder(args, tmpdir, runner):
     """
     This command produces a bootc image containing required tools that is used
-    in the bootc-to-disk-image (and bootc-reseal) command. This will contain tools
+    in the to-disk-image (and reseal) command. This will contain tools
     like mkfs.ext4 that are needed to build a disk image.
 
     In non-automotive use of bootc, these tools are in the bootc image itself,
@@ -214,11 +214,11 @@ def build_bootc_builder(args, tmpdir, runner):
     source. The tools need to match the version of the image, so these
     containers are built for specific distro versions.
 
-    The container to use in bootc-to-disk-image can be specified with --build-container,
+    The container to use in to-disk-image can be specified with --build-container,
     but normally the default name of 'localhost/aib-build:$DISTRO' is used, and if
     the out argument is not specified this will be used.
     """
-    # build-bootc-builder is a special form of the "build" command with fixed values for
+    # build-builder is a special form of the "build" command with fixed values for
     # manifest/export/target/mode arguments.
     args.simple_manifest = os.path.join(args.base_dir, "files/bootc-builder.aib.yml")
     args.manifest = os.path.join(args.base_dir, "files/simple.mpp.yml")
@@ -259,7 +259,7 @@ def get_build_container_for(container):
             "Either specify another one with --build-container, or create it using: "
         )
         log.error(
-            " aib build-bootc-builder --distro %s",
+            " aib build-builder --distro %s",
             distro,
         )
         sys.exit(1)
@@ -289,14 +289,14 @@ def get_build_container_for(container):
         },
     ],
 )
-def bootc_to_disk_image(args, tmpdir, runner):
+def to_disk_image(args, tmpdir, runner):
     """
     Converts a bootc container image to a disk image that can be flashed on a board
 
     Internally this uses the bootc-image-builder tool from a container image.
     The --bib-container option can be used to specify a different version of this tool
 
-    Also, to build the image we need a container with tools. See the build-bootc-builder
+    Also, to build the image we need a container with tools. See the build-builder
     command for how to build one.
     """
     if not podman_image_exists(args.src_container):
@@ -338,14 +338,14 @@ def bootc_to_disk_image(args, tmpdir, runner):
         },
     ],
 )
-def bootc_extract_for_signing(args, tmpdir, runner):
+def extract_for_signing(args, tmpdir, runner):
     """
     Extract all the files related to secure boot that need signing in the image. This can
     be for example EFI executables, or aboot partition data.
 
     These files can then be signed, using whatever process available to the user, which
     often involves sending them to a 3rd party. Once these files are signed, the modified
-    file can then be injected using bootc-inject-signed.
+    file can then be injected using inject-signed.
     """
     if not podman_image_exists(args.src_container):
         log.error(
@@ -425,14 +425,14 @@ def do_reseal_image(args, runner, tmpdir, privkey, src_container, dst_container)
         },
     ],
 )
-def bootc_inject_signed(args, tmpdir, runner):
+def inject_signed(args, tmpdir, runner):
     """
-    Once the files produced by bootc-extract-for-signing have been signed, this command
+    Once the files produced by extract-for-signing have been signed, this command
     can be used to inject them into the bootc image again.
 
     Note that this modified the bootc image which makes it not possible to boot if
     sealed images are being used (which is the default). Also, signatures interact
-    in a complex way with sealing. See the help for bootc-reseal for how to re-seal
+    in a complex way with sealing. See the help for reseal for how to re-seal
     the modified image so that it boots again.
     """
     if not podman_image_exists(args.src_container):
@@ -488,30 +488,30 @@ def bootc_inject_signed(args, tmpdir, runner):
         {
             "--key": {
                 "type": "path",
-                "help": "path to private key, as previously used in bootc-prepare-reseal",
+                "help": "path to private key, as previously used in prepare-reseal",
             },
             "src_container": "Bootc container name",
             "new_container": "Destination container name",
         },
     ],
 )
-def bootc_reseal(args, tmpdir, runner):
+def reseal(args, tmpdir, runner):
     """
     By default, bootc images are 'sealed', which means that the root filesystem
     is signed by a secret key. The (signed by secureboot) initramfs will contain
     the corresponding public key used to validate the root filesystem. If a
     bootc image is built to be sealed and it is later modified then this check
-    will fail and the image will not boot. The bootc-reseal operation fixes this
+    will fail and the image will not boot. The reseal operation fixes this
     by updating the initramfs with a new public key and signing the rootfs with
     the (temporary) private key.
 
     Note: Re-sealing modifies the initramfs, which interacts badly with secureboot,
     where the initramfs is signed by a trusted key. To fix this issue there is a
-    separate command 'bootc-prepare-reseal' that does the initial step of bootc-reseal
+    separate command 'prepare-reseal' that does the initial step of reseal
     i.e., it adds a new public key to the initrd. Once that is done, you can sign the
-    new initramfs and then finish with bootc-prepare-reseal, passing in the key used
-    in bootc-prepare-reseal to bootc-reseal with the --key option. See the help for
-    bootc-prepare-reseal for more details
+    new initramfs and then finish with prepare-reseal, passing in the key used
+    in prepare-reseal to reseal with the --key option. See the help for
+    prepare-reseal for more details
     """
     if not podman_image_exists(args.src_container):
         log.error(
@@ -557,13 +557,13 @@ def bootc_reseal(args, tmpdir, runner):
         },
     ],
 )
-def bootc_prepare_reseal(args, tmpdir, runner):
+def prepare_reseal(args, tmpdir, runner):
     """
     Injects the public part of a key pair into the initramfs of the bootc image, to
-    prepare for signinging the initrd, and later calling bootc-reseal.
+    prepare for signinging the initrd, and later calling reseal.
 
     The private key supplied should be single-use, used only for one image and discarded after
-    it has been used in the matching bootc-reseal operation.
+    it has been used in the matching reseal operation.
 
     A private key can be generated with openssl like this:
        openssl genpkey -algorithm ed25519 -outform PEM -out private.pem
