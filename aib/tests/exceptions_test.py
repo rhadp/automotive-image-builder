@@ -2,7 +2,7 @@ import pytest
 
 import aib.main  # noqa: F401
 from aib.arguments import parse_args
-from aib.main import create_osbuild_manifest, rewrite_manifest
+from aib.osbuild import create_osbuild_manifest, rewrite_manifest
 from aib import AIBParameters
 from aib import exceptions
 from aib.exports import get_export_data
