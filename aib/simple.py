@@ -20,13 +20,12 @@ class ValidatedPathOperation(Enum):
 
     def allowed_dirs(self):
         """Return the list of allowed top-level directories for this operation."""
-        match self:
-            case ValidatedPathOperation.ADD_FILES:
-                return ["/etc/", "/usr/"]
-            case ValidatedPathOperation.MAKE_DIRS:
-                return ["/etc/", "/usr/", "/var/"]
-            case ValidatedPathOperation.ADD_SYMLINKS:
-                return ["/etc/", "/usr/", "/var/"]
+        if self == ValidatedPathOperation.ADD_FILES:
+            return ["/etc/", "/usr/"]
+        elif self == ValidatedPathOperation.MAKE_DIRS:
+            return ["/etc/", "/usr/", "/var/"]
+        elif self == ValidatedPathOperation.ADD_SYMLINKS:
+            return ["/etc/", "/usr/", "/var/"]
 
 
 # Disallowed paths (take precedence over allowed directories)
