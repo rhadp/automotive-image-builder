@@ -78,9 +78,10 @@ mpp-vars:
       Before=ostree-prepare-root.service
 
       [Service]
+      Type=oneshot
       ExecStart=
-      ExecStart=systemd-repart --dry-run=no --definitions=/usr/lib/repart.d
-      ExecStart=/usr/lib/systemd/systemd-growfs /sysroot
+      ExecStart=-systemd-repart --dry-run=no --definitions=/usr/lib/repart.d
+      ExecStart=-/usr/lib/systemd/systemd-growfs /sysroot
   containers_conf:
     mpp-format-string: |
       [containers]
