@@ -24,6 +24,7 @@ environment:
     REBUILD_BOOTC_BUILDER: no
 
     AIB: aib
+    AIBDEV: aib-dev
     AIB_BASEDIR: /usr/lib/automotive-image-builder
     AIR: air
     OUTDIR: /var/tmp/tmt

@@ -105,25 +105,25 @@ build-simple-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10-latest-sig --mode=image --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build --build-dir _build --distro autosd10-latest-sig --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10-latest-sig --mode=package --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build --build-dir _build --distro autosd10-latest-sig --mode=package --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10 --mode=image --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build --build-dir _build --distro autosd10 --mode=image --export image examples/complex.aib.yml example.img
 
 build-simple-autosd-package-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./automotive-image-builder build --build-dir _build --distro autosd10 --mode=package --export image examples/complex.aib.yml example.img
+    - ./bin/aib-dev build --build-dir _build --distro autosd10 --mode=package --export image examples/complex.aib.yml example.img
 
 pages:
   stage: deploy

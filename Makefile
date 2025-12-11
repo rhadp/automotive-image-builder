@@ -14,6 +14,7 @@ all:
 install:
 	mkdir -p $(DESTDIR)$(BINDIR)
 	install bin/aib.installed $(DESTDIR)$(BINDIR)/aib
+	install bin/aib-dev.installed $(DESTDIR)$(BINDIR)/aib-dev
 	install -t $(DESTDIR)$(BINDIR) bin/air
 	ln -s aib $(DESTDIR)$(BINDIR)/automotive-image-builder
 	ln -s aib-dev $(DESTDIR)$(BINDIR)/automotive-image-builder-dev
@@ -85,7 +86,3 @@ generate-manifest-doc: .venv
 	mkdir -p docs
 	. .venv/bin/activate; generate-schema-doc files/manifest_schema.yml docs/manifest.html
 	. .venv/bin/activate; generate-schema-doc --config template_name=md files/manifest_schema.yml docs/manifest.md
-
-bootc-image:
-	./automotive-image-builder build --export bootc files/bootc-builder.aib.yml quay.io/centos-sig-automotive/aib-bootc:latest-$(shell build/ociarch)
-	sudo podman tag quay.io/centos-sig-automotive/aib-bootc:latest-$(shell build/ociarch) quay.io/centos-sig-automotive/aib-bootc:latest

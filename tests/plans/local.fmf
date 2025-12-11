@@ -12,6 +12,7 @@ environment:
     REBUILD_BOOTC_BUILDER: no
 
     AIB: $PROJECT_DIR/bin/aib
+    AIBDEV: $PROJECT_DIR/bin/aib-dev
     AIB_BASEDIR: $PROJECT_DIR
     AIR: $PROJECT_DIR/bin/air
     OUTDIR: /var/tmp/tmt

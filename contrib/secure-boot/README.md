@@ -135,7 +135,7 @@ knowing that it will now only boot EFI files signed by the PK.
 To do this, build and run the `enroll.aib.yml` image which embeds the keys that
 where generated above (in the `secureboot-keys` directory.
 ```
-$ air build-traditional --distro autosd10-latest-sig enroll.aib.yml enroll.img
+$ aib-dev build-traditional --distro autosd10-latest-sig enroll.aib.yml enroll.img
 $ air --secureboot-vars=secboot_vars.fd --secureboot-writeable enroll.img
 ```
 

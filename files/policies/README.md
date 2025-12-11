@@ -6,10 +6,10 @@ This directory contains automotive-image-builder policy files (`.aibp.yml` exten
 
 ```bash
 # Use policy by name (searches installed locations)
-aib build --policy security --export qcow2 manifest.aib.yml output.qcow2
+aib build-bootc --policy security manifest.aib.yml output
 
 # Use policy file (searches local first, then installed)
-aib build --policy my-policy.aibp.yml --export qcow2 manifest.aib.yml output.qcow2
+aib build-bootc --policy my-policy.aibp.yml manifest.aib.yml output
 ```
 
 Policy files use YAML format. See the main README.md for complete documentation.

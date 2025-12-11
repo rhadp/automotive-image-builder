@@ -9,17 +9,17 @@ from aib.arguments import parse_args
     "subcommand,arg_name,arg_value,extra_args,expected_value",
     [
         (
-            "build",
+            "build-bootc",
             "--container",
             [],
-            ["--export", "qcow2", "test.mpp.yml", "output"],
+            ["--target", "qemu", "test.mpp.yml", "output"],
             True,
         ),
         (
-            "build",
+            "build-bootc",
             "--include",
             ["/some/path"],
-            ["--export", "qcow2", "test.mpp.yml", "output.json"],
+            ["--target", "qemu", "test.mpp.yml", "output.json"],
             "/some/path",
         ),
         ("list-distro", "--include", ["/some/path"], [], "/some/path"),

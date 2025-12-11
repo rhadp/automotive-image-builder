@@ -308,7 +308,7 @@ FAST_OPTIONS="--define sign_kernel_modules=false"
 trybuild() {
     local result=0
 
-    $AIB build \
+    $AIBDEV build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -409,7 +409,7 @@ build_bootc_builder() {
 trybuild_traditional() {
     local result=0
 
-    $AIB build-traditional \
+    $AIBDEV build-traditional \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \

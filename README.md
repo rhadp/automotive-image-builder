@@ -14,14 +14,7 @@ container images.
 Build a `qcow2` image:
 
 ```shell
- $ aib compose --distro autosd10 --mode package --target qemu my-image.aib.yml osbuild.json
- $ sudo osbuild --store osbuild_store --output-directory output --export qcow2 osbuild.json
-```
-
-Alternatively, you can combine these two commands into one:
-
-```shell
- $ aib build --distro autosd10 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
+ $ aib-dev build --distro autosd10 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
 ```
 
 These commands compose the `osbuild.json` file and then build it and export the `qcow2` output to the the `output` 
@@ -33,7 +26,7 @@ Run the QCOW image in a virtual machine:
  $ air  output/qcow2/disk.qcow2
 ```
 
-Note: When you run `aib build`, it's helpful and time-saving
+Note: When you run `aib-dev build`, it's helpful and time-saving
 to pass the option `--build-dir some/dir`, which stores intermediate data, such as downloaded
 RPMs between runs.
 
@@ -67,7 +60,7 @@ You can find detailed
 You can also experiment with the example manifests in the [examples](examples) directory:
 
 ```shell
-$ aib build --export qcow2 examples/simple.aib.yml example.qcow2
+$ aib-dev build --export qcow2 examples/simple.aib.yml example.qcow2
 $ air example.qcow2
 ```
 
@@ -136,7 +129,7 @@ Installed policy locations (searched in order):
 2. `/usr/lib/automotive-image-builder/files/policies/` (package-provided)
 
 ```shell
-$ aib build --policy security --export qcow2 my-image.aib.yml output.qcow2
+$ aib-dev build --policy security --export qcow2 my-image.aib.yml output.qcow2
 ```
 
 Policy files use the `.aibp.yml` extension and define restrictions and forced configurations:

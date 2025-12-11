@@ -376,7 +376,7 @@ def no_subcommand(_args, _tmpdir, _runner):
     log.info("No subcommand specified, see --help for usage")
 
 
-def parse_args(args):
+def parse_args(args, prog="aib"):
     """
     Parse command-line arguments.
 
@@ -387,7 +387,7 @@ def parse_args(args):
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(
-        prog="aib",
+        prog=prog,
         description="Select subcommand to run.\n"
         "For more details, use --help for the individual commands.",
         formatter_class=AIBHelpFormatter,
