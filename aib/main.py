@@ -31,6 +31,7 @@ from .arguments import (
     parse_args,
     aib_build_container_name,
     command,
+    BIB_ARGS,
     POLICY_ARGS,
     TARGET_ARGS,
     BUILD_ARGS,
@@ -44,10 +45,7 @@ from .osbuild import (
     run_osbuild,
     export_disk_image_file,
 )
-from .globals import (
-    default_bib_container,
-    default_distro,
-)
+from .globals import default_distro
 
 from . import list_ops  # noqa: F401
 
@@ -293,18 +291,8 @@ def get_build_container_for(container):
     shared_args=[],
     args=[
         DISK_FORMAT_ARGS,
+        BIB_ARGS,
         {
-            "--bib-container": {
-                "type": "str",
-                "metavar": "IMAGE",
-                "default": default_bib_container,
-                "help": f"bootc-image-builder image to use (default: {default_bib_container})",
-            },
-            "--build-container": {
-                "type": "str",
-                "metavar": "IMAGE",
-                "help": f"bootc build container image to use  (default: {aib_build_container_name('$DISTRO')})",
-            },
             "src_container": "Bootc container name",
             "out": "Output image name",
         },

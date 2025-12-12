@@ -14,7 +14,7 @@ from enum import Enum
 from .utils import DiskFormat
 from .version import __version__
 from . import log
-from .globals import default_distro, default_container_image_name
+from .globals import default_distro, default_container_image_name, default_bib_container
 
 
 def aib_build_container_name(distro):
@@ -355,10 +355,22 @@ DISK_FORMAT_ARGS = {
         "help": "Disk image format (default: from extension)",
     },
     "--separate-partitions": {
-        "help": "Split the resulting image into per-partition files",
+        "help": "Split disk images into per-partition files",
     },
 }
-
+BIB_ARGS = {
+    "--bib-container": {
+        "type": "str",
+        "metavar": "IMAGE",
+        "default": default_bib_container,
+        "help": f"bootc-image-builder image to use (default: {default_bib_container})",
+    },
+    "--build-container": {
+        "type": "str",
+        "metavar": "IMAGE",
+        "help": f"bootc build container image to use (default: {aib_build_container_name('$DISTRO')})",
+    },
+}
 SHARED_RESEAL_ARGS = {
     "--build-container": {
         "type": "str",
