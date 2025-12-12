@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import binascii
 import sys
 import os
 import json
@@ -117,9 +118,13 @@ def container_to_disk_image(args, tmpdir, runner, src_container, fmt, out):
         export_disk_image_file(runner, args, tmpdir, output_file, out, fmt)
 
 
+def random_container_name():
+    return "aib-" + binascii.b2a_hex(os.urandom(12)).decode("utf8")
+
+
 @command(
     group=CommandGroup.BASIC,
-    help="Build a bootc container image (to container store or archive file)",
+    help="Build a bootc container image (to container store or archive file) and optionally disk image",
     shared_args=["container", "include"],
     args=[
         {
@@ -136,28 +141,44 @@ def container_to_disk_image(args, tmpdir, runner, src_container, fmt, out):
                 "help": "Just compose the osbuild manifest, don't build it.",
             },
             "manifest": "Source manifest file",
-            "out": "Output container image name (or pathname)",
+            "out": "Output container image name (or pathname), or '-' to not store container",
+            "disk": {
+                "help": "Optional output disk image pathname",
+                "required": False,
+            },
         },
         POLICY_ARGS,
         TARGET_ARGS,
         BUILD_ARGS,
+        DISK_FORMAT_ARGS,
+        BIB_ARGS,
     ],
 )
 def build(args, tmpdir, runner):
     """
     This builds a bootc-style container image from a manifest describing its
     content, and options like what board to target and what distribution version
-    to use.
+    to use. Optionally it can also build a disk image, but this can also be done
+    later with the `to-disk-image` command.
 
     The resulting container image can used to update a running bootc system, using
-    `bootc update` or `bootc switch`. Or, alternatively it can be converted to a
-    disk-image which can be flashed to a board using `to-disk-image`.
+    `bootc update` or `bootc switch`.
     """
     args.mode = "bootc"
 
     exports = []
     if not args.dry_run:
         exports.append("bootc-tar" if args.tar else "bootc-archive")
+
+    if args.disk and args.tar:
+        log.error("--tar was used, which is incompatible with generating disk image")
+        sys.exit(1)
+
+    # This is the container name we us in the root container store.
+    # It may be a random temporary name if the user didn't want the result in the
+    # root container store (i.e. user store or oci archive file)
+    root_containername = None
+    remove_container = False
 
     with run_osbuild(args, tmpdir, runner, exports) as outputdir:
         if args.tar:
@@ -167,14 +188,45 @@ def build(args, tmpdir, runner):
                 outputdir.name, "bootc-archive/image.oci-archive"
             )
 
+        # Export to file and/or container store as needed
         if args.dry_run:
             pass
         elif args.tar or args.oci_archive:
+            if args.disk and args.oci_archive:
+                # We need it in the root store, to convert it
+                remove_container = True
+                root_containername = random_container_name()
+                bootc_archive_to_store(
+                    runner, output_file, root_containername, user=False
+                )
+
             runner.add_volume_for(args.out)
             runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", output_file])
             runner.run_as_root(["mv", output_file, args.out])
         else:
-            bootc_archive_to_store(runner, output_file, args.out, user=args.user)
+            # "-" to not store result in store
+            if args.out != "-":
+                bootc_archive_to_store(runner, output_file, args.out, user=args.user)
+
+            if args.disk and (args.user or args.out == "-"):
+                # We need it in the root store anyway to convert it
+                remove_container = True
+                root_containername = random_container_name()
+                bootc_archive_to_store(
+                    runner, output_file, root_containername, user=args.user
+                )
+            else:
+                root_containername = args.out
+
+    if args.disk and not args.dry_run:
+        assert root_containername is not None
+        fmt = DiskFormat.from_string(args.format) or DiskFormat.from_filename(args.disk)
+        container_to_disk_image(
+            args, tmpdir, runner, root_containername, fmt, args.disk
+        )
+
+    if remove_container:
+        podman_image_rm(root_containername)
 
 
 @command(
