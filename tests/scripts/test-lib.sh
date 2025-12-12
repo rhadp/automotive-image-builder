@@ -305,7 +305,7 @@ save_to_tmt_data () {
 # Some default options that make builds faster, override if problematic
 FAST_OPTIONS="--define sign_kernel_modules=false"
 
-trybuild() {
+trybuild_deprecated() {
     local result=0
 
     $AIBDEV build-deprecated \
@@ -319,8 +319,8 @@ trybuild() {
     return $result
 }
 
-build() {
-   if ! trybuild "$@"; then
+build_deprecated() {
+   if ! trybuild_deprecated "$@"; then
       echo FAILED to build image
       # only show last 50 lines in
       tail -n 50 build.log
@@ -406,7 +406,7 @@ build_bootc_builder() {
    save_to_tmt_data build-builder.log
 }
 
-trybuild_traditional() {
+trybuild_dev() {
     local result=0
 
     $AIBDEV build \
@@ -420,8 +420,8 @@ trybuild_traditional() {
     return $result
 }
 
-build_traditional() {
-   if ! trybuild_traditional "$@"; then
+build_dev() {
+   if ! trybuild_dev "$@"; then
       echo FAILED to build image
       # only show last 50 lines in
       tail -n 50 build.log

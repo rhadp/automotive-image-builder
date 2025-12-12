@@ -115,10 +115,10 @@ echo_log "Test 6: Testing Compliance policy mode restrictions..."
 build_bootc --dry-run --policy compliance.aibp.yml simple-rpms.aib.yml out
 echo_log "Compliance policy allows bootc"
 
-build --policy compliance.aibp.yml --mode image simple-rpms.aib.yml out
+build_deprecated --policy compliance.aibp.yml --mode image simple-rpms.aib.yml out
 echo_log "Compliance policy allows image mode"
 
-if trybuild --policy compliance.aibp.yml --mode package simple-rpms.aib.yml out 2> mode_error.txt; then
+if trybuild_deprecated --policy compliance.aibp.yml --mode package simple-rpms.aib.yml out 2> mode_error.txt; then
     echo_fail "Compliance policy should deny package mode"
     fatal "Compliance policy should have blocked package mode"
 else
@@ -126,7 +126,7 @@ else
 fi
 assert_file_has_content mode_error.txt "mode 'package' is not in allowed list"
 
-if trybuild_traditional --dry-run --policy compliance.aibp.yml simple-rpms.aib.yml out.img 2> mode_error.txt; then
+if trybuild_dev --dry-run --policy compliance.aibp.yml simple-rpms.aib.yml out.img 2> mode_error.txt; then
     echo_fail "Compliance policy should deny traditional build"
     fatal "Compliance policy should have blocked traditional build"
 else
@@ -140,7 +140,7 @@ echo_log "Test 7: Testing Compliance policy manifest restrictions..."
 
 # Test that containers-storage transport is disallowed
 echo_log "  Testing containers-storage transport restriction..."
-if trybuild --policy compliance.aibp.yml containers-storage.aib.yml out 2> containers_error.txt; then
+if trybuild_deprecated --policy compliance.aibp.yml containers-storage.aib.yml out 2> containers_error.txt; then
     echo_fail "Compliance policy should deny containers-storage transport"
     fatal "Compliance policy should have blocked containers-storage transport"
 else
@@ -150,7 +150,7 @@ assert_file_has_content containers_error.txt "forbidden value 'containers-storag
 
 # Test that experimental properties are disallowed
 echo_log "  Testing experimental property restriction..."
-if trybuild --policy compliance.aibp.yml experimental.aib.yml out 2> experimental_error.txt; then
+if trybuild_deprecated --policy compliance.aibp.yml experimental.aib.yml out 2> experimental_error.txt; then
     echo_fail "Compliance policy should deny experimental properties"
     fatal "Compliance policy should have blocked experimental properties"
 else
@@ -326,7 +326,7 @@ echo_log "Test 14: Testing require_simple_manifest restriction..."
 
 # Test that compliance policy blocks low-level manifests
 echo_log "  Testing compliance policy blocks low-level manifests..."
-if trybuild_traditional  --dry-run --policy compliance.aibp.yml lowlevel.mpp.yml out.img 2> manifest_type_error.txt; then
+if trybuild_dev  --dry-run --policy compliance.aibp.yml lowlevel.mpp.yml out.img 2> manifest_type_error.txt; then
     echo_fail "Compliance policy should deny low-level manifests"
     fatal "Compliance policy should have blocked low-level manifest"
 else

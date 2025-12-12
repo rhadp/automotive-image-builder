@@ -14,7 +14,7 @@ trap 'cleanup_path "$IMG_NAME"' 'EXIT'
 
 # Build the image
 echo_log "Building AIB image..."
-build --target qemu \
+build_deprecated --target qemu \
     --mode image \
     --export image \
     kernel-cmdline-options.aib.yml \

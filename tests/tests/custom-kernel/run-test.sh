@@ -102,7 +102,7 @@ sed -i "s|^\(\s*baseurl:\).*|\1 file://${REPO_DIR}|" "$YML_NAME"
 
 # Build AIB image
 echo_log "Building AIB image..."
-build --target qemu --mode image --export image "$YML_NAME" "$IMG_NAME"
+build_deprecated --target qemu --mode image --export image "$YML_NAME" "$IMG_NAME"
 
 # Check if image was created
 assert_image_exists "$IMG_NAME"
