@@ -566,6 +566,9 @@ mpp-vars:
                   exist_ok: true
                 - path: /var/qm/
                   parents: true
+                - path: /var/qm/tmp
+                  parents: true
+                  exist_ok: true
         - mpp-if: use_qm
           then:
             type: org.osbuild.copy
