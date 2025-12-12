@@ -17,7 +17,7 @@ echo_final_test_result() {
 }
 
 echo_log "Starting build..."
-build_bootc --tar \
+build --tar \
     --extend-define tar_paths='usr/lib/modules' \
     denylist-modules.aib.yml \
     "$TAR_FILE"

@@ -13,8 +13,7 @@ trap 'cleanup_path "$IMG_NAME" ; cleanup_container "$CTR_NAME"' 'EXIT'
 
 # Build the image
 echo_log "Building image from $MANIFEST..."
-build_bootc --target qemu "$MANIFEST" "$CTR_NAME"
-bootc_to_disk_image "$CTR_NAME" "$IMG_NAME"
+build --target qemu "$MANIFEST" "$CTR_NAME" "$IMG_NAME"
 
 # Check if image was created
 assert_image_exists "$IMG_NAME"

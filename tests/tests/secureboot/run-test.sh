@@ -33,7 +33,7 @@ echo_log "Helpers built"
 #########################################
 
 echo_log "Starting bootc build..."
-build_bootc secureboot.aib.yml "$SB_UNSIGNED"
+build secureboot.aib.yml "$SB_UNSIGNED"
 echo_log "Build completed, output: $SB_UNSIGNED"
 
 echo_log "EFI Signing bootc image..."
@@ -61,7 +61,7 @@ echo_pass "Built signed bootc disk image"
 ############################################
 
 echo_log "Starting bootc build of update..."
-build_bootc secureboot-update.aib.yml "$SB_UPD_UNSIGNED"
+build secureboot-update.aib.yml "$SB_UPD_UNSIGNED"
 echo_log "Build completed, output: $SB_UPD_UNSIGNED"
 
 echo_log "EFI Signing bootc update image..."
