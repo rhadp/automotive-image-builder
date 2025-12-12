@@ -93,7 +93,7 @@ assert_not_has_file "usr/lib/qm/rootfs/usr/sbin/cupsd"
 echo_pass "Files marked for removal are not present in the image."
 
 echo_log "Testing invalid custom top-level directory..."
-if trybuild_deprecated --export tar invalid-custom-dir.aib.yml invalid-out.tar 2> error.txt; then
+if trybuild --tar invalid-custom-dir.aib.yml invalid-out.tar 2> error.txt; then
     echo_fail "Build should have failed for custom top-level directory /custom-dir"
     exit 1
 else
@@ -104,7 +104,7 @@ echo_log "Checking error message content..."
 assert_file_has_content error.txt "Path '/custom-dir' is not allowed"
 
 echo_log "Testing invalid root-level file..."
-if trybuild_deprecated --export tar invalid-root-path.aib.yml invalid-out2.tar 2> error2.txt; then
+if trybuild --tar invalid-root-path.aib.yml invalid-out2.tar 2> error2.txt; then
     echo_fail "Build should have failed for file directly in root /"
     exit 1
 else

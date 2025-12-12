@@ -140,7 +140,7 @@ echo_log "Test 7: Testing Compliance policy manifest restrictions..."
 
 # Test that containers-storage transport is disallowed
 echo_log "  Testing containers-storage transport restriction..."
-if trybuild_deprecated --policy compliance.aibp.yml containers-storage.aib.yml out 2> containers_error.txt; then
+if trybuild --dry-run --policy compliance.aibp.yml containers-storage.aib.yml out 2> containers_error.txt; then
     echo_fail "Compliance policy should deny containers-storage transport"
     fatal "Compliance policy should have blocked containers-storage transport"
 else
@@ -150,7 +150,7 @@ assert_file_has_content containers_error.txt "forbidden value 'containers-storag
 
 # Test that experimental properties are disallowed
 echo_log "  Testing experimental property restriction..."
-if trybuild_deprecated --policy compliance.aibp.yml experimental.aib.yml out 2> experimental_error.txt; then
+if trybuild --policy compliance.aibp.yml experimental.aib.yml out 2> experimental_error.txt; then
     echo_fail "Compliance policy should deny experimental properties"
     fatal "Compliance policy should have blocked experimental properties"
 else

@@ -9,7 +9,7 @@ success=0
 
 # Build image
 echo_log "Building AIB image..."
-build_deprecated --target qemu --mode image --policy qm-container-checksum-policy.aibp.yml --export image qm-container-checksum.aib.yml "$IMG_NAME"
+build --target qemu --policy qm-container-checksum-policy.aibp.yml qm-container-checksum.aib.yml - "$IMG_NAME"
 
 # Verify image exists
 assert_image_exists "$IMG_NAME"
