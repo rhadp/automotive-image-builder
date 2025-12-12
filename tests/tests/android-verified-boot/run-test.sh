@@ -21,7 +21,7 @@ trap 'cleanup_path "$IMG_SIGNED" "$UPDATE_TAR"; cleanup_container "$AVB_UNSIGNED
 #########################################
 
 echo_log "Starting bootc build..."
-build_bootc --target abootqemukvm \
+build --target abootqemukvm \
     avb.aib.yml \
     "$AVB_UNSIGNED"
 echo_log "Build completed, output: $AVB_UNSIGNED"
@@ -51,7 +51,7 @@ echo_pass "Built signed bootc disk image"
 ############################################
 
 echo_log "Starting bootc build of update..."
-build_bootc --target abootqemukvm \
+build --target abootqemukvm \
     avb-update.aib.yml \
     "$AVB_UPD_UNSIGNED"
 echo_log "Build completed, output: $AVB_UPD_UNSIGNED"

@@ -8,7 +8,7 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "etc"' 'EXIT'
 
 echo_log "Starting build for root_ssh_keys test..."
-build_bootc \
+build \
     --tar \
     --extend-define tar_paths=['etc/ssh/sshd_config','etc/ssh/authorized_keys/root','etc/ssh/sshd_config.d/99-custom-authorized-keys.conf'] \
     authorized-keys.aib.yml \

@@ -331,7 +331,7 @@ build_deprecated() {
    save_to_tmt_data build.log
 }
 
-trybuild_bootc() {
+trybuild() {
     local result=0
 
     $AIB build \
@@ -345,8 +345,8 @@ trybuild_bootc() {
     return $result
 }
 
-build_bootc() {
-   if ! trybuild_bootc "$@"; then
+build() {
+   if ! trybuild "$@"; then
       echo FAILED to build bootc container
       # only show last 50 lines in
       tail -n 50 build-bootc.log

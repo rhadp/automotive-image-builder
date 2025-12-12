@@ -18,7 +18,7 @@ tar_paths="[\
 'usr/sbin',\
 'usr/share/containers/systemd'\
 ]"
-build_bootc --tar \
+build --tar \
     --extend-define tar_paths="$tar_paths" \
     custom-files.aib.yml \
     "$TAR_FILE"
