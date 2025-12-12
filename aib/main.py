@@ -98,6 +98,27 @@ def bootc_archive_to_store(runner, archive_file, container_name, user=False):
         runner.run_as_root(cmdline)
 
 
+def container_to_disk_image(args, tmpdir, runner, src_container, fmt, out):
+    with SudoTemporaryDirectory(
+        prefix="bib-out--", dir=os.path.dirname(out)
+    ) as outputdir:
+        output_file = os.path.join(outputdir.name, "image.raw")
+
+        res = podman_run_bootc_image_builder(
+            args.bib_container,
+            args.build_container or get_build_container_for(src_container),
+            src_container,
+            "raw",
+            output_file,
+            args.verbose,
+        )
+        if res != 0:
+            log.error("bootc-image-builder failed to create the image")
+            sys.exit(1)
+
+        export_disk_image_file(runner, args, tmpdir, output_file, out, fmt)
+
+
 @command(
     group=CommandGroup.BASIC,
     help="Build a bootc container image (to container store or archive file)",
@@ -307,24 +328,7 @@ def to_disk_image(args, tmpdir, runner):
 
     fmt = DiskFormat.from_string(args.format) or DiskFormat.from_filename(args.out)
 
-    with SudoTemporaryDirectory(
-        prefix="bib-out--", dir=os.path.dirname(args.out)
-    ) as outputdir:
-        output_file = os.path.join(outputdir.name, "image.raw")
-
-        res = podman_run_bootc_image_builder(
-            args.bib_container,
-            args.build_container or get_build_container_for(args.src_container),
-            args.src_container,
-            "raw",
-            output_file,
-            args.verbose,
-        )
-        if res != 0:
-            log.error("bootc-image-builder failed to create the image")
-            sys.exit(1)
-
-        export_disk_image_file(runner, args, tmpdir, output_file, fmt)
+    container_to_disk_image(args, tmpdir, runner, args.src_container, fmt, args.out)
 
 
 @command(

@@ -321,11 +321,11 @@ def partition_is_safe_to_truncate(p):
     return False
 
 
-def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
-    runner.add_volume_for(args.out)
+def export_disk_image_file(runner, args, tmpdir, image_file, out, fmt):
+    runner.add_volume_for(out)
     if args.separate_partitions:
-        runner.run_as_root(["rm", "-rf", args.out])
-        os.mkdir(args.out)
+        runner.run_as_root(["rm", "-rf", out])
+        os.mkdir(out)
 
         disk_json = runner.run_in_container(
             ["sfdisk", "--json", image_file], capture_output=True
@@ -337,7 +337,7 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
             name = p.get("name", f"part{idx}")
 
             part_tmp_file = os.path.join(tmpdir, "part.img")
-            part_file = os.path.join(args.out, name + fmt.ext)
+            part_file = os.path.join(out, name + fmt.ext)
 
             if partition_is_safe_to_truncate(p):
                 size = truncate_partition_size(image_file, start, size)
@@ -352,4 +352,4 @@ def export_disk_image_file(runner, args, tmpdir, image_file, fmt):
             )
             fmt.convert_image(runner, part_tmp_file, part_file)
     else:
-        fmt.convert_image(runner, image_file, args.out)
+        fmt.convert_image(runner, image_file, out)
