@@ -879,6 +879,10 @@ mpp-vars:
           then: aboot-update
         - mpp-if: use_aboot_like
           then: aboot-deploy
+        - mpp-if: use_aboot
+          then: android-tools
+        - mpp-if: use_aboot
+          then: kernel-tools
         - mpp-if: sign_kernel_modules
           then: $kernel_devel_rpm
       - mpp-if: use_ukiboot
