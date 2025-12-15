@@ -7,7 +7,15 @@
 **Domain:** Automotive / Embedded Systems
 **Workflow:** User provides declarative YAML manifest (.aib.yml) → AIB generates deterministic OSBuild JSON → OSBuild builds the image
 **Key Dependencies:** OSBuild (build engine), Python stdlib, manifest pre-processor (mpp/)
-**Image Types:** Immutable OSTree-based (default, FuSa-ready) and traditional package-based
+
+The project provides three command-line tools:
+- **`aib`** (alias `automotive-image-builder`): Modern bootc-based image builds for production
+- **`aib-dev`** (alias `automotive-image-builder-dev`): Traditional package-based builds for development
+- **`air`** (alias `automotive-image-runner`): Wrapper of qemu to run virtual machines
+
+**Image Types:**
+- Immutable OSTree-based bootc containers (via `aib`, default for production, FuSa-ready)
+- Traditional package-based mutable filesystems (via `aib-dev`, for development/iteration)
 
 ## Technology Stack
 
@@ -23,177 +31,381 @@
 - **Testing:** Test automation is managed via `tox` (inferred from `tox.ini`). A dedicated `tests` directory exists.
 - **Code Quality:** No specific tools listed, but configurations are likely present in `tox.ini`.
 - **Build/Package:** Build and packaging processes are likely automated with `tox`.
-- **CI/CD:** GitLab CI - Configuration is in `.gitlab-ci.yml`. The pipeline likely executes test environments defined in `tox.ini` and runs custom scripts from the `ci-scripts` directory.
+- **CI/CD:** GitLab CI - The pipeline executes test environments defined in `.gitlab-ci.yml` and runs custom scripts from the `ci-scripts` directory.
 
 ## Architecture & Code Organization
 
 ### Project Organization
 ```
 .
-├── .fmf/
-├── aib/
-│   ├── tests/
-│   │   ├── __init__.py
-│   │   ├── builder_options_test.py
-│   │   ├── exceptions_test.py
-│   │   ├── manifest_test.py
-│   │   ├── ostree_test.py
-│   │   ├── runner_test.py
-│   │   ├── simple_test.py
-│   │   └── utils_test.py
-│   ├── __init__.py
-│   ├── exceptions.py
-│   ├── exports.py
-│   ├── main.py
-│   ├── ostree.py
-│   ├── runner.py
-│   ├── simple.py
-│   ├── utils.py
-│   └── version.py
-├── build/
-│   └── build-rpm.sh
-├── ci-scripts/
-│   └── run_tmt_tests.sh
-├── distro/
-│   ├── autosd.ipp.yml -> autosd10.ipp.yml
-│   ├── autosd10-latest-sig.ipp.yml
-│   ├── autosd10-sig.ipp.yml
-│   ├── autosd10.ipp.yml
-│   ├── autosd9-latest-sig.ipp.yml
-│   ├── autosd9-sig.ipp.yml
-│   ├── autosd9.ipp.yml
-│   ├── cs9.ipp.yml -> autosd9-latest-sig.ipp.yml
-│   ├── eln.ipp.yml
-│   ├── f40.ipp.yml
-│   ├── f40a.ipp.yml
-│   ├── f41.ipp.yml
-│   ├── rhivos.ipp.yml -> rhivos2.ipp.yml
-│   ├── rhivos1.ipp.yml
-│   └── rhivos2.ipp.yml
-├── docs/
-├── examples/
-│   ├── complex.aib.yml
-│   ├── container.aib.yml
-│   ├── lowlevel.mpp.yml
-│   ├── qm.aib.yml
-│   └── simple.aib.yml
-├── files/
-│   ├── manifest_schema.yml
-│   └── simple.mpp.yml
-├── include/
-│   ├── arch-aarch64.ipp.yml
-│   ├── arch-x86_64.ipp.yml
-│   ├── build.ipp.yml
-│   ├── computed-vars.ipp.yml
-│   ├── content.ipp.yml
-│   ├── data.ipp.yml
-│   ├── defaults-computed.ipp.yml
-│   ├── defaults.ipp.yml
-│   ├── empty.ipp.yml
-│   ├── image.ipp.yml
-│   ├── main.ipp.yml
-│   ├── mode-image.ipp.yml
-│   ├── mode-package.ipp.yml
-│   └── qm.ipp.yml
-├── mpp/
-│   └── aibosbuild/
-│       └── util/
-│           ├── __init__.py
-│           ├── bls.py
-│           ├── checksum.py
-│           ├── containers.py
-│           ├── ctx.py
-│           ├── fscache.py
-│           ├── jsoncomm.py
-│           ├── linux.py
-│           ├── lorax.py
-│           ├── lvm2.py
-│           ├── mnt.py
-│           ├── osrelease.py
-│           ├── ostree.py
-│           ├── parsing.py
-│           └── path.py
-├── targets/
-│   ├── _abootqemu.ipp.yml
-│   ├── _abootqemukvm.ipp.yml
-│   ├── _ridesx4_r3.ipp.yml
-│   ├── _ridesx4_scmi.ipp.yml
-│   ├── abootqemu.ipp.yml
-│   ├── abootqemukvm.ipp.yml
-│   ├── am62sk.ipp.yml
-│   ├── am69sk.ipp.yml
-│   ├── aws.ipp.yml
-│   ├── beagleplay.ipp.yml
-│   ├── ccimx93dvk.ipp.yml
-│   ├── j784s4evm.ipp.yml
-│   ├── pc.ipp.yml
-│   ├── qdrive3.ipp.yml
-│   ├── qemu.ipp.yml
-│   ├── rcar_s4.ipp.yml
-│   ├── rcar_s4_can.ipp.yml
-│   ├── ridesx4.ipp.yml
-│   ├── ridesx4_r3.ipp.yml
-│   ├── ridesx4_scmi.ipp.yml
-│   ├── rpi4.ipp.yml
-│   ├── s32g_vnp_rdb3.ipp.yml
-│   └── tda4vm_sk.ipp.yml
-├── tests/
-│   ├── plans/
-│   │   ├── connect.fmf
-│   │   └── local.fmf
-│   ├── scripts/
-│   │   ├── cleanup.sh
-│   │   ├── rebuild-package.sh
-│   │   ├── setup-lib.sh
-│   │   ├── setup-local.sh
-│   │   ├── setup-repos.sh
-│   │   └── test-lib.sh
-│   ├── tests/
-│   │   ├── add-files/
-│   │   │   ├── custom-files.aib.yml
-│   │   │   ├── main.fmf
-│   │   │   └── test-add-files.sh
-│   │   ├── container-image/
-│   │   │   ├── main.fmf
-│   │   │   ├── test-container-image.sh
-│   │   │   └── test.aib.yml
-│   │   ├── denylist-modules/
-│   │   │   ├── main.fmf
-│   │   │   ├── test-denylist-modules.sh
-│   │   │   └── test.aib.yml
-│   │   ├── denylist-rpms/
-│   │   │   ├── main.fmf
-│   │   │   ├── test-denylist-rpms.sh
-│   │   │   └── test.aib.yml
-│   │   ├── install-rpms/
-│   │   │   ├── main.fmf
-│   │   │   ├── test-install-rpms.sh
-│   │   │   └── test.aib.yml
-│   │   └── main.fmf
-│   ├── README.md
-│   ├── run_aws.sh
-│   ├── test-compose.json
-│   └── test.mpp.yml
-├── .gitignore
-├── .gitlab-ci.yml
+├── aib
+│   ├── arguments.py
+│   ├── exceptions.py
+│   ├── exports.py
+│   ├── globals.py
+│   ├── __init__.py
+│   ├── list_ops.py
+│   ├── main_dev.py
+│   ├── main.py
+│   ├── osbuild.py
+│   ├── ostree.py
+│   ├── podman.py
+│   ├── policy.py
+│   ├── progress.py
+│   ├── runner.py
+│   ├── simple.py
+│   ├── tests
+│   │   ├── argparse_test.py
+│   │   ├── builder_options_test.py
+│   │   ├── exceptions_test.py
+│   │   ├── exports_test.py
+│   │   ├── __init__.py
+│   │   ├── manifest_test.py
+│   │   ├── ostree_test.py
+│   │   ├── policy_test.py
+│   │   ├── progress_test.py
+│   │   ├── runner_test.py
+│   │   ├── simple_test.py
+│   │   ├── utils_test.py
+│   │   └── version_test.py
+│   ├── utils.py
+│   └── version.py
+├── auto-image-builder.sh
+├── automotive-image-builder
+├── automotive-image-builder-dev
+├── automotive-image-builder.spec.in
+├── bin
+│   ├── aib
+│   ├── aib-dev
+│   ├── aib-dev.installed
+│   ├── aib.installed
+│   ├── air
+│   ├── automotive-image-builder -> aib
+│   └── automotive-image-builder-dev -> aib-dev
+├── build
+│   ├── build-rpm.sh
+│   └── ociarch
+├── ci-scripts
+│   ├── aws-lib.sh
+│   ├── parallel-test-runner.sh
+│   ├── run-shellcheck.sh
+│   └── run_tmt_tests.sh
 ├── Containerfile
+├── contrib
+│   ├── avb
+│   │   ├── sign.sh
+│   │   └── testkey_rsa4096.pem
+│   └── secure-boot
+│       ├── enroll.aib.yml
+│       ├── enroll-keys.sh
+│       ├── generate-sb-keys.sh
+│       ├── pregenerated
+│       │   ├── db.auth
+│       │   ├── db.p12
+│       │   ├── KEK.auth
+│       │   ├── password
+│       │   ├── PK.auth
+│       │   └── secboot_vars.fd
+│       ├── README.md
+│       └── signer
+│           ├── Containerfile
+│           └── sign-files.sh
+├── distro
+│   ├── autosd10.ipp.yml
+│   ├── autosd10-latest-sig.ipp.yml
+│   ├── autosd10-sig.ipp.yml
+│   ├── autosd9.ipp.yml
+│   ├── autosd9-latest-sig.ipp.yml
+│   ├── autosd9-sig.ipp.yml
+│   ├── autosd.ipp.yml -> autosd10.ipp.yml
+│   ├── cs9.ipp.yml -> autosd9-latest-sig.ipp.yml
+│   ├── eln.ipp.yml
+│   ├── f40.ipp.yml
+│   ├── f41.ipp.yml
+│   ├── rhivos1.ipp.yml
+│   ├── rhivos2.ipp.yml
+│   └── rhivos.ipp.yml -> rhivos2.ipp.yml
+├── docs
+│   └── index.html
+├── examples
+│   ├── complex.aib.yml
+│   ├── container.aib.yml
+│   ├── glob-files.aib.yml
+│   ├── lowlevel.mpp.yml
+│   ├── qm.aib.yml
+│   ├── radio.container
+│   └── simple.aib.yml
+├── files
+│   ├── bootc-builder.aib.yml
+│   ├── emergency.service
+│   ├── manifest_schema.yml
+│   ├── policies
+│   │   ├── hardened.aibp.yml
+│   │   └── README.md
+│   ├── policy_schema.yml
+│   ├── rcu-normal.service
+│   ├── rescue.service
+│   └── simple.mpp.yml
+├── include
+│   ├── arch-aarch64.ipp.yml
+│   ├── arch-x86_64.ipp.yml
+│   ├── build.ipp.yml
+│   ├── computed-vars.ipp.yml
+│   ├── content.ipp.yml
+│   ├── data.ipp.yml
+│   ├── defaults-computed.ipp.yml
+│   ├── defaults.ipp.yml
+│   ├── empty.ipp.yml
+│   ├── image.ipp.yml
+│   ├── main.ipp.yml
+│   ├── mode-image.ipp.yml
+│   ├── mode-package.ipp.yml
+│   └── qm.ipp.yml
+├── LICENSE
+├── Makefile
+├── mpp
+│   ├── aibosbuild
+│   │   └── util
+│   │       ├── bls.py
+│   │       ├── checksum.py
+│   │       ├── containers.py
+│   │       ├── ctx.py
+│   │       ├── fscache.py
+│   │       ├── __init__.py
+│   │       ├── jsoncomm.py
+│   │       ├── linux.py
+│   │       ├── lorax.py
+│   │       ├── lvm2.py
+│   │       ├── mnt.py
+│   │       ├── osrelease.py
+│   │       ├── ostree.py
+│   │       ├── parsing.py
+│   │       ├── path.py
+│   │       ├── pe32p.py
+│   │       ├── rhsm.py
+│   │       ├── rmrf.py
+│   │       ├── runners.py
+│   │       ├── selinux.py
+│   │       ├── term.py
+│   │       ├── types.py
+│   │       └── udev.py
+│   └── aib-osbuild-mpp
+├── README.maintainer.md
 ├── README.md
+├── systemctl-status.exp
+├── targets
+│   ├── abootqemu.ipp.yml
+│   ├── abootqemukvm.ipp.yml
+│   ├── acrn.ipp.yml
+│   ├── am62sk.ipp.yml
+│   ├── am69sk.ipp.yml
+│   ├── aws.ipp.yml
+│   ├── azure.ipp.yml
+│   ├── beagleplay.ipp.yml
+│   ├── ccimx93dvk.ipp.yml
+│   ├── ebbr.ipp.yml
+│   ├── imx8qxp_mek.ipp.yml
+│   ├── include
+│   │   ├── _abootqemu.ipp.yml
+│   │   ├── _abootqemukvm.ipp.yml
+│   │   ├── k3.ipp.yml
+│   │   ├── _ridesx4_common.ipp.yml
+│   │   ├── _ridesx4.ipp.yml
+│   │   └── _ridesx4_scmi.ipp.yml
+│   ├── j784s4evm.ipp.yml
+│   ├── pc.ipp.yml
+│   ├── qdrive3.ipp.yml
+│   ├── qemu.ipp.yml
+│   ├── rcar_s4_can.ipp.yml
+│   ├── rcar_s4.ipp.yml
+│   ├── ridesx4.ipp.yml
+│   ├── ridesx4_r3.ipp.yml
+│   ├── ridesx4_scmi.ipp.yml
+│   ├── ridesx4_scmi_r3.ipp.yml
+│   ├── rpi4.ipp.yml
+│   ├── s32g_vnp_rdb3.ipp.yml
+│   └── tda4vm_sk.ipp.yml
+├── tests
+│   ├── image-tests
+│   │   ├── dmesg_clean.sh
+│   │   ├── README.md
+│   │   ├── rpmdb_initialized.sh
+│   │   ├── run-all.sh
+│   │   ├── selinux_check.sh
+│   │   ├── systemd_running.sh
+│   │   └── test-runner.service
+│   ├── plans
+│   │   ├── connect.fmf
+│   │   └── local.fmf
+│   ├── README.md
+│   ├── run_aws.sh
+│   ├── scripts
+│   │   ├── cleanup.sh
+│   │   ├── init-bootc-builder.sh
+│   │   ├── init-build-cache.sh
+│   │   ├── login.exp
+│   │   ├── rebuild-package.sh
+│   │   ├── runcmd.exp
+│   │   ├── setup-lib.sh
+│   │   ├── setup-local.sh
+│   │   ├── setup-repos.sh
+│   │   └── test-lib.sh
+│   ├── test.mpp.yml
+│   └── tests
+│       ├── android-verified-boot
+│       │   ├── avb.aib.yml
+│       │   ├── avb-update.aib.yml
+│       │   ├── main.fmf
+│       │   ├── password
+│       │   ├── run-test.sh
+│       │   ├── sign.sh
+│       │   └── testkey_rsa4096.pem
+│       ├── auth-root-password
+│       │   ├── main.fmf
+│       │   ├── root-password.aib.yml
+│       │   └── run-test.sh
+│       ├── auth-root-ssh-keys
+│       │   ├── authorized-keys.aib.yml
+│       │   ├── main.fmf
+│       │   └── run-test.sh
+│       ├── auth-users-and-groups
+│       │   ├── main.fmf
+│       │   ├── run-test.sh
+│       │   └── users-and-groups.aib.yml
+│       ├── compliance-policy
+│       │   ├── compliance.aibp.yml
+│       │   ├── containers-storage.aib.yml
+│       │   ├── experimental.aib.yml
+│       │   ├── lowlevel.mpp.yml
+│       │   ├── main.fmf
+│       │   ├── minimal.aibp.yml
+│       │   ├── run-test.sh
+│       │   └── simple-rpms.aib.yml
+│       ├── container-image
+│       │   ├── container-image.aib.yml
+│       │   ├── main.fmf
+│       │   └── run-test.sh
+│       ├── custom-kernel
+│       │   ├── custom-kernel.aib.yml
+│       │   ├── main.fmf
+│       │   └── run-test.sh
+│       ├── denylist-modules
+│       │   ├── denylist-modules.aib.yml
+│       │   ├── main.fmf
+│       │   └── run-test.sh
+│       ├── image-size
+│       │   ├── image-size-2500mb.aib.yml
+│       │   ├── image-size-2gib.aib.yml
+│       │   ├── main.fmf
+│       │   └── run-test.sh
+│       ├── install-rpms
+│       │   ├── install-rpms.aib.yml
+│       │   ├── main.fmf
+│       │   └── run-test.sh
+│       ├── kernel-cmdline-options
+│       │   ├── kernel-cmdline-options.aib.yml
+│       │   ├── main.fmf
+│       │   └── run-test.sh
+│       ├── main.fmf
+│       ├── manage-files
+│       │   ├── custom-files.aib.yml
+│       │   ├── invalid-custom-dir.aib.yml
+│       │   ├── invalid-root-path.aib.yml
+│       │   ├── main.fmf
+│       │   ├── run-test.sh
+│       │   └── test-data
+│       │       ├── file1.txt
+│       │       ├── file2.txt
+│       │       ├── root_fs
+│       │       │   └── usr
+│       │       │       └── share
+│       │       │           └── containers
+│       │       │               └── systemd
+│       │       │                   └── test.container
+│       │       ├── subdir1
+│       │       │   └── app.log
+│       │       └── subdir2
+│       │           └── system.log
+│       ├── memory-limit-cpu-weight
+│       │   ├── main.fmf
+│       │   ├── memory-limit-cpu-weight.aib.yml
+│       │   └── run-test.sh
+│       ├── minimal-image-boot
+│       │   ├── main.fmf
+│       │   ├── minimal-image-boot.aib.yml
+│       │   └── run-test.sh
+│       ├── network-dynamic
+│       │   ├── main.fmf
+│       │   ├── network-dynamic.aib.yml
+│       │   └── run-test.sh
+│       ├── network-static
+│       │   ├── main.fmf
+│       │   ├── network-static.aib.yml
+│       │   └── run-test.sh
+│       ├── partition-absolute-size
+│       │   ├── main.fmf
+│       │   ├── partition-absolute-size.aib.yml
+│       │   └── run-test.sh
+│       ├── partition-relative-size
+│       │   ├── main.fmf
+│       │   ├── partition-relative-size.aib.yml
+│       │   └── run-test.sh
+│       ├── qm-container-checksum
+│       │   ├── main.fmf
+│       │   ├── qm-container-checksum.aib.yml
+│       │   ├── qm-container-checksum-policy.aibp.yml
+│       │   └── run-test.sh
+│       ├── secureboot
+│       │   ├── db.p12
+│       │   ├── main.fmf
+│       │   ├── password
+│       │   ├── run-test.sh
+│       │   ├── secboot_vars.fd
+│       │   ├── secureboot.aib.yml
+│       │   ├── secureboot-update.aib.yml
+│       │   └── signer
+│       │       ├── Containerfile
+│       │       └── sign-files.sh
+│       ├── selinux-config
+│       │   ├── main.fmf
+│       │   ├── run-test.sh
+│       │   └── selinux-config.aib.yml
+│       └── systemd-services
+│           ├── main.fmf
+│           ├── run-test.sh
+│           └── systemd-services.aib.yml
 └── tox.ini
 ```
 
 ### Architecture Patterns
-**Code Organization:** Configuration-Driven Command-Line Interface (CLI). The application logic is organized into distinct Python modules within the `aib` package, each handling a specific domain (e.g., `ostree`, `vm`, `runner`). The core workflow is driven by merging and processing declarative YAML configuration files.
+**Code Organization:** Configuration-Driven Command-Line Interface (CLI). The application logic is organized into distinct Python modules within the `aib` package, each handling a specific domain (e.g., `ostree`, `runner`, `podman`, `exports`). The core workflow is driven by merging and processing declarative YAML configuration files.
 **Key Components:**
-- `aib.main`: The main entry point. It handles command-line argument parsing, discovers configuration files (`.ipp.yml`), and orchestrates the build process.
-- `aib.runner`: The core execution engine. It takes the processed configuration and likely invokes underlying build tools like `osbuild`.
+- `aib.main`: Entry point for `aib` (bootc-focused builds). Handles command-line argument parsing for bootc container operations and orchestrates bootc-specific workflows.
+- `aib.main_dev`: Entry point for `aib-dev` (package-based builds). Handles traditional package-based builds and includes deprecated backwards compatibility commands.
+- `aib.list_ops`: Shared list subcommands between `aib` and `aib-dev` for discovering available distros, targets, and exports.
+- `aib.runner`: A sudo/container execution engine. It takes the processed configuration and invokes underlying build tools like `osbuild`.
 - `aib.simple.ManifestLoader`: Responsible for loading, parsing, and processing the primary user-provided YAML manifest files.
-- `aib.ostree`, `aib.exports`: Specialized modules that handle specific functionalities like OSTree repository operations, VM management, and exporting build artifacts.
-**Entry Points:** The application is executed via the command line through `aib/main.py`. The primary flow involves parsing arguments, loading and merging a hierarchy of YAML files (`.ipp.yml`, `.aib.yml`), and passing the resulting configuration to the `Runner` to execute the build.
+- `aib.podman`: Support for running podman and bootc tools for container image operations.
+- `aib.progress`: Nice printing of osbuild logs with progress tracking.
+- `aib.policy`: Handlers for loading policy files and validating manifest against them for FuSa compliance.
+- `aib.osbuild`: Code for invoking osbuild with proper error handling.
+- `aib.ostree`: OSTree repository management operations.
+- `aib.exports`: Specialized module that handles exporting build artifacts in various formats (qcow2, raw, simg, container, etc.).
+- `aib.utils`: Utility functions including sparse file handling, key management, and filesystem operations.
+**Entry Points:** The application has two entry points:
+- `aib/main.py` for modern bootc-based builds (accessed via `aib` or `automotive-image-builder`)
+- `aib/main_dev.py` for traditional package-based builds (accessed via `aib-dev` or `automotive-image-builder-dev`)
+The primary flow involves parsing arguments, loading and merging a hierarchy of YAML files (`.ipp.yml`, `.aib.yml`), and passing the resulting configuration to the `Runner` to execute the build.
 
 ### Important Files for Review Context
-- **`aib/main.py`** - As the primary entry point, it defines the CLI arguments and orchestrates the interaction between all other modules. Understanding this file is key to understanding the application's overall workflow.
+- **`aib/main.py`** - Entry point for `aib` (bootc builds). Defines CLI arguments for bootc container operations including build, to-disk-image, extract-for-signing, inject-signed, reseal, and prepare-reseal commands.
+- **`aib/main_dev.py`** - Entry point for `aib-dev` (package builds). Defines CLI arguments for traditional package-based builds and includes the deprecated build-deprecated command for backwards compatibility.
 - **`aib/runner.py`** - This module contains the central build logic. Changes here directly impact how OS images are constructed, making it a critical file for most reviews.
-- **`files/manifest_schema.yml`** - This file (inferred from its name and project structure) likely defines the valid structure and options for the input `.aib.yml` manifests. Reviewers need to be aware of this schema to validate changes related to build configuration.
+- **`aib/podman.py`** - Handles container operations via Podman, including image mounting, running bootc-image-builder, and container lifecycle management.
+- **`aib/osbuild.py`** - Invokes osbuild with proper error handling, manifest creation, and progress tracking.
+- **`aib/policy.py`** - Loads and validates policy files (`.aibp.yml`) against manifests for FuSa compliance enforcement.
+- **`files/manifest_schema.yml`** - Defines the valid structure and options for the input `.aib.yml` manifests. Reviewers need to be aware of this schema to validate changes related to build configuration.
+- **`files/policy_schema.yml`** - Defines the structure for policy files used to enforce FuSa and other compliance requirements.
 
 ### Development Conventions
 - **Naming:** Python source files use snake_case (`runner.py`). Test files are named with a `_test.py` suffix (`runner_test.py`). Configuration files use a `.ipp.yml` or `.aib.yml` suffix to denote their purpose.
@@ -243,7 +455,7 @@
 
 **`integration_tests_10`** - TMT framework (120min timeout)
 - Depends on: `packit-srpm-build` artifact (`*.src.rpm`)
-- Uses: CentOS Stream 9 image (TODO comment: migrate to CS10)
+- Uses: CentOS Stream 10 image
 - Produces: JUnit XML at `tmt-run/**/junit.xml`
 - Currently tests: `autosd10-latest-sig` distro (TODO comment: change to autosd10-sig)
 
@@ -289,10 +501,16 @@
 ## Domain-Specific Context
 
 - **OSBuild Integration**: Core dependency on OSBuild for actual image construction. AIB acts as a "manifest authoring tool" generating deterministic OSBuild JSON manifests.
-- **OSTree vs Package Mode**: "image" mode creates immutable OSTree-based systems for production; "package" mode creates traditional DNF-managed systems for development.
-- **Automotive Terminology**: QM (Quality Managed) partitions for safety-critical code isolation; FuSa (Functional Safety) compliance; bootc containers for atomic updates.
+- **Tool Selection**:
+  - **`aib`**: For production bootc container images and immutable OSTree-based systems. Supports container builds, disk image conversion, secure boot workflows (extract-for-signing, inject-signed, reseal).
+  - **`aib-dev`**: For development with traditional package-based mutable filesystems. Supports rapid iteration with DNF-managed systems. Includes deprecated `build-deprecated` command for automotive-image-builder 1.0 compatibility.
+- **Bootc vs Package Mode**:
+  - **Bootc mode** (via `aib`): Creates immutable OSTree-based container images for production use with atomic updates and rollback capabilities. Output is a container image that can be converted to disk images.
+  - **Package mode** (via `aib-dev`): Creates traditional DNF-managed mutable filesystems for development and rapid iteration. Direct disk image output.
+- **Automotive Terminology**: QM (Quality Managed) partitions for safety-critical code isolation; FuSa (Functional Safety) compliance; bootc containers for atomic updates; secure boot workflows for production deployments.
 - **Target Hardware**: Extensive automotive SoC support (TI AM62/69, Renesas R-Car, NXP S32G, Qualcomm) with target-specific configurations in `targets/` directory.
 - **Container Images**: `quay.io/centos-sig-automotive/automotive-image-builder` for containerized builds; supports both rootless (`--user-container`) and privileged execution.
+- **Sparse Image Support**: Android sparse image format (simg) for efficient storage with DONT_CARE (holes), FILL (zeros), and RAW (data) chunks. Use `contrib/write_simg.py` for writing to block devices or files.
 
 ## Special Cases & Edge Handling
 
@@ -307,3 +525,9 @@
 - **Schema Evolution**: `files/manifest_schema.yml` and `files/policy_schema.yml` define validation rules. Changes to manifest features require schema updates and corresponding parser logic in `aib/simple.py`.
 - **Export Format Flexibility**: Supports multiple simultaneous exports (qcow2, container, ostree-commit, bootc, etc.) from single build. Each format handled by specialized logic in `aib/exports.py`.
 - **Testing Strategy**: Unit tests in `aib/tests/`, compose-only tests via `make test-compose`, full integration tests using TMT framework in root `tests/` directory.
+- **Sparse File Utilities** (in `aib/utils.py`):
+  - `extract_part_of_file(src, dst, start, size)`: Extract partition from image, preserving sparse regions using SEEK_DATA/SEEK_HOLE
+  - `truncate_partition_size(src, start, size, block_size)`: Detect trailing holes and return optimal partition size
+  - `convert_to_simg(src, dst, block_size)`: Convert raw image to Android sparse image format
+  - `create_cpio_archive(dest, basedir, files, compression)`: Create compressed CPIO archives with various formats (gzip, xz, zstd, lz4)
+- **Sparse Image Writing** (`contrib/write_simg.py`): Standalone tool for writing Android sparse images to block devices or regular files. Supports interactive confirmation, force mode, and optional zero-initialization of DONT_CARE regions.
