@@ -84,17 +84,66 @@ unit-test-job:
         path: coverage/report.xml
   coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
 
-build-image-x86-job:
+prepare-image-x86-job:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
   script:
-    - ./bin/aib-dev build-deprecated --build-dir _build --mode=image --export qcow2 examples/lowlevel.mpp.yml lowlevel.qcow2
+    - ./bin/aib download --verbose --distro autosd10-latest-sig --build-dir _build --cache _build/cache examples/complex.aib.yml
+    - ./bin/aib download --verbose --distro autosd10 --build-dir _build --cache _build/cache examples/complex.aib.yml
+  artifacts:
+    paths:
+      - _build/
+      - builder.tar
+    when: on_success
+    expire_in: 24 hours
 
-build-package-x86-job:
+.build-bootc-template:
   image: quay.io/centos-sig-automotive/automotive-osbuild
   stage: test
+  needs:
+    - job: prepare-image-x86-job
+      artifacts: true
+  variables:
+    AIB_DISTRO: "autosd10"
+    MANIFEST: "examples/complex.aib.yml"
+    CONTAINER_IMAGE_NAME: "localhost/auto:latest"
+  before_script:
+    # Set up container storage in a non-overlay locateion (in $CI_PROJECT_DIR)
+    - mkdir -p "$CI_PROJECT_DIR/_containers/var" "$CI_PROJECT_DIR/_containers/run"
+    - rm -rf /var/lib/containers /run/containers
+    - mkdir -p /var/lib/containers /run/containers
+    - mount --bind "$CI_PROJECT_DIR/_containers/var" /var/lib/containers
+    - mount --bind "$CI_PROJECT_DIR/_containers/run" /run/containers
   script:
-    - ./bin/aib-dev build-deprecated --build-dir _build --mode=package --export image examples/lowlevel.mpp.yml lowlevel.img
+    - ./bin/aib build --verbose --build-dir _build --cache _build/cache --distro "$AIB_DISTRO" "$MANIFEST" "$CONTAINER_IMAGE_NAME"
+
+.build-dev-template:
+  image: quay.io/centos-sig-automotive/automotive-osbuild
+  stage: test
+  needs:
+    - job: prepare-image-x86-job
+      artifacts: true
+  variables:
+    AIB_DISTRO: "autosd10"
+    MANIFEST: "examples/complex.aib.yml"
+    DISK_IMAGE_NAME: "auto.img"
+  script:
+    - ./bin/aib-dev build --verbose --build-dir _build --cache _build/cache --distro "$AIB_DISTRO" "$MANIFEST"  "$DISK_IMAGE_NAME"
+
+build-bootc-x86-job:
+  extends: .build-bootc-template
+  variables:
+    AIB_DISTRO: "autosd10"
+
+build-bootc-latest-x86-job:
+  extends: .build-bootc-template
+  variables:
+    AIB_DISTRO: "autosd10-latest-sig"
+
+build-dev-x86-job:
+  extends: .build-dev-template
+  variables:
+    AIB_DISTRO: "autosd10"
 
 packit-srpm-build:
   image: quay.io/packit/packit
@@ -105,30 +154,6 @@ packit-srpm-build:
     paths:
       - "*.src.rpm"
     expire_in: 1 week
-
-build-simple-image-x86-job:
-  image: quay.io/centos-sig-automotive/automotive-osbuild
-  stage: test
-  script:
-    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10-latest-sig --mode=image --export image examples/complex.aib.yml example.img
-
-build-simple-package-x86-job:
-  image: quay.io/centos-sig-automotive/automotive-osbuild
-  stage: test
-  script:
-    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10-latest-sig --mode=package --export image examples/complex.aib.yml example.img
-
-build-simple-autosd-image-x86-job:
-  image: quay.io/centos-sig-automotive/automotive-osbuild
-  stage: test
-  script:
-    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10 --mode=image --export image examples/complex.aib.yml example.img
-
-build-simple-autosd-package-x86-job:
-  image: quay.io/centos-sig-automotive/automotive-osbuild
-  stage: test
-  script:
-    - ./bin/aib-dev build-deprecated --build-dir _build --distro autosd10 --mode=package --export image examples/complex.aib.yml example.img
 
 pages:
   stage: deploy
