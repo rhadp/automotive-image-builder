@@ -16,9 +16,9 @@ install:
 	install bin/aib.installed $(DESTDIR)$(BINDIR)/aib
 	install bin/aib-dev.installed $(DESTDIR)$(BINDIR)/aib-dev
 	install -t $(DESTDIR)$(BINDIR) bin/air
-	ln -s aib $(DESTDIR)$(BINDIR)/automotive-image-builder
-	ln -s aib-dev $(DESTDIR)$(BINDIR)/automotive-image-builder-dev
-	ln -s air $(DESTDIR)$(BINDIR)/automotive-image-runner
+	ln -sf aib $(DESTDIR)$(BINDIR)/automotive-image-builder
+	ln -sf aib-dev $(DESTDIR)$(BINDIR)/automotive-image-builder-dev
+	ln -sf air $(DESTDIR)$(BINDIR)/automotive-image-runner
 	for subdir in distro include targets targets/include ; do \
 		mkdir -p $(DESTDIR)$(DATADIR)/$$subdir ; \
 		install -m 0644 -t $(DESTDIR)$(DATADIR)/$$subdir $$subdir/*.yml ; \
