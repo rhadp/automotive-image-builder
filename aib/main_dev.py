@@ -183,7 +183,7 @@ def build(args, tmpdir, runner):
         output_file = os.path.join(outputdir.name, "image/disk.img")
 
         if not args.dry_run:
-            export_disk_image_file(runner, args, tmpdir, output_file, fmt)
+            export_disk_image_file(runner, args, tmpdir, output_file, args.out, fmt)
 
 
 @command(
