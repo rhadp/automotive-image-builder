@@ -124,6 +124,9 @@ mpp-vars:
     then:
       # TODO-BOOTC: aboot doesn't need a /boot/efi, but bc-t-i currently fails in bootupd stage if this is missing
       mpp-eval: use_grub2 or use_ukiboot or (use_aboot and use_bootc)
+  use_efipart_mount:
+    # TODO-BOOTC: We don't need to mount it even though we added it above for aboot (in particular with --separate-partitions)
+    mpp-eval: use_efipart and not (use_aboot and use_bootc)
   use_bootpart:
     mpp-if: not "use_bootpart" in locals()
     then:
@@ -462,7 +465,7 @@ mpp-vars:
       - - mpp-if: tmp_is_tmpfs
           then: tmp.mount
         - rcu-normal.service
-        - mpp-if: use_efipart and not policy_disable_efi_features
+        - mpp-if: use_efipart_mount and not policy_disable_efi_features
           then: boot-efi.mount
         - mpp-if: use_bootpart
           then: boot.mount
@@ -835,7 +838,7 @@ mpp-vars:
       then:
         from: input://extra-tree/boot.mount
         to: tree:////usr/lib/systemd/system/boot.mount
-    - mpp-if: use_efipart and not policy_disable_efi_features
+    - mpp-if: use_efipart_mount and not policy_disable_efi_features
       then:
         from: input://extra-tree/boot-efi.mount
         to: tree:////usr/lib/systemd/system/boot-efi.mount
