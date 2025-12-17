@@ -59,6 +59,8 @@ mpp-vars:
   containers_configdir: /usr/share/containers
 
   use_qm: false   # Set to true to add QM container
+  qm_writable:
+    mpp-eval: image_mode == 'package'
   use_qm_containers_extra_store: false
   qm_container_subuid: 1000000000:1500000000
   qm_container_subgid: 1000000000:1500000000

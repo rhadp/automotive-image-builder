@@ -143,6 +143,9 @@ mpp-vars:
       MemoryMax={ qm_memory_max }
       MemoryHigh={ qm_memory_high }
       CPUWeight={ qm_cpu_weight }
+
+      [Container]
+      {"ReadOnly=false" if qm_writable else "" }
   subuid_content_qm:
     mpp-if: use_qm
     then:
