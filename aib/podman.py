@@ -321,7 +321,7 @@ def podman_run_bootc_image_builder(
                 bib_container,
                 volumes,
                 args,
-                podman_args=["--privileged"],
+                podman_args=["--privileged", "--network=none"],
                 stdout_pipe=None if verbose else subprocess.DEVNULL,
             )
 

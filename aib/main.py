@@ -267,6 +267,9 @@ def download(args, tmpdir, runner):
             "--if-needed": {
                 "help": "Only build the image if its not already built.",
             },
+            "--oci-archive": {
+                "help": "Build an oci container archive file instead of a container image",
+            },
             "out": {
                 "help": "Name of container image to build",
                 "required": False,
@@ -307,7 +310,12 @@ def build_builder(args, tmpdir, runner):
     with run_osbuild(args, tmpdir, runner, ["bootc-archive"]) as outputdir:
         output_file = os.path.join(outputdir.name, "bootc-archive/image.oci-archive")
 
-        bootc_archive_to_store(runner, output_file, dest_image)
+        if args.oci_archive:
+            runner.add_volume_for(args.out)
+            runner.run_as_root(["chown", f"{os.getuid()}:{os.getgid()}", output_file])
+            runner.run_as_root(["mv", output_file, args.out])
+        else:
+            bootc_archive_to_store(runner, output_file, dest_image)
 
         print(f"Built image {dest_image}")
 
