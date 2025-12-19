@@ -273,13 +273,16 @@ class TemporaryContainer:
         # Container is automatically removed here
     """
 
-    def __init__(self, name):
+    def __init__(self, name, cleanup=True):
         """Initialize temporary container context manager.
 
         Args:
             name: The container image name/tag to track
+            cleanup: If True, remove the container on exit. If False, leave it.
+                     Defaults to True.
         """
         self.name = name
+        self.cleanup_enabled = cleanup
         self._removed = False
 
     def __enter__(self):
@@ -287,8 +290,9 @@ class TemporaryContainer:
         return self.name
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit the context and remove the container image."""
-        self.cleanup()
+        """Exit the context and remove the container image if cleanup is enabled."""
+        if self.cleanup_enabled:
+            self.cleanup()
 
     def cleanup(self):
         """Remove the container image if it exists."""

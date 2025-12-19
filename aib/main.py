@@ -23,10 +23,10 @@ from . import log
 from .podman import (
     podman_image_exists,
     podman_image_info,
-    podman_image_rm,
     podman_run_bootc_image_builder,
     podman_bootc_inject_pubkey,
     PodmanImageMount,
+    TemporaryContainer,
 )
 from .arguments import (
     parse_args,
@@ -174,7 +174,7 @@ def build(args, tmpdir, runner):
         log.error("--tar was used, which is incompatible with generating disk image")
         sys.exit(1)
 
-    # This is the container name we us in the root container store.
+    # This is the container name we use in the root container store.
     # It may be a random temporary name if the user didn't want the result in the
     # root container store (i.e. user store or oci archive file)
     root_containername = None
@@ -221,12 +221,10 @@ def build(args, tmpdir, runner):
     if args.disk and not args.dry_run:
         assert root_containername is not None
         fmt = DiskFormat.from_string(args.format) or DiskFormat.from_filename(args.disk)
-        container_to_disk_image(
-            args, tmpdir, runner, root_containername, fmt, args.disk
-        )
-
-    if remove_container:
-        podman_image_rm(root_containername)
+        with TemporaryContainer(root_containername, cleanup=remove_container):
+            container_to_disk_image(
+                args, tmpdir, runner, root_containername, fmt, args.disk
+            )
 
 
 @command(
@@ -525,10 +523,10 @@ def inject_signed(args, tmpdir, runner):
 
     if args.reseal_with_key:
         (pubkey, privkey) = read_keys(args.reseal_with_key, args.passwd)
-        do_reseal_image(
-            args, runner, tmpdir, privkey, mount.image_id, args.new_container
-        )
-        podman_image_rm(mount.image_id)
+        with TemporaryContainer(mount.image_id) as temp_container:
+            do_reseal_image(
+                args, runner, tmpdir, privkey, temp_container, args.new_container
+            )
 
 
 @command(
