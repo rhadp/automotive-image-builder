@@ -337,7 +337,7 @@ def podman_image_info(image):
         with PodmanImageMount(image) as mount:
             content = mount.read_file("/etc/build-info")
             build_info = parse_shvars(content)
-    except Exception as e:
+    except (PodmanCommandFailed, RuntimeError, ValueError) as e:
         log.info("No build info in %s: %s", image, e)
     return ContainerInfo(image, build_info)
 
