@@ -100,7 +100,7 @@ def bootc_archive_to_store(runner, archive_file, container_name, user=False):
     ]
 
     if user:
-        subprocess.run(cmdline)
+        subprocess.run(cmdline, check=True)
     else:
         runner.run_as_root(cmdline)
 

@@ -51,15 +51,20 @@ def run_cmd(
         process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stdin=stdin_pipe)
         return process.stdout
 
-    if capture_output:
-        r = subprocess.run(cmdline, capture_output=True, stdin=stdin_pipe)
-    else:
-        r = subprocess.run(cmdline, stdin=stdin_pipe, stdout=stdout_pipe)
-    if capture_output or check:
-        if r.returncode != 0:
-            raise PodmanCommandFailed(
-                shlex.join(args), (r.stderr or b"").decode("utf-8").rstrip()
+    should_check = check or capture_output
+    try:
+        if capture_output:
+            r = subprocess.run(
+                cmdline, capture_output=True, stdin=stdin_pipe, check=should_check
             )
+        else:
+            r = subprocess.run(
+                cmdline, stdin=stdin_pipe, stdout=stdout_pipe, check=should_check
+            )
+    except subprocess.CalledProcessError as e:
+        error_msg = (e.stderr or b"").decode("utf-8").rstrip() if e.stderr else ""
+        raise PodmanCommandFailed(shlex.join(args), error_msg) from e
+
     if capture_output:
         return r.stdout.decode("utf-8").rstrip()
     return r.returncode
