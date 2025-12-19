@@ -511,7 +511,7 @@ def inject_signed(args, tmpdir, runner):
             sys.exit(0)
 
     if args.reseal_with_key:
-        (pubkey, privkey) = read_keys(args.reseal_with_key, args.passwd)
+        (_pubkey, privkey) = read_keys(args.reseal_with_key, args.passwd)
         with TemporaryContainer(mount.image_id) as temp_container:
             do_reseal_image(
                 args, runner, tmpdir, privkey, temp_container, args.new_container

@@ -455,7 +455,7 @@ def podman_bootc_inject_pubkey(
 
         # Append cpio to initrd
         with open(extracted_initrd, "ab") as f_out:
-            for i in range(padding):
+            for _ in range(padding):
                 f_out.write(b"\0")
             with open(to_append, "rb") as f_in:
                 shutil.copyfileobj(f_in, f_out)
