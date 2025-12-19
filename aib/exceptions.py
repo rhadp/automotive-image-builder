@@ -178,3 +178,37 @@ class UnknownSignatureType(AIBException):
 
     def __str__(self):
         return f"Unknown signature type {self.sig_type}"
+
+
+class PodmanCommandFailed(AIBException):
+    """Raised when a podman command fails."""
+
+    def __init__(self, command, error_message):
+        self.command = command
+        self.error_message = error_message
+
+    def __str__(self):
+        msg = f"Failed to run '{self.command}'"
+        if self.error_message:
+            msg += f": {self.error_message}"
+        return msg
+
+
+class UnsupportedImageType(AIBException):
+    """Raised when an unsupported disk image type is requested."""
+
+    def __init__(self, image_type):
+        self.image_type = image_type
+
+    def __str__(self):
+        return f"Unknown bootc-image-builder type {self.image_type}"
+
+
+class InitramfsNotFound(AIBException):
+    """Raised when initramfs cannot be found in a bootc image."""
+
+    def __init__(self, container_name):
+        self.container_name = container_name
+
+    def __str__(self):
+        return f"Can't find initramfs in bootc image '{self.container_name}'"

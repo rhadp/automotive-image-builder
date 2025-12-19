@@ -10,6 +10,11 @@ from .utils import (
     create_cpio_archive,
 )
 from . import log
+from .exceptions import (
+    PodmanCommandFailed,
+    UnsupportedImageType,
+    InitramfsNotFound,
+)
 
 
 def run_cmd(
@@ -52,9 +57,8 @@ def run_cmd(
         r = subprocess.run(cmdline, stdin=stdin_pipe, stdout=stdout_pipe)
     if capture_output or check:
         if r.returncode != 0:
-            raise Exception(
-                f"Failed to run '{shlex.join(args)}': "
-                + (r.stderr or b"").decode("utf-8").rstrip()
+            raise PodmanCommandFailed(
+                shlex.join(args), (r.stderr or b"").decode("utf-8").rstrip()
             )
     if capture_output:
         return r.stdout.decode("utf-8").rstrip()
@@ -347,7 +351,7 @@ def podman_run_bootc_image_builder(
     elif build_type == "ovf":
         src_path = "ovf/disk.ovf"
     else:
-        raise Exception(f"Unknown bootc-image-builder type {build_type}")
+        raise UnsupportedImageType(build_type)
 
     with tempfile.TemporaryDirectory(
         prefix="automotive-image-builder-", dir="/var/tmp"
@@ -402,9 +406,7 @@ def podman_bootc_inject_pubkey(
             # Extract initrd
             ostree_initrd_path = mount.get_ostree_initrd()
             if not ostree_initrd_path:
-                raise Exception(
-                    f"Can't find initramfs in bootc image '{src_container}'"
-                )
+                raise InitramfsNotFound(src_container)
             mount.copy_out_file(ostree_initrd_path, extracted_initrd)
 
         if src_is_aboot:
