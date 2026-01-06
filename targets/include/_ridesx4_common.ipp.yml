@@ -23,7 +23,7 @@ mpp-vars:
   target_repos:
     - id: qcom-board-support
       baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/qcom-board-support/$distro_chroot/
-      priority: 1
+      priority: 6
   target_rpms:
     - stmmac-mac-generator
   image_enabled_services:
