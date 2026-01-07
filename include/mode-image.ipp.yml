@@ -94,26 +94,12 @@ pipelines:
           - type: org.osbuild.systemd
             options:
               enabled_services:
-                - mpp-if: use_grub2
-                  then: greenboot-grub2-set-counter.service
-                - mpp-if: use_grub2
-                  then: greenboot-grub2-set-success.service
                 - mpp-if: use_ukiboot
                   then: ukiboot-set-success.service
                 - mpp-if: use_aboot and aboot_boot_type == 'aboot-gptctl'
                   then: aboot-gptctl-set-success.service
-                - greenboot-healthcheck.service
-                - mpp-if: use_grub2
-                  then: greenboot-rpm-ostree-grub2-check-fallback.service
-                - greenboot-status.service
-                - greenboot-task-runner.service
                 - mpp-if: "containers_transient_store and 'podman' in rpms['rootfs']"
                   then: podman-clean-transient.service
-              disabled_services:
-                - mpp-if: use_aboot_like
-                  then: greenboot-grub2-set-success.service
-                - mpp-if: use_aboot_like
-                  then: greenboot-grub2-set-counter.service
         - mpp-eval: image_extra_stages
         - - type: org.osbuild.selinux
             options:
@@ -415,4 +401,3 @@ pipelines:
               install: true
             legacy: false
             write_defaults: false
-            greenboot: true
