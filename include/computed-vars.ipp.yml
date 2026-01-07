@@ -905,14 +905,9 @@ mpp-vars:
           - systemd-boot
 
   ostree_mode_rpms:
+    - bootc
+    - rpm-ostree
     - nss-altfiles
-    - greenboot
-    - mpp-if: use_grub2
-      then: greenboot-grub2
-    - greenboot-reboot
-    - greenboot-status
-    - mpp-if: use_grub2
-      then: greenboot-rpm-ostree-grub2
     - skopeo  # Needed for upgrading from an OCI remove image
     - bootupd
 

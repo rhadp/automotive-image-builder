@@ -138,7 +138,6 @@ pipelines:
                   unified: true
                 legacy: false
                 write_defaults: false
-                greenboot: true
         - mpp-if: use_aboot_like
           then:
             - type: org.osbuild-auto.aboot.update
