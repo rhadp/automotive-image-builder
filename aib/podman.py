@@ -262,6 +262,55 @@ def parse_shvars(content):
     return result
 
 
+class TemporaryContainer:
+    """Context manager for temporary container images.
+    The container image is auto-removed when exiting the context.
+
+    Usage:
+        with TemporaryContainer(name="temp-image") as container:
+            # Use the container name
+            podman_run_something(container)
+        # Container is automatically removed here
+    """
+
+    def __init__(self, name, cleanup=True):
+        """Initialize temporary container context manager.
+
+        Args:
+            name: The container image name/tag to track
+            cleanup: If True, remove the container on exit. If False, leave it.
+                     Defaults to True.
+        """
+        self.name = name
+        self.cleanup_enabled = cleanup
+        self._removed = False
+
+    def __enter__(self):
+        """Enter the context and return the container name."""
+        return self.name
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the context and remove the container image if cleanup is enabled."""
+        if self.cleanup_enabled:
+            self.cleanup()
+
+    def cleanup(self):
+        """Remove the container image if it exists."""
+        if self._removed:
+            return
+
+        try:
+            if podman_image_exists(self.name):
+                log.debug("Removing temporary container: %s", self.name)
+                podman_image_rm(self.name)
+            self._removed = True
+        except Exception as e:
+            log.warning("Failed to remove temporary container %s: %s", self.name, e)
+
+    def __str__(self):
+        return self.name
+
+
 class ContainerInfo:
     def __init__(self, name, build_info):
         self.name = name
