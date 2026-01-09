@@ -154,7 +154,8 @@ class PodmanImageMount:
 
     def _get_full_path(self, path):
         """Convert a path to a full path within the mounted image."""
-        return os.path.join(self.mount_path, os.path.splitroot(path)[2])
+        given_path = Path(path)
+        return str(Path(self.mount_path) / given_path.relative_to(given_path.anchor))
 
     def run(self, cmd, stdin_pipe=None, stdout_pipe=None, check=False):
         return run_cmd(
