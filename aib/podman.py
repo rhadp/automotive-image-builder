@@ -10,6 +10,11 @@ from .utils import (
     create_cpio_archive,
 )
 from . import log
+from .exceptions import (
+    PodmanCommandFailed,
+    UnsupportedImageType,
+    InitramfsNotFound,
+)
 
 
 def run_cmd(
@@ -46,16 +51,20 @@ def run_cmd(
         process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stdin=stdin_pipe)
         return process.stdout
 
-    if capture_output:
-        r = subprocess.run(cmdline, capture_output=True, stdin=stdin_pipe)
-    else:
-        r = subprocess.run(cmdline, stdin=stdin_pipe, stdout=stdout_pipe)
-    if capture_output or check:
-        if r.returncode != 0:
-            raise Exception(
-                f"Failed to run '{shlex.join(args)}': "
-                + (r.stderr or b"").decode("utf-8").rstrip()
+    should_check = check or capture_output
+    try:
+        if capture_output:
+            r = subprocess.run(
+                cmdline, capture_output=True, stdin=stdin_pipe, check=should_check
             )
+        else:
+            r = subprocess.run(
+                cmdline, stdin=stdin_pipe, stdout=stdout_pipe, check=should_check
+            )
+    except subprocess.CalledProcessError as e:
+        error_msg = (e.stderr or b"").decode("utf-8").rstrip() if e.stderr else ""
+        raise PodmanCommandFailed(shlex.join(args), error_msg) from e
+
     if capture_output:
         return r.stdout.decode("utf-8").rstrip()
     return r.returncode
@@ -328,7 +337,7 @@ def podman_image_info(image):
         with PodmanImageMount(image) as mount:
             content = mount.read_file("/etc/build-info")
             build_info = parse_shvars(content)
-    except Exception as e:
+    except (PodmanCommandFailed, RuntimeError, ValueError) as e:
         log.info("No build info in %s: %s", image, e)
     return ContainerInfo(image, build_info)
 
@@ -347,7 +356,7 @@ def podman_run_bootc_image_builder(
     elif build_type == "ovf":
         src_path = "ovf/disk.ovf"
     else:
-        raise Exception(f"Unknown bootc-image-builder type {build_type}")
+        raise UnsupportedImageType(build_type)
 
     with tempfile.TemporaryDirectory(
         prefix="automotive-image-builder-", dir="/var/tmp"
@@ -402,9 +411,7 @@ def podman_bootc_inject_pubkey(
             # Extract initrd
             ostree_initrd_path = mount.get_ostree_initrd()
             if not ostree_initrd_path:
-                raise Exception(
-                    f"Can't find initramfs in bootc image '{src_container}'"
-                )
+                raise InitramfsNotFound(src_container)
             mount.copy_out_file(ostree_initrd_path, extracted_initrd)
 
         if src_is_aboot:
@@ -448,7 +455,7 @@ def podman_bootc_inject_pubkey(
 
         # Append cpio to initrd
         with open(extracted_initrd, "ab") as f_out:
-            for i in range(padding):
+            for _ in range(padding):
                 f_out.write(b"\0")
             with open(to_append, "rb") as f_in:
                 shutil.copyfileobj(f_in, f_out)

@@ -241,8 +241,6 @@ def rm_rf(path):
             shutil.rmtree(path)
     except FileNotFoundError:
         pass
-    except Exception as e:
-        raise e
 
 
 # This is compatible with tempdir.TemporaryDirectory, but falls back to sudo rm -rf on permission errors
@@ -307,7 +305,7 @@ class SudoTemporaryDirectory:
         try:
             shutil.rmtree(p)
             return
-        except Exception as e:
+        except (OSError, PermissionError) as e:
             last_err = e
 
         # Optionally try sudo fallback

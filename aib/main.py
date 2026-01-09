@@ -18,6 +18,14 @@ from .utils import (
     rm_rf,
 )
 from . import exceptions
+from .exceptions import (
+    ContainerNotFound,
+    BuildContainerNotFound,
+    BootcImageBuilderFailed,
+    IncompatibleOptions,
+    InvalidBuildDir,
+    UnknownSignatureType,
+)
 from . import AIBParameters
 from . import log
 from .podman import (
@@ -92,7 +100,7 @@ def bootc_archive_to_store(runner, archive_file, container_name, user=False):
     ]
 
     if user:
-        subprocess.run(cmdline)
+        subprocess.run(cmdline, check=True)
     else:
         runner.run_as_root(cmdline)
 
@@ -112,8 +120,7 @@ def container_to_disk_image(args, tmpdir, runner, src_container, fmt, out):
             args.verbose,
         )
         if res != 0:
-            log.error("bootc-image-builder failed to create the image")
-            sys.exit(1)
+            raise BootcImageBuilderFailed()
 
         export_disk_image_file(runner, args, tmpdir, output_file, out, fmt)
 
@@ -171,8 +178,11 @@ def build(args, tmpdir, runner):
         exports.append("bootc-tar" if args.tar else "bootc-archive")
 
     if args.disk and args.tar:
-        log.error("--tar was used, which is incompatible with generating disk image")
-        sys.exit(1)
+        raise IncompatibleOptions(
+            option1="--tar",
+            option2="generating disk image",
+            reason="tar format is only for container archives",
+        )
 
     # This is the container name we use in the root container store.
     # It may be a random temporary name if the user didn't want the result in the
@@ -245,8 +255,7 @@ def download(args, tmpdir, runner):
     builds.
     """
     if not args.build_dir:
-        log.error("No build dir specified, refusing to download to temporary directory")
-        sys.exit(1)
+        raise InvalidBuildDir()
     args.out = None
     args.mode = "image"
     exports = []
@@ -321,8 +330,7 @@ def build_builder(args, tmpdir, runner):
 def get_build_container_for(container):
     info = podman_image_info(container)
     if not info:
-        log.error("'%s' not found in local container store", container)
-        sys.exit(1)
+        raise ContainerNotFound(container)
 
     # Use same distro for build image as the source container image
     distro = default_distro
@@ -331,15 +339,7 @@ def get_build_container_for(container):
 
     build_container = aib_build_container_name(distro)
     if not podman_image_exists(build_container):
-        log.error("Build container %s isn't in local container store", build_container)
-        log.error(
-            "Either specify another one with --build-container, or create it using: "
-        )
-        log.error(
-            " aib build-builder --distro %s",
-            distro,
-        )
-        sys.exit(1)
+        raise BuildContainerNotFound(build_container, distro)
     return build_container
 
 
@@ -367,10 +367,7 @@ def to_disk_image(args, tmpdir, runner):
     command for how to build one.
     """
     if not podman_image_exists(args.src_container):
-        log.error(
-            "Source bootc image '%s' isn't in local container store", args.src_container
-        )
-        sys.exit(1)
+        raise ContainerNotFound(args.src_container)
 
     fmt = DiskFormat.from_string(args.format) or DiskFormat.from_filename(args.out)
 
@@ -398,10 +395,7 @@ def extract_for_signing(args, tmpdir, runner):
     file can then be injected using inject-signed.
     """
     if not podman_image_exists(args.src_container):
-        log.error(
-            "Source bootc image '%s' isn't in local container store", args.src_container
-        )
-        sys.exit(1)
+        raise ContainerNotFound(args.src_container)
     rm_rf(args.out)
     os.makedirs(args.out)
     with PodmanImageMount(args.src_container) as mount:
@@ -421,8 +415,7 @@ def extract_for_signing(args, tmpdir, runner):
                 elif _type in ["aboot", "vbmeta"]:
                     destdir = os.path.join(args.out, "aboot")
                 else:
-                    log.error(f"Unknown signature type {_type}")
-                    sys.exit(1)
+                    raise UnknownSignatureType(_type)
 
                 os.makedirs(destdir, exist_ok=True)
 
@@ -486,10 +479,7 @@ def inject_signed(args, tmpdir, runner):
     the modified image so that it boots again.
     """
     if not podman_image_exists(args.src_container):
-        log.error(
-            "Source bootc image '%s' isn't in local container store", args.src_container
-        )
-        sys.exit(1)
+        raise ContainerNotFound(args.src_container)
 
     with PodmanImageMount(
         args.src_container,
@@ -509,8 +499,7 @@ def inject_signed(args, tmpdir, runner):
                 elif _type in ["aboot", "vbmeta"]:
                     srcdir = os.path.join(args.srcdir, "aboot")
                 else:
-                    log.error(f"Unknown signature type {_type}")
-                    sys.exit(1)
+                    raise UnknownSignatureType(_type)
 
                 src = os.path.join(srcdir, filename)
                 log.info("Injecting %s from %s", filename, src)
@@ -522,7 +511,7 @@ def inject_signed(args, tmpdir, runner):
             sys.exit(0)
 
     if args.reseal_with_key:
-        (pubkey, privkey) = read_keys(args.reseal_with_key, args.passwd)
+        (_pubkey, privkey) = read_keys(args.reseal_with_key, args.passwd)
         with TemporaryContainer(mount.image_id) as temp_container:
             do_reseal_image(
                 args, runner, tmpdir, privkey, temp_container, args.new_container
@@ -564,10 +553,7 @@ def reseal(args, tmpdir, runner):
     prepare-reseal for more details
     """
     if not podman_image_exists(args.src_container):
-        log.error(
-            "Source bootc image '%s' isn't in local container store", args.src_container
-        )
-        sys.exit(1)
+        raise ContainerNotFound(args.src_container)
 
     if args.key:
         (pubkey, privkey) = read_keys(args.key, args.passwd)
@@ -621,10 +607,7 @@ def prepare_reseal(args, tmpdir, runner):
     then has to be supplied when using it).
     """
     if not podman_image_exists(args.src_container):
-        log.error(
-            "Source bootc image '%s' isn't in local container store", args.src_container
-        )
-        sys.exit(1)
+        raise ContainerNotFound(args.src_container)
 
     build_container = args.build_container
     if not build_container:
