@@ -6,8 +6,8 @@ content:
   rpms:
     - bootc
     - dnf # needed for bootc-image-builder to generate manifest
-    - dosfstools # mkfs.fat neeed for bc-i-b
-    - e2fsprogs # mkfs.ext4 neeed for bc-i-b
+    - dosfstools # mkfs.fat needed for bc-i-b
+    - e2fsprogs # mkfs.ext4 needed for bc-i-b
     - bootupd # needed for bootc
     - shim # needed for bootupd
     - grub2
@@ -15,3 +15,4 @@ content:
     - aboot-update
     - systemd-ukify
     - systemd-boot
+    - kernel-tools # Provides bootconfig tool used by aboot-update
