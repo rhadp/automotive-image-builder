@@ -25,7 +25,7 @@ for YML_NAME in image-size-*.aib.yml; do
 
     # Build image
     echo_log "Building image: $YML_NAME"
-    build --target qemu --export qcow2 "$YML_NAME" "$IMAGE_NAME" || {
+    build_deprecated --target qemu --export qcow2 "$YML_NAME" "$IMAGE_NAME" || {
         echo_fail "Build failed for $YML_NAME"
         exit 1
     }

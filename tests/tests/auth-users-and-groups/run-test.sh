@@ -8,7 +8,7 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "etc" "usr"' 'EXIT'
 
 echo_log "Starting build for auth users and groups test..."
-build --export bootc-tar \
+build --tar \
     --extend-define "tar_paths=['usr/lib/passwd','usr/lib/group','etc/shadow']" \
     users-and-groups.aib.yml \
     "$TAR_FILE"

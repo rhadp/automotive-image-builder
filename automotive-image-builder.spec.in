@@ -10,7 +10,7 @@ Source0:        automotive-image-builder-%{version}.tar.gz
 BuildArch:	noarch
 BuildRequires:  make
 Requires:       android-tools
-Requires:       osbuild >= 162
+Requires:       osbuild >= 164
 Requires:       osbuild-auto
 Requires:       osbuild-luks2
 Requires:       osbuild-lvm2
@@ -40,7 +40,11 @@ Tool to build (and run) automotive images
 %files
 %license LICENSE
 %doc README.md docs/manifest.html docs/manifest.md
+%{_bindir}/aib
+%{_bindir}/aib-dev
+%{_bindir}/air
 %{_bindir}/automotive-image-builder
+%{_bindir}/automotive-image-builder-dev
 %{_bindir}/automotive-image-runner
 %{_prefix}/lib/automotive-image-builder
 %{_sysconfdir}/automotive-image-builder

@@ -8,7 +8,7 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "etc"' 'EXIT'
 
 echo_log "Starting build for root password test..."
-build --export bootc-tar \
+build --tar \
     --extend-define tar_paths=['etc/shadow'] \
     root-password.aib.yml \
     "$TAR_FILE"

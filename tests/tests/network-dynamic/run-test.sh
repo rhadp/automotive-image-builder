@@ -8,7 +8,7 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "etc" "usr"' 'EXIT'
 
 echo_log "Starting build..."
-build --export bootc-tar \
+build --tar \
     --extend-define "tar_paths=['etc','usr/lib']" \
     network-dynamic.aib.yml \
     "$TAR_FILE"

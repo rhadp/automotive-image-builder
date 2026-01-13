@@ -8,7 +8,7 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "etc" "usr" "error.txt" "error2.txt"' 'EXIT'
 
 echo_log "Starting build..."
-build --export bootc-tar \
+build --tar \
     systemd-services.aib.yml \
     "$TAR_FILE"
 echo_log "Build completed, output: $TAR_FILE"

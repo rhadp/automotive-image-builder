@@ -66,6 +66,10 @@ pipelines:
                     - podman
                     - selinux-policy-$selinux_policy
                     - procps-ng
+                  - mpp-if: qm_wayland_enable
+                    then:
+                      - qm-oci-hooks
+                      - qm-wayland
 
       - type: org.osbuild.copy
         inputs:
@@ -103,6 +107,22 @@ pipelines:
                   - mpp-if: use_qm_containers_extra_store
                     then:
                       mpp-eval: qm_containers_extra_store
+
+      - mpp-if: qm_wayland_enable
+        then:
+          type: org.osbuild.skopeo
+          inputs:
+            images:
+              type: org.osbuild.containers
+              origin: org.osbuild.source
+              mpp-resolve-images:
+                images:
+                  mpp-eval: _qm_containers
+          options:
+            destination:
+              type: containers-storage
+              storage-path:
+                mpp-eval: qm_containers_extra_store
 
       - type: org.osbuild.lorax-script
         options:

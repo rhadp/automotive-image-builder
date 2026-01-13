@@ -5,7 +5,7 @@ environment:
     AIB_BASE_REPO: https://autosd.sig.centos.org/AutoSD-10/nightly/repos/AutoSD/compose/AutoSD/$arch/os/
 
     # Distribution used inside tests.
-    # Available distributions can be listed using `automotive-image-builder list-dist` on the relevant platform.
+    # Available distributions can be listed using `aib list-dist` on the relevant platform.
     AIB_DISTRO: autosd10-sig
 
     # IP or hostname of a node, where tests will be executed
@@ -23,9 +23,10 @@ environment:
     # Build boot builder container only when it doesn't exist
     REBUILD_BOOTC_BUILDER: no
 
-    AIB: automotive-image-builder
+    AIB: aib
+    AIBDEV: aib-dev
     AIB_BASEDIR: /usr/lib/automotive-image-builder
-    AIR: automotive-image-runner
+    AIR: air
     OUTDIR: /var/tmp/tmt
     BUILDDIR: $OUTDIR/build
     RUNDIR: $OUTDIR/run

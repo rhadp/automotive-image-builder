@@ -6,7 +6,7 @@ source "$(dirname ${BASH_SOURCE[0]})"/../../scripts/test-lib.sh
 trap 'cleanup_path "out.json" "*.txt"' 'EXIT'
 
 echo_log "Starting build..."
-build --export rpmlist install-rpms.aib.yml out.json
+$AIB list-rpms install-rpms.aib.yml > out.json
 echo_log "Build completed, output: out.json"
 
 # Check if rootfs contains 'strace'

@@ -8,7 +8,7 @@ TAR_FILE="out.tar"
 trap 'cleanup_path "$TAR_FILE" "etc" "usr"' 'EXIT'
 
 echo_log "Starting build for static network configuration..."
-build --export bootc-tar \
+build --tar \
     --extend-define "tar_paths=['etc/hostname','etc/main.nmstate','usr/lib/boot-check.d/nmstate.conf','usr/lib/modules-load.d/auto-modules.conf']" \
     network-static.aib.yml \
     "$TAR_FILE"

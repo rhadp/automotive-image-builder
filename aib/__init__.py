@@ -17,6 +17,22 @@ class AIBParameters:
     args: Any
     base_dir: str
 
+    def __init__(self, args, base_dir):
+        if "manifest" in args:
+            if (
+                args.manifest.endswith(".aib")
+                or args.manifest.endswith(".aib.yml")
+                or args.manifest.endswith(".aib.yaml")
+            ):
+                args.simple_manifest = args.manifest
+                args.manifest = os.path.join(base_dir, "files/simple.mpp.yml")
+
+        self.args = args
+        self.base_dir = base_dir
+
+        if args.verbose:
+            log.setLevel("DEBUG")
+
     @cached_property
     def include_dirs(self):
         return [self.base_dir] + self.args.include

@@ -21,7 +21,7 @@ trap 'cleanup_path "$IMG_NAME"' 'EXIT'
 
 # Build the image
 echo_log "Building AIB image..."
-build --target qemu \
+build_deprecated --target qemu \
     --mode image \
     --export image \
     selinux-config.aib.yml \
@@ -68,7 +68,7 @@ for opt in "${EXPECTED_SELINUX_BOOLEANS[@]}"; do
     fi
 done
 
-# Clean up automotive-image-runner process
+# Clean up air process
 stop_vm "$VM_PID"
 
 # Report test result

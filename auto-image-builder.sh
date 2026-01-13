@@ -8,6 +8,7 @@ usage() {
     echo "  -h,--help                 - Display usage"
     echo "  -n,--nopull               - Don't attempt to pull new image"
     echo "  -a,--aib DIR              - Use the automotive-image-builder from DIR instead of the one preinstalled in the container"
+    echo "  -d,--dev                  - Run aib-dev instead of aib "
     echo "  -c,--container IMAGE_NAME - Container image name, defaults to $IMAGE_NAME_DEFAULT "
     echo
 }
@@ -15,7 +16,8 @@ usage() {
 IMAGE_NAME_DEFAULT="quay.io/centos-sig-automotive/automotive-image-builder:latest"
 PULL_ARG="--pull=newer"
 # prefer a-i-b preinstalled in the container
-AIB="automotive-image-builder"
+AIB="aib"
+AIB_SUFFIX=""
 IMAGE_NAME=
 SHARE_AIB_DIR=
 while [[ $# -gt 0 ]]; do
@@ -25,16 +27,20 @@ while [[ $# -gt 0 ]]; do
       break
       ;;
     -a|--aib)
-      if [ ! -x "$2/automotive-image-builder" ]; then
+      if [ ! -x "$2/bin/aib" ]; then
         echo invalid aib directory, automotive-image-builder executable not found
         exit 1
       fi
       SHARE_AIB_DIR="-v $(realpath "$2"):/aib"
       shift 2 || exit 1
-      AIB="/aib/automotive-image-builder"
+      AIB="/aib/bin/aib"
       ;;
     -n|--nopull)
       PULL_ARG=
+      shift 1
+      ;;
+    -d|--dev)
+      AIB_SUFFIX="-dev"
       shift 1
       ;;
     -c|--container)
@@ -49,7 +55,7 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
-AIB="$AIB $*"
+AIB="$AIB$AIB_SUFFIX $*"
 
 PODMAN=$(command -v podman || command -v docker)
 if [ -z "$PODMAN" ]; then

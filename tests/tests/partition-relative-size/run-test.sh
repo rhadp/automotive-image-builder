@@ -8,7 +8,7 @@ IMG_FILE="out.img"
 trap 'cleanup_path "$IMG_FILE"' 'EXIT'
 
 echo_log "Starting build..."
-build --export image \
+build_deprecated --export image \
     partition-relative-size.aib.yml \
     "$IMG_FILE"
 echo_log "Build completed, output: $IMG_FILE"

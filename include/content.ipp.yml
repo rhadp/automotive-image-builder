@@ -74,13 +74,14 @@ mpp-vars:
   systemd_repart_dropin:
     mpp-format-string: |
       [Unit]
-      After=mount-sysroot.service
+      After={sysroot_unit}
       Before=ostree-prepare-root.service
 
       [Service]
+      Type=oneshot
       ExecStart=
-      ExecStart=systemd-repart --dry-run=no --definitions=/usr/lib/repart.d
-      ExecStart=/usr/lib/systemd/systemd-growfs /sysroot
+      ExecStart=-systemd-repart --dry-run=no --definitions=/usr/lib/repart.d
+      ExecStart=-/usr/lib/systemd/systemd-growfs /sysroot
   containers_conf:
     mpp-format-string: |
       [containers]
@@ -142,6 +143,9 @@ mpp-vars:
       MemoryMax={ qm_memory_max }
       MemoryHigh={ qm_memory_high }
       CPUWeight={ qm_cpu_weight }
+
+      [Container]
+      {"ReadOnly=false" if qm_writable else "" }
   subuid_content_qm:
     mpp-if: use_qm
     then:
@@ -174,6 +178,16 @@ mpp-vars:
     mpp-format-string: |
       [Coredump]
       Storage={coredump_storage}
+  qm_wayland_compositor_conf:
+    mpp-format-string: |
+      [Container]
+      Image={qm_wayland_compositor_name}
+  qm_wayland_extra_devices_conf: |
+    [Container]
+    AddDevice=/dev/tty0
+    AddDevice=/dev/tty7
+    Annotation=org.containers.qm.wayland.seat=seat0
+    Volume=/run/udev:/run/udev:ro,Z
   main_nmstate:
     mpp-format-string: |
       ---
@@ -612,6 +626,36 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile/{embedded['coredump.conf']}
               to: tree:///coredump.conf
+      - mpp-if: use_qm and qm_wayland_enable
+        then:
+          type: org.osbuild.copy
+          inputs:
+            inlinefile:
+              type: org.osbuild.files
+              origin: org.osbuild.source
+              mpp-embed:
+                id: wayland-compositor.conf
+                text: $qm_wayland_compositor_conf
+          options:
+            paths:
+              - from:
+                  mpp-format-string: input://inlinefile/{embedded['wayland-compositor.conf']}
+                to: tree:///wayland-compositor.conf
+      - mpp-if: use_qm and qm_wayland_enable
+        then:
+          type: org.osbuild.copy
+          inputs:
+            inlinefile:
+              type: org.osbuild.files
+              origin: org.osbuild.source
+              mpp-embed:
+                id: wayland-extra-devices.conf
+                text: $qm_wayland_extra_devices_conf
+          options:
+            paths:
+              - from:
+                  mpp-format-string: input://inlinefile/{embedded['wayland-extra-devices.conf']}
+                to: tree:///wayland-extra-devices.conf
       - type: org.osbuild.copy
         inputs:
           inlinefile:

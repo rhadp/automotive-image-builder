@@ -14,11 +14,7 @@ from enum import Enum
 from .utils import DiskFormat
 from .version import __version__
 from . import log
-
-# Default values used across arguments
-default_distro = "autosd10-sig"
-default_container_image_name = "quay.io/centos-sig-automotive/automotive-image-builder"
-default_bib_container = "quay.io/centos-bootc/bootc-image-builder:latest"
+from .globals import default_distro, default_container_image_name, default_bib_container
 
 
 def aib_build_container_name(distro):
@@ -41,7 +37,7 @@ class SubCommand:
     Definition of a CLI subcommand.
 
     Attributes:
-        name: The subcommand name (e.g., "build-bootc")
+        name: The subcommand name (e.g., "build")
         help: Short help text shown in command list
         description: Long description shown in subcommand --help
         callback: Function to call when this subcommand is invoked
@@ -87,7 +83,7 @@ def command(
     Args:
         name: Optional name to register this callback under.
               If None, uses the function's __name__ with underscores replaced by hyphens
-              (e.g. 'build_bootc' -> 'build-bootc')
+              (e.g. 'build_builder' -> 'build-builder')
         help: Short help text shown in command list
         description: Long description shown in subcommand --help.
                      If not provided, uses the docstring of the function.
@@ -359,10 +355,22 @@ DISK_FORMAT_ARGS = {
         "help": "Disk image format (default: from extension)",
     },
     "--separate-partitions": {
-        "help": "Split the resulting image into per-partition files",
+        "help": "Split disk images into per-partition files",
     },
 }
-
+BIB_ARGS = {
+    "--bib-container": {
+        "type": "str",
+        "metavar": "IMAGE",
+        "default": default_bib_container,
+        "help": f"bootc-image-builder image to use (default: {default_bib_container})",
+    },
+    "--build-container": {
+        "type": "str",
+        "metavar": "IMAGE",
+        "help": f"bootc build container image to use (default: {aib_build_container_name('$DISTRO')})",
+    },
+}
 SHARED_RESEAL_ARGS = {
     "--build-container": {
         "type": "str",
@@ -380,7 +388,7 @@ def no_subcommand(_args, _tmpdir, _runner):
     log.info("No subcommand specified, see --help for usage")
 
 
-def parse_args(args):
+def parse_args(args, prog="aib"):
     """
     Parse command-line arguments.
 
@@ -391,7 +399,7 @@ def parse_args(args):
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(
-        prog="automotive-image-builder",
+        prog=prog,
         description="Select subcommand to run.\n"
         "For more details, use --help for the individual commands.",
         formatter_class=AIBHelpFormatter,

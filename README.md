@@ -1,41 +1,46 @@
 # Automotive Image Builder
 
 Automotive Image Builder (AIB) is a tool to create various kinds of OS images based on CentOS-derived
-distributions. The images can support package-based mode (called "package") as well as image-based mode
-(called "image").
+distributions. The main tool produces immutable atomically updatable images based on bootc, but there
+is also a tool that allows building mutable package-based disk images for development and testing
+purposes.
 
-The main tool is called `automotive-image-builder`, and its primary function is to compose manifests. 
-The compose operation takes a YAML-based Automotive Image Builder manifest and a set of options 
-that affect the compose, and it resolves the manifest into an osbuild JSON file. This
-JSON file contains precise instructions for building an image using the
-specific software chosen during the compose, such as package versions and 
-container images.
+The main tool is called `aib`, and its primary function is to build bootc container images from
+manifests, given some highlevel options like what hardware board to target, and what distribution to
+use.
 
-Build a `qcow2` image:
+Example of how to build a 'bootc' container image:
 
 ```shell
- $ automotive-image-builder compose --distro autosd10 --mode package --target qemu my-image.aib.yml osbuild.json
- $ sudo osbuild --store osbuild_store --output-directory output --export qcow2 osbuild.json
+ $ aib build --target qemu my-image.aib.yml localhost/my-image:latest
 ```
 
-Alternatively, you can combine these two commands into one:
+And then to build a disk image from it:
 
 ```shell
- $ automotive-image-builder build --distro autosd10 --mode package --target qemu --export qcow2 my-image.aib.yml osbuild.json
+ $ aib to-disk-image localhost/my-image:latest my-image.qcow2
 ```
 
-These commands compose the `osbuild.json` file and then build it and export the `qcow2` output to the the `output` 
-directory, for example, `output/qcow2/disk.qcow2`. 
-
-Run the QCOW image in a virtual machine:
+You can then run the QCOW2 image in a virtual machine like this:
 
 ```shell
- $ automotive-image-runner  output/qcow2/disk.qcow2
+ $ air  my-image.qcow2
 ```
 
-Note: When you run `automotive-image-builder build`, it's helpful and time-saving
-to pass the option `--build-dir some/dir`, which stores intermediate data, such as downloaded
-RPMs between runs.
+For a hardware based target you would instead flash the disk image to the board and boot it.
+
+Alternatively you can build the bootc container as well as the disk image in one command:
+
+```shell
+ $ aib build --target qemu my-image.aib.yml localhost/my-image:latest my-image.qcow2
+```
+
+However, creating the disk image is not always needed. Once the system is running it can update directly
+from the bootc container using the `bootc switch` and `bootc update` commands. This is much faster than
+re-flashing.
+
+Note: When you run `aib build`, it is helpful and time-saving to pass the option `--build-dir some/dir`,
+which stores in this directory intermediate data, such as downloaded RPMs, between runs.
 
 ## Installation and dependencies
 
@@ -49,8 +54,7 @@ Alternatively, you can also run Automotive Image Builder from
 
 ## Manifests
 
-Automotive Image Builder supports two types of image manifests. The
-default manifest uses the extension `.aib.yml` and is a high-level,
+Automotive Image Builder manifests have the extension `.aib.yml` and is a high-level,
 declarative YAML-based format, for example:
 ```yaml
 name: image-with-vim
@@ -60,64 +64,36 @@ content:
     - vim
 ```
 
-
 You can find detailed
 [schema documentation for the manifest syntax](https://centos.gitlab.io/automotive/src/automotive-image-builder/simple_manifest.html).
 
 You can also experiment with the example manifests in the [examples](examples) directory:
 
 ```shell
-$ automotive-image-builder build --export qcow2 examples/simple.aib.yml example.qcow2
-$ automotive-image-runner example.qcow2
+$ aib build examples/simple.aib.yml example:latest example.qcow2
+$ air example.qcow2
 ```
 
 The sample-images repository
 (https://gitlab.com/CentOS/automotive/sample-images) has a larger set
 of functional examples.
 
-There is also support for a low-level manifest file format, with extension `.mpp.yml`. This is
-a format closer to the osbuild imperative format, and writing such files requires deeper
-knowledge of how osbuild works, as well as the internals of Automotive Image Builder. This
-is used internally to implement the higher-level manifest format, but it is also available
-to the end user. However, we don't recommend using this format, as it is quite difficult to use
-and not well documented.
-
 ## Controlling the image built
 
-When composing (or building) a manifest, there are some core options that control what gets built:
+When building a manifest, there are some core options that control what gets built:
 
 * `--arch`: The hardware architecture to build for (`x86_64` or `aarch64`). If not specified the native
-   architecture is used. Note: It is possible to compose an image for any architecture, but you can
-   only build one for the native architecture.
+   architecture is used. Note: You can only build an image on the native architecture, but some operations
+   like e.g. `list-rpms` work on non-native architectures.
 
 * `--target`: The board to target, defaults to `qemu`. You can get a list of the supported targets from
-  `automotive-image-builder list-targets`.
-
-* `--mode`: Either `package` or `image`. Default is `image`. Package mode is a read-write OS that uses
-  `dnf` to install packages. Image mode is an immutable OS image based on OSTree, which supports
-  atomic updates, but no package-level modifications. Image mode is meant for
-  production, while package mode is more useful during development and testing.
+  `aib list-targets`.
 
 * `--distro`: There are a set of distribution definitions that can be used. These define which package
   repositories to use. The default is "autosd10-sig", but the full list can be obtained with
-  `automotive-image-builder list-dist`.  It is also possible to extend the list of distributions
+  `aib list-dist`.  It is also possible to extend the list of distributions
   with your custom ones by placing them in a directory called "/some/dir/distro" and passing
   `--include /some/dir` on the command line.
-
-When the manifest has been composed, the generated osbuild JSON file can contain several types of
-build artifacts. For example, it can generate both raw image files and `qcow2` files. When
-building you need to use the `--export` option to select what you want to build. The available export options
-are:
-
-* `image`: A raw disk image with partitions
-* `qcow2`: A qcow2-format disk image with partitions
-* `ext4`: An ext4 filesystem containing just the rootfs partition (i.e. no boot partitions, etc.)
-* `aboot`: An Android boot system partition image and a boot partition
-* `container`: A container image you can run with podman or docker
-* `tar`: A tar file containing the basic rootfs files
-* `ostree-commit`: An OSTree repository with the commit built from the image
-* `bootc`: A bootc image
-* `rpmlist`: A JSON file listing all the RPMs used in the image
 
 ## Policy System
 
@@ -136,7 +112,7 @@ Installed policy locations (searched in order):
 2. `/usr/lib/automotive-image-builder/files/policies/` (package-provided)
 
 ```shell
-$ automotive-image-builder build --policy security --export qcow2 my-image.aib.yml output.qcow2
+$ aib build --policy security my-image.aib.yml example:latest
 ```
 
 Policy files use the `.aibp.yml` extension and define restrictions and forced configurations:
@@ -149,17 +125,17 @@ restrictions:
   modes:
     allow:
       - image
-  
+
   variables:
     force:
       disable_ipv6: true
       ld_so_cache_protected: true
-  
+
   rpms:
     disallow:
       - dosfstools
       - e2fsprogs
-  
+
   sysctl:
     force:
       "net.core.busy_poll": "0"
@@ -170,7 +146,6 @@ restrictions:
 
 Policies can enforce:
 
-- **Mode restrictions**: Allow/disallow package vs image mode
 - **Target restrictions**: Control which hardware targets are allowed
 - **Distribution restrictions**: Limit which distributions can be used
 - **Variable enforcement**: Force specific manifest variables
@@ -186,12 +161,11 @@ The complete policy file schema is defined in [files/policy_schema.yml](files/po
 
 ## Manifest variables
 
-The low-level manifest format supports a variety of variables that you can set in the manifest file or
-on the command line. In the high-level manifests, these are automatically set based on the options in
-the manifest and the target, distro, and mode that you choose. However, it can sometimes be useful to
-modify these variables on the command line during development and testing.
-
-To modify these variables on the command line, you can use:
+Internally, the various options in the manifests are automatically converted to internal
+variables in the osbuild templates that are used to build the image. These variables
+can also be set directly on the commandline or in the manifest (although such variables
+don't have the same stability guarantees as the regular manifest options).
+To set these variables on the command line, you can use:
 
 * `--define VAR=VALUE`: Sets the variable to the specified value (YAML format).
 
@@ -203,18 +177,9 @@ To modify these variables on the command line, you can use:
 
 Commonly used supported variables include:
 
-* `use_qm`: If true, includes QM partition support in the image.
-* `qm_memory_max`: Sets the maximum memory that can be used by the QM partition (see the `MemoryMax` systemd option).
 * `extra_rpms`: Adds extra RPMs to the image (supported by any manifests, e.g., in sample-images).
 * `image_size`: Specifies the size (in bytes, as a string) of the generated image.
-* `use_composefs_signed`: If false, ostree commits don’t require signing. Useful for modifying ostree images on the target system (e.g., layering packages).
-* `use_transient_etc`: If false, changes to `/etc` persist across boots in image-based builds. Not recommended for production but useful for testing.
-* `use_static_ip`: If set, disables NetworkManager and applies static network configuration via the following options:
-* `static_ip`: The IP address
-* `static_gw`: The default gateway
-* `static_dns`: The DNS server
-* `static_ip_iface`: The network interface name
-* `static_ip_modules`: The network driver kernel modules to load (if any)
+* `use_transient_etc`: If false, changes to `/etc` persist across boots in bootc images. Not recommended for production but useful for testing.
 * `use_debug`: If true, enables detailed debugging output during boot.
 
 ## Using QM

@@ -21,7 +21,7 @@ trap 'cleanup_path "$IMG_SIGNED" "$UPDATE_TAR"; cleanup_container "$AVB_UNSIGNED
 #########################################
 
 echo_log "Starting bootc build..."
-build_bootc --target abootqemukvm \
+build --target abootqemukvm \
     avb.aib.yml \
     "$AVB_UNSIGNED"
 echo_log "Build completed, output: $AVB_UNSIGNED"
@@ -29,21 +29,21 @@ echo_log "Build completed, output: $AVB_UNSIGNED"
 echo_log "AVB Signing bootc image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private.pem
-$AIB bootc-prepare-reseal --key=private.pem "$AVB_UNSIGNED" "$AVB_PREPARED"
+$AIB prepare-reseal --key=private.pem "$AVB_UNSIGNED" "$AVB_PREPARED"
 
 # Extract aboot files to sign
-$AIB bootc-extract-for-signing "$AVB_PREPARED" to-sign
+$AIB extract-for-signing "$AVB_PREPARED" to-sign
 
 # Sign aboot files
 ./sign.sh to-sign/
 
 # Inject signed aboot files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private.pem "$AVB_PREPARED" to-sign "$AVB_SIGNED"
+$AIB inject-signed --reseal-with-key=private.pem "$AVB_PREPARED" to-sign "$AVB_SIGNED"
 
 echo_pass "Built signed bootc container"
 
 echo_log "Building bootc disk image..."
-$AIB bootc-to-disk-image "$AVB_SIGNED" "$IMG_SIGNED"
+$AIB to-disk-image "$AVB_SIGNED" "$IMG_SIGNED"
 echo_pass "Built signed bootc disk image"
 
 ############################################
@@ -51,7 +51,7 @@ echo_pass "Built signed bootc disk image"
 ############################################
 
 echo_log "Starting bootc build of update..."
-build_bootc --target abootqemukvm \
+build --target abootqemukvm \
     avb-update.aib.yml \
     "$AVB_UPD_UNSIGNED"
 echo_log "Build completed, output: $AVB_UPD_UNSIGNED"
@@ -59,16 +59,16 @@ echo_log "Build completed, output: $AVB_UPD_UNSIGNED"
 echo_log "AVB Signing bootc update image..."
 # Generate a throwaway key (no password) and prepare for resealing with it
 openssl genpkey -algorithm ed25519 -outform PEM -out private2.pem
-$AIB bootc-prepare-reseal --key=private2.pem "$AVB_UPD_UNSIGNED" "$AVB_UPD_PREPARED"
+$AIB prepare-reseal --key=private2.pem "$AVB_UPD_UNSIGNED" "$AVB_UPD_PREPARED"
 
 # Extract aboot files to sign
-$AIB bootc-extract-for-signing "$AVB_UPD_PREPARED" to-sign
+$AIB extract-for-signing "$AVB_UPD_PREPARED" to-sign
 
 # Sign aboot files
 ./sign.sh to-sign/
 
 # Inject signed aboot files and reseal
-$AIB bootc-inject-signed --reseal-with-key=private2.pem "$AVB_UPD_PREPARED" to-sign "$AVB_UPD_SIGNED"
+$AIB inject-signed --reseal-with-key=private2.pem "$AVB_UPD_PREPARED" to-sign "$AVB_UPD_SIGNED"
 
 # Export file
 sudo podman save --format=oci-archive -o "$UPDATE_TAR" "$AVB_UPD_SIGNED"

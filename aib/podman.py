@@ -10,6 +10,11 @@ from .utils import (
     create_cpio_archive,
 )
 from . import log
+from .exceptions import (
+    PodmanCommandFailed,
+    UnsupportedImageType,
+    InitramfsNotFound,
+)
 
 
 def run_cmd(
@@ -46,16 +51,20 @@ def run_cmd(
         process = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stdin=stdin_pipe)
         return process.stdout
 
-    if capture_output:
-        r = subprocess.run(cmdline, capture_output=True, stdin=stdin_pipe)
-    else:
-        r = subprocess.run(cmdline, stdin=stdin_pipe, stdout=stdout_pipe)
-    if capture_output or check:
-        if r.returncode != 0:
-            raise Exception(
-                f"Failed to run '{shlex.join(args)}': "
-                + (r.stderr or b"").decode("utf-8").rstrip()
+    should_check = check or capture_output
+    try:
+        if capture_output:
+            r = subprocess.run(
+                cmdline, capture_output=True, stdin=stdin_pipe, check=should_check
             )
+        else:
+            r = subprocess.run(
+                cmdline, stdin=stdin_pipe, stdout=stdout_pipe, check=should_check
+            )
+    except subprocess.CalledProcessError as e:
+        error_msg = (e.stderr or b"").decode("utf-8").rstrip() if e.stderr else ""
+        raise PodmanCommandFailed(shlex.join(args), error_msg) from e
+
     if capture_output:
         return r.stdout.decode("utf-8").rstrip()
     return r.returncode
@@ -145,7 +154,8 @@ class PodmanImageMount:
 
     def _get_full_path(self, path):
         """Convert a path to a full path within the mounted image."""
-        return os.path.join(self.mount_path, os.path.splitroot(path)[2])
+        given_path = Path(path)
+        return str(Path(self.mount_path) / given_path.relative_to(given_path.anchor))
 
     def run(self, cmd, stdin_pipe=None, stdout_pipe=None, check=False):
         return run_cmd(
@@ -262,6 +272,55 @@ def parse_shvars(content):
     return result
 
 
+class TemporaryContainer:
+    """Context manager for temporary container images.
+    The container image is auto-removed when exiting the context.
+
+    Usage:
+        with TemporaryContainer(name="temp-image") as container:
+            # Use the container name
+            podman_run_something(container)
+        # Container is automatically removed here
+    """
+
+    def __init__(self, name, cleanup=True):
+        """Initialize temporary container context manager.
+
+        Args:
+            name: The container image name/tag to track
+            cleanup: If True, remove the container on exit. If False, leave it.
+                     Defaults to True.
+        """
+        self.name = name
+        self.cleanup_enabled = cleanup
+        self._removed = False
+
+    def __enter__(self):
+        """Enter the context and return the container name."""
+        return self.name
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the context and remove the container image if cleanup is enabled."""
+        if self.cleanup_enabled:
+            self.cleanup()
+
+    def cleanup(self):
+        """Remove the container image if it exists."""
+        if self._removed:
+            return
+
+        try:
+            if podman_image_exists(self.name):
+                log.debug("Removing temporary container: %s", self.name)
+                podman_image_rm(self.name)
+            self._removed = True
+        except Exception as e:
+            log.warning("Failed to remove temporary container %s: %s", self.name, e)
+
+    def __str__(self):
+        return self.name
+
+
 class ContainerInfo:
     def __init__(self, name, build_info):
         self.name = name
@@ -279,7 +338,7 @@ def podman_image_info(image):
         with PodmanImageMount(image) as mount:
             content = mount.read_file("/etc/build-info")
             build_info = parse_shvars(content)
-    except Exception as e:
+    except (PodmanCommandFailed, RuntimeError, ValueError) as e:
         log.info("No build info in %s: %s", image, e)
     return ContainerInfo(image, build_info)
 
@@ -298,7 +357,7 @@ def podman_run_bootc_image_builder(
     elif build_type == "ovf":
         src_path = "ovf/disk.ovf"
     else:
-        raise Exception(f"Unknown bootc-image-builder type {build_type}")
+        raise UnsupportedImageType(build_type)
 
     with tempfile.TemporaryDirectory(
         prefix="automotive-image-builder-", dir="/var/tmp"
@@ -321,14 +380,14 @@ def podman_run_bootc_image_builder(
                 bib_container,
                 volumes,
                 args,
-                podman_args=["--privileged"],
+                podman_args=["--privileged", "--network=none"],
                 stdout_pipe=None if verbose else subprocess.DEVNULL,
             )
 
             if res == 0:
                 src = os.path.join(tmpdir, src_path)
                 log.debug("Copying: %s to %s", src, dest_path)
-                shutil.copyfile(src, dest_path, follow_symlinks=False)
+                run_cmd(["cp", src, dest_path])
             return res
 
         finally:
@@ -353,9 +412,7 @@ def podman_bootc_inject_pubkey(
             # Extract initrd
             ostree_initrd_path = mount.get_ostree_initrd()
             if not ostree_initrd_path:
-                raise Exception(
-                    f"Can't find initramfs in bootc image '{src_container}'"
-                )
+                raise InitramfsNotFound(src_container)
             mount.copy_out_file(ostree_initrd_path, extracted_initrd)
 
         if src_is_aboot:
@@ -399,7 +456,7 @@ def podman_bootc_inject_pubkey(
 
         # Append cpio to initrd
         with open(extracted_initrd, "ab") as f_out:
-            for i in range(padding):
+            for _ in range(padding):
                 f_out.write(b"\0")
             with open(to_append, "rb") as f_in:
                 shutil.copyfileobj(f_in, f_out)

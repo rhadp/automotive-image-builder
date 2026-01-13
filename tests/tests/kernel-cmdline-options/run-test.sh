@@ -15,10 +15,8 @@ trap 'cleanup_path "$IMG_NAME"' 'EXIT'
 # Build the image
 echo_log "Building AIB image..."
 build --target qemu \
-    --mode image \
-    --export image \
     kernel-cmdline-options.aib.yml \
-    "$IMG_NAME"
+    - "$IMG_NAME"
 
 # Check if image was created
 assert_image_exists "$IMG_NAME"
@@ -59,7 +57,7 @@ else
     success=1
 fi
 
-# Clean up automotive-image-runner process
+# Clean up air process
 stop_vm "$VM_PID"
 
 exit $success

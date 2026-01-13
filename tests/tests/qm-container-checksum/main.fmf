@@ -1,7 +1,7 @@
 summary: Validate that the QM container checksum is correct after image build
 description: |
   Builds an AIB image and verifies the QM container checksum via the `auto-boot-check` service.
-  The test boots the image with `automotive-image-runner`, waits for SSH on port 2222, and checks
+  The test boots the image with `air`, waits for SSH on port 2222, and checks
   `systemctl is-active auto-boot-check`. On failure, the journal is collected and the checksum
   mismatch line is extracted to show the actual and expected values.
 

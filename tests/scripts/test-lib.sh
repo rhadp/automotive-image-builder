@@ -108,9 +108,9 @@ assert_file_has_owner() {
     local actual_uid_gid
     actual_uid_gid=$(stat -c "%u:%g" "$file")
     if [[ "$actual_uid_gid" == "$expected_uid_gid" ]]; then
-        echo_pass $file has correct UID:GID $expected_uid_gid"
+        echo_pass "$file has correct UID:GID $expected_uid_gid"
     else
-        echo_fail $file has UID:GID $actual_uid_gid, expected $expected_uid_gid"
+        echo_fail "$file has UID:GID $actual_uid_gid, expected $expected_uid_gid"
     fi
 }
 
@@ -120,9 +120,30 @@ assert_file_has_permission() {
     local actual_perm
     actual_perm=$(stat -c "%a" "$file")
     if [[ "$actual_perm" == "$expected_perm" ]]; then
-        echo_pass $file has correct permissions $expected_perm
+        echo_pass "$file has correct permissions $expected_perm"
     else
-        echo_fail $file permissions are $actual_perm, expected $expected_perm
+        echo_fail "$file permissions are $actual_perm, expected $expected_perm"
+    fi
+}
+
+assert_symlink_exists() {
+    local symlink=$1
+    if [ ! -L "$symlink" ]; then
+        ls -la "$(dirname "$symlink")/" >&2
+        fatal "Symlink '$symlink' does not exist"
+    fi
+}
+
+assert_symlink_target() {
+    local symlink=$1
+    local expected_target=$2
+
+    assert_symlink_exists "$symlink"
+
+    if [[ "$(readlink "$symlink")" == "$expected_target" ]]; then
+        echo_pass "Symlink '$symlink' points to '$expected_target'"
+    else
+        fatal "Symlink '$symlink' points to '$(readlink "$symlink")', expected '$expected_target'"
     fi
 }
 
@@ -284,10 +305,10 @@ save_to_tmt_data () {
 # Some default options that make builds faster, override if problematic
 FAST_OPTIONS="--define sign_kernel_modules=false"
 
-trybuild() {
+trybuild_deprecated() {
     local result=0
 
-    $AIB build \
+    $AIBDEV build-deprecated \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -298,8 +319,8 @@ trybuild() {
     return $result
 }
 
-build() {
-   if ! trybuild "$@"; then
+build_deprecated() {
+   if ! trybuild_deprecated "$@"; then
       echo FAILED to build image
       # only show last 50 lines in
       tail -n 50 build.log
@@ -310,10 +331,10 @@ build() {
    save_to_tmt_data build.log
 }
 
-trybuild_bootc() {
+trybuild() {
     local result=0
 
-    $AIB build-bootc \
+    $AIB build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -324,8 +345,8 @@ trybuild_bootc() {
     return $result
 }
 
-build_bootc() {
-   if ! trybuild_bootc "$@"; then
+build() {
+   if ! trybuild "$@"; then
       echo FAILED to build bootc container
       # only show last 50 lines in
       tail -n 50 build-bootc.log
@@ -339,7 +360,7 @@ build_bootc() {
 trybootc_to_disk_image() {
     local result=0
 
-    $AIB bootc-to-disk-image \
+    $AIB to-disk-image \
         --verbose \
         "$@" > bootc-to-disk-image.log
     result=$?
@@ -362,7 +383,7 @@ bootc_to_disk_image() {
 trybuild_bootc_builder() {
     local result=0
 
-    $AIB build-bootc-builder \
+    $AIB build-builder \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -385,10 +406,10 @@ build_bootc_builder() {
    save_to_tmt_data build-builder.log
 }
 
-trybuild_traditional() {
+trybuild_dev() {
     local result=0
 
-    $AIB build-traditional \
+    $AIBDEV build \
         --distro=$AIB_DISTRO \
         --cache $OUTDIR/dnf-cache \
         --build-dir "$BUILDDIR" $FAST_OPTIONS \
@@ -399,8 +420,8 @@ trybuild_traditional() {
     return $result
 }
 
-build_traditional() {
-   if ! trybuild_traditional "$@"; then
+build_dev() {
+   if ! trybuild_dev "$@"; then
       echo FAILED to build image
       # only show last 50 lines in
       tail -n 50 build.log

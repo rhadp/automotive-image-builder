@@ -112,3 +112,103 @@ class InvalidTopLevelPath(AIBException):
             f"Files and directories must be under one of: {', '.join(self.allowed_dirs)}, "
             f"but not under {', '.join(self.disallowed_paths)}"
         )
+
+
+class ContainerNotFound(AIBException):
+    """Raised when a container image is not found in the local container store."""
+
+    def __init__(self, container_name):
+        self.container_name = container_name
+
+    def __str__(self):
+        return (
+            f"Source bootc image '{self.container_name}' isn't in local container store"
+        )
+
+
+class BuildContainerNotFound(AIBException):
+    """Raised when the build container is not found in the local container store."""
+
+    def __init__(self, build_container, distro):
+        self.build_container = build_container
+        self.distro = distro
+
+    def __str__(self):
+        return (
+            f"Build container {self.build_container} isn't in local container store\n"
+            f"Either specify another one with --build-container, or create it using:\n"
+            f"  aib build-builder --distro {self.distro}"
+        )
+
+
+class BootcImageBuilderFailed(AIBException):
+    """Raised when bootc-image-builder fails to create an image."""
+
+    def __str__(self):
+        return "bootc-image-builder failed to create the image"
+
+
+class IncompatibleOptions(AIBException):
+    """Raised when incompatible command-line options are used together."""
+
+    def __init__(self, option1, option2, reason=None):
+        self.option1 = option1
+        self.option2 = option2
+        self.reason = reason
+
+    def __str__(self):
+        msg = f"{self.option1} is incompatible with {self.option2}"
+        if self.reason:
+            msg += f": {self.reason}"
+        return msg
+
+
+class InvalidBuildDir(AIBException):
+    """Raised when build directory is required but not specified."""
+
+    def __str__(self):
+        return "No build dir specified, refusing to download to temporary directory"
+
+
+class UnknownSignatureType(AIBException):
+    """Raised when an unknown signature type is encountered."""
+
+    def __init__(self, sig_type):
+        self.sig_type = sig_type
+
+    def __str__(self):
+        return f"Unknown signature type {self.sig_type}"
+
+
+class PodmanCommandFailed(AIBException):
+    """Raised when a podman command fails."""
+
+    def __init__(self, command, error_message):
+        self.command = command
+        self.error_message = error_message
+
+    def __str__(self):
+        msg = f"Failed to run '{self.command}'"
+        if self.error_message:
+            msg += f": {self.error_message}"
+        return msg
+
+
+class UnsupportedImageType(AIBException):
+    """Raised when an unsupported disk image type is requested."""
+
+    def __init__(self, image_type):
+        self.image_type = image_type
+
+    def __str__(self):
+        return f"Unknown bootc-image-builder type {self.image_type}"
+
+
+class InitramfsNotFound(AIBException):
+    """Raised when initramfs cannot be found in a bootc image."""
+
+    def __init__(self, container_name):
+        self.container_name = container_name
+
+    def __str__(self):
+        return f"Can't find initramfs in bootc image '{self.container_name}'"

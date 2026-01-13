@@ -2,4 +2,4 @@
 
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-PYTHONPATH="${BASEDIR}/" exec python3 -m aib.main "${BASEDIR}" "$@"
+exec "${BASEDIR}/bin/aib" "$@"

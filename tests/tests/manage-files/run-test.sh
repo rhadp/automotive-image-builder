@@ -15,9 +15,10 @@ tar_paths="[\
 'etc/test-glob-preserve-log',\
 'usr/lib/qm/rootfs/etc/qm-custom',\
 'usr/lib/qm/rootfs/usr/sbin',\
-'usr/sbin'\
+'usr/sbin',\
+'usr/share/containers/systemd'\
 ]"
-build --export bootc-tar \
+build --tar \
     --extend-define tar_paths="$tar_paths" \
     custom-files.aib.yml \
     "$TAR_FILE"
@@ -51,6 +52,10 @@ assert_file_has_content etc/test-glob-preserve/file2.txt "This is test file 2"
 assert_file_has_content etc/test-glob-preserve/subdir1/app.log "App log from subdir1"
 assert_file_has_content etc/test-glob-preserve/subdir2/system.log "System log from subdir2"
 
+# Test that files were copied to /usr/ with preserved paths
+# This verifies that directories are created with exist_ok=True
+assert_file_has_content usr/share/containers/systemd/test.container "# Test container configuration"
+
 echo_pass "Image contains all required files"
 
 echo_log "Checking permissions and ownership (content)..."
@@ -69,7 +74,15 @@ assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file4.txt "65534:65534"
 assert_file_has_permission usr/lib/qm/rootfs/etc/qm-custom/file5.txt "644"
 assert_file_has_owner usr/lib/qm/rootfs/etc/qm-custom/file5.txt "0:0"
 
-echo_pass "All file permissions and ownerships are correctly set."
+echo_log "Checking symlinks (content)..."
+assert_symlink_target "etc/custom-files/link-absolute" "/etc/custom-files/file1.txt"
+assert_symlink_target "etc/custom-files/link-relative" "file2.txt"
+
+echo_log "Checking symlinks (QM)..."
+assert_symlink_target "usr/lib/qm/rootfs/etc/qm-custom/qm-link-absolute" "/etc/qm-custom/file4.txt"
+assert_symlink_target "usr/lib/qm/rootfs/etc/qm-custom/qm-link-relative" "file5.txt"
+
+echo_pass "All file permissions, ownerships, and symlinks are correctly set."
 
 echo_log "Checking removed files in content section..."
 assert_not_has_file "usr/sbin/crond"
@@ -80,7 +93,7 @@ assert_not_has_file "usr/lib/qm/rootfs/usr/sbin/cupsd"
 echo_pass "Files marked for removal are not present in the image."
 
 echo_log "Testing invalid custom top-level directory..."
-if trybuild --export tar invalid-custom-dir.aib.yml invalid-out.tar 2> error.txt; then
+if trybuild --tar invalid-custom-dir.aib.yml invalid-out.tar 2> error.txt; then
     echo_fail "Build should have failed for custom top-level directory /custom-dir"
     exit 1
 else
@@ -91,7 +104,7 @@ echo_log "Checking error message content..."
 assert_file_has_content error.txt "Path '/custom-dir' is not allowed"
 
 echo_log "Testing invalid root-level file..."
-if trybuild --export tar invalid-root-path.aib.yml invalid-out2.tar 2> error2.txt; then
+if trybuild --tar invalid-root-path.aib.yml invalid-out2.tar 2> error2.txt; then
     echo_fail "Build should have failed for file directly in root /"
     exit 1
 else

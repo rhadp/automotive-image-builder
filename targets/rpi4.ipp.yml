@@ -1,29 +1,35 @@
 # Target for the Raspberry Pi 4
+# Needs eeprom firmware later than 2020-09-14 (for GPT support)
 version: '2'
 mpp-vars:
+  use_autoinit: true
   extra_image_source_image: ostree-tree
   extra_image_copy_image:
     - from: input://extra-tree/lib/ostree-boot/efi/
       to: mount://root/boot/efi/
-  rpi4_use_uefi: false
   target_supported_arches:
     - aarch64
+  grow_rootfs: true
   target_repos:
     - id: rpi-board-support
       baseurl: https://download.copr.fedorainfracloud.org/results/@centos-automotive-sig/rpi-board-support/$distro_chroot/
       priority: 1
   target_rpms:
     - pi4-firmware-blob
-    - pi_resize
   dracut_add_drivers:
     mpp-join:
       - mpp-eval: dracut_add_drivers
       - - bcm2835
         - bcm2835-mailbox
         - sdhci
+        - sdhci_iproc
   dracut_force_drivers:
     mpp-join:
       - mpp-eval: dracut_force_drivers
       - - simplefb
-  partition_label: dos
+  kernel_opts:
+    mpp-join:
+      - mpp-eval: kernel_opts
+      - - mpp-if: is_autoinit_supported and use_autoinit # With autoinit, udev will not load block drivers
+          then: rd.modules-load=sdhci_iproc
 pipelines: []

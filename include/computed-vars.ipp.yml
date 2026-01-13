@@ -14,6 +14,20 @@ mpp-vars:
     mpp-eval: locals().get('qm_varpart_size', int(int(image_size) * qm_varpart_relative_size / 512))
   _qm_use_separate_var:
     mpp-eval: use_qm and _qm_varpart_size != 0
+  _qm_containers:
+    mpp-if: qm_wayland_enable
+    then:
+      mpp-join:
+        - - source: quay.io/qm-images/qm-dbus-broker
+            name: localhost/qm-dbus-broker
+        - mpp-if: qm_wayland_source == "default"
+          then:
+            - source: quay.io/qm-images/wayland-compositor
+              name: $qm_wayland_compositor_name
+          else:
+            - source: $qm_wayland_source
+              name: $qm_wayland_compositor_name
+    else: []
   ostree_os_version:
     mpp-if: not "ostree_os_version" in locals()
     then: $version
@@ -110,6 +124,9 @@ mpp-vars:
     then:
       # TODO-BOOTC: aboot doesn't need a /boot/efi, but bc-t-i currently fails in bootupd stage if this is missing
       mpp-eval: use_grub2 or use_ukiboot or (use_aboot and use_bootc)
+  use_efipart_mount:
+    # TODO-BOOTC: We don't need to mount it even though we added it above for aboot (in particular with --separate-partitions)
+    mpp-eval: use_efipart and not (use_aboot and use_bootc)
   use_bootpart:
     mpp-if: not "use_bootpart" in locals()
     then:
@@ -220,10 +237,13 @@ mpp-vars:
           - systemd-initrd-automotive
           - mpp-if: use_debug or use_kernel_debug_package
             then: systemd-journald
-      - mpp-if: use_repart
-        then:
-          - systemd-repart
-
+          - mpp-if: use_repart
+            then: systemd-repart
+  dracut_add_modules:
+    mpp-join:
+      - mpp-eval: dracut_add_modules
+      - - mpp-if: use_repart
+          then: systemd-repart
   dracut_add_drivers:
     mpp-join:
       - mpp-eval: dracut_add_drivers
@@ -431,6 +451,10 @@ mpp-vars:
     mpp-eval: aboot_partlabel if use_aboot else "root"
   autoinit_root:
     mpp-eval: locals().get("autoinit_root", f"PARTLABEL={rootpart_label}")
+  sysroot_unit:
+    mpp-if: use_autoinit
+    then: mount-sysroot.service
+    else: sysroot.mount
   qm_importfile:
     mpp-if: use_qm
     then: "qm"
@@ -441,7 +465,7 @@ mpp-vars:
       - - mpp-if: tmp_is_tmpfs
           then: tmp.mount
         - rcu-normal.service
-        - mpp-if: use_efipart and not policy_disable_efi_features
+        - mpp-if: use_efipart_mount and not policy_disable_efi_features
           then: boot-efi.mount
         - mpp-if: use_bootpart
           then: boot.mount
@@ -552,6 +576,9 @@ mpp-vars:
                   exist_ok: true
                 - path: /var/qm/
                   parents: true
+                - path: /var/qm/tmp
+                  parents: true
+                  exist_ok: true
         - mpp-if: use_qm
           then:
             type: org.osbuild.copy
@@ -704,6 +731,11 @@ mpp-vars:
         path: /usr/share/containers/systemd/qm.container.d
         parents: true
         exist_ok: true
+    - mpp-if: use_qm and qm_wayland_enable
+      then:
+        path: /etc/qm/containers/systemd/wayland-compositor.container.d
+        parents: true
+        exist_ok: true
     - mpp-if: use_boot_check
       then:
         path: /usr/lib/systemd/system/auto-boot-check.service.d
@@ -760,6 +792,10 @@ mpp-vars:
         to: tree:///usr/.auto-unlock-key
     - from: input://extra-tree/containers.conf
       to: tree://$containers_configdir/containers.conf
+    - mpp-if: use_qm and qm_wayland_enable
+      then:
+        from: input://extra-tree/wayland-compositor.conf
+        to: tree:///etc/qm/containers/systemd/wayland-compositor.container.d/10-wayland-image.conf
     - mpp-if: use_ostree
       then:
         from: input://extra-tree/ostree_prepare_root.conf
@@ -802,7 +838,7 @@ mpp-vars:
       then:
         from: input://extra-tree/boot.mount
         to: tree:////usr/lib/systemd/system/boot.mount
-    - mpp-if: use_efipart and not policy_disable_efi_features
+    - mpp-if: use_efipart_mount and not policy_disable_efi_features
       then:
         from: input://extra-tree/boot-efi.mount
         to: tree:////usr/lib/systemd/system/boot-efi.mount
@@ -822,6 +858,10 @@ mpp-vars:
       then:
         from: input://extra-tree/qm-automotive.conf
         to: tree:////usr/share/containers/systemd/qm.container.d/10-automotive.conf
+    - mpp-if: use_qm and qm_wayland_enable
+      then:
+        from: input://extra-tree/wayland-extra-devices.conf
+        to: tree:///usr/share/containers/systemd/qm.container.d/20-wayland-extra-devices.conf
     - from: input://extra-tree/signing_info.json
       to: tree://///etc/signing_info.json
     - from: input://extra-tree/bootc.install
@@ -852,6 +892,10 @@ mpp-vars:
           then: aboot-update
         - mpp-if: use_aboot_like
           then: aboot-deploy
+        - mpp-if: use_aboot
+          then: android-tools
+        - mpp-if: use_aboot
+          then: kernel-tools
         - mpp-if: sign_kernel_modules
           then: $kernel_devel_rpm
       - mpp-if: use_ukiboot
@@ -861,14 +905,9 @@ mpp-vars:
           - systemd-boot
 
   ostree_mode_rpms:
+    - bootc
+    - rpm-ostree
     - nss-altfiles
-    - greenboot
-    - mpp-if: use_grub2
-      then: greenboot-grub2
-    - greenboot-reboot
-    - greenboot-status
-    - mpp-if: use_grub2
-      then: greenboot-rpm-ostree-grub2
     - skopeo  # Needed for upgrading from an OCI remove image
     - bootupd
 
@@ -925,9 +964,15 @@ mpp-vars:
           then: NetworkManager
         - mpp-if: use_qm
           then: qm
+        - mpp-if: use_qm and qm_wayland_enable
+          then: qm-oci-hooks
         # TODO-BOOTC: bootupd needs this for generate-update-metadata
         - mpp-if: use_bootc
           then: shim
+        # TODO-BOOTC: bootupd 0.2.32 needs to have at least two EFI modules or it asserts
+        - mpp-if: use_bootc and use_aboot
+          then:
+            mpp-format-string: "grub2-efi-{efiarch}"
         # TODO-BOOTC: bootupd needs this for generate-update-metadata
         - mpp-if: use_bootc
           then: grub2-tools

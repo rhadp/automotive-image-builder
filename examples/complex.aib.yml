@@ -25,6 +25,11 @@ content:
         some text
     - path: /usr/share/README.md
       source_path: ../README.md
+  add_symlinks:
+    - target: /usr/share/my_file.txt
+      link: /usr/share/my_file_link
+    - target: ../share/README.md
+      link: /usr/bin/readme_link
   chmod_files:
     - path: /usr/share/my_file.txt
       mode: "0666"
@@ -58,6 +63,9 @@ qm:
     add_files:
       - path: /etc/extra_files.json
         url: https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/extra_files.json
+    add_symlinks:
+      - target: /etc/extra_files.json
+        link: /etc/files_link
 
 network:
   static: {}
